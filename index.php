@@ -1,7 +1,5 @@
 <?php
 
-// Check if the system setup is complete
-
 require_once 'config.php';
 
 if (isset($_SESSION['user_id'])) 
