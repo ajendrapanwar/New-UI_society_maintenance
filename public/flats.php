@@ -121,7 +121,7 @@ include('../resources/layout/footer.php');
 					orderable: false,
 					render: function(data, type, row) {
 						return `
-                        <a href="edit_flats.php?id=${row.id}" class="btn btn-sm btn-primary">Edit</a>
+                        <a href="edit/edit_flats.php?id=${row.id}" class="btn btn-sm btn-primary">Edit</a>
                         <button class="btn btn-sm btn-danger delete_btn" data-id="${row.id}">
                             Delete
                         </button>

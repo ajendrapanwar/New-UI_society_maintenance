@@ -104,7 +104,7 @@ $(document).ready(function () {
                 orderable: false,
                 render: function (data) {
                     return `
-                        <a href="<?= BASE_URL ?>edit_user.php?id=${data.id}" class="btn btn-sm btn-primary">Edit</a>
+                        <a href="<?= BASE_URL ?>edit/edit_user.php?id=${data.id}" class="btn btn-sm btn-primary">Edit</a>
                         <button class="btn btn-sm btn-danger delete_btn" data-id="${data.id}">Delete</button>
                     `;
                 }

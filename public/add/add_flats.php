@@ -3,110 +3,125 @@
 require_once __DIR__ . '/../../core/config.php';
 
 
-if(isset($_POST['add_flats']))
-{
-	// Validate the form data
-  	$flat_number = $_POST['flat_number'];
-  	$floor = $_POST['floor'];
-  	$block_number = $_POST['block_number'];
-  	$flat_type = $_POST['flat_type'];
-  	$created_at = date('Y-m-d H:i:s');
+//    ACCESS CONTROL
 
-  	if (empty($flat_number)) 
-  	{
-	    $errors[] = 'Flat Number is required';
-  	}
-  	if (empty($floor)) 
-  	{
-	    $errors[] = 'Floor Number is required';
-  	}
-  	if(empty($flat_type))
-  	{
-  		$errors[] = 'Please Select Type';
-  	}
-
-  	// If the form data is valid, update the user's password
-  	if (empty($errors)) 
-  	{
-  		$sql = "INSERT INTO flats (flat_number, floor, block_number, flat_type, created_at) VALUES (?, ?, ?, ?, ?)";
-
-  		$pdo->prepare($sql)->execute([$flat_number, $floor, $block_number, $flat_type, $created_at]);
-
-  		$_SESSION['success'] = 'New Flat Data Added';
-
-  		header('location:flats.php');
-  		exit();
-  	}
+if (
+	!isset($_SESSION['user_id']) ||
+	$_SESSION['user_role'] !== 'admin'
+) {
+	header('Location: ' . BASE_URL . 'logout.php');
+	exit();
 }
 
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') 
-{
-  	header('Location: logout.php');
-  	exit();
+$errors = [];
+
+
+//    ADD FLAT
+
+if (isset($_POST['add_flats'])) {
+
+	$flat_number  = trim($_POST['flat_number']);
+	$floor        = trim($_POST['floor']);
+	$block_number = trim($_POST['block_number']);
+	$flat_type    = trim($_POST['flat_type']);
+	$created_at   = date('Y-m-d H:i:s');
+
+	if ($flat_number === '') {
+		$errors[] = 'Flat Number is required';
+	}
+
+	if ($floor === '') {
+		$errors[] = 'Floor Number is required';
+	}
+
+	if ($flat_type === '') {
+		$errors[] = 'Please select flat type';
+	}
+
+	if (empty($errors)) {
+
+		$sql = "INSERT INTO flats 
+                (flat_number, floor, block_number, flat_type, created_at)
+                VALUES (?, ?, ?, ?, ?)";
+
+		$pdo->prepare($sql)->execute([
+			$flat_number,
+			$floor,
+			$block_number,
+			$flat_type,
+			$created_at
+		]);
+
+		$_SESSION['success'] = 'New flat added successfully';
+		header('Location: ' . BASE_URL . 'flats.php');
+		exit();
+	}
 }
 
 include(__DIR__ . '/../../resources/layout/header.php');
-
 ?>
 
 <div class="container-fluid px-4">
-    <h1 class="mt-4">Add Flats</h1>
-    <ol class="breadcrumb mb-4">
-    	<li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="flats.php">Flats Management</a></li>
-        <li class="breadcrumb-item active">Add Flats Management</li>
-    </ol>
+	<h1 class="mt-4">Add Flat</h1>
+
+	<ol class="breadcrumb mb-4">
+		<li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
+		<li class="breadcrumb-item"><a href="<?= BASE_URL ?>flats.php">Flats Management</a></li>
+		<li class="breadcrumb-item active">Add Flat</li>
+	</ol>
+
 	<div class="col-md-4">
-		<?php
 
-		if(isset($errors))
-        {
-            foreach ($errors as $error) 
-            {
-                echo "<div class='alert alert-danger'>$error</div>";
-            }
-        }
+		<?php foreach ($errors as $error): ?>
+			<div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+		<?php endforeach; ?>
 
-		?>
 		<div class="card">
 			<div class="card-header">
-				<h5 class="card-title">Add Flats</h5>
+				<h5 class="card-title">Add Flat</h5>
 			</div>
+
 			<div class="card-body">
-				<form id="add-flat-form" method="POST">
-				  	<div class="mb-3">
-				    	<label for="flat-number" class="form-label">Flat Number</label>
-				    	<input type="text" class="form-control" id="flat-number" name="flat_number">
-				  	</div>
-				  	<div class="mb-3">
-				    	<label for="floor" class="form-label">Floor</label>
-				    	<input type="number" class="form-control" id="floor" name="floor">
-				  	</div>
-				  	<div class="mb-3">
-				    	<label for="floor" class="form-label">Block Number</label>
-				    	<input type="text" class="form-control" id="block_number" name="block_number">
-				  	</div>
-				  	<div class="mb-3">
-				    	<label for="floor" class="form-label">Type</label>
-				    	<select name="flat_type" class="form-control">
-				    		<option value="">Select Type</option>
-				    		<?php 
-				    		foreach($type as $t)
-				    		{
-				    			echo '<option value="'.$t.'">'.$t.'</option>';
-				    		}
-				    		?>
-				    	</select>
-				  	</div>
-				  	<button type="submit" name="add_flats" class="btn btn-primary">Add Flat</button>
+				<form method="post">
+
+					<div class="mb-3">
+						<label class="form-label">Flat Number</label>
+						<input type="text" class="form-control" name="flat_number"
+							value="<?= htmlspecialchars($_POST['flat_number'] ?? '') ?>">
+					</div>
+
+					<div class="mb-3">
+						<label class="form-label">Floor</label>
+						<input type="number" class="form-control" name="floor"
+							value="<?= htmlspecialchars($_POST['floor'] ?? '') ?>">
+					</div>
+
+					<div class="mb-3">
+						<label class="form-label">Block Number</label>
+						<input type="text" class="form-control" name="block_number"
+							value="<?= htmlspecialchars($_POST['block_number'] ?? '') ?>">
+					</div>
+
+					<div class="mb-3">
+						<label class="form-label">Type</label>
+						<select name="flat_type" class="form-control">
+							<option value="">Select Type</option>
+							<?php foreach ($flatTypes as $t): ?>
+								<option value="<?= $t ?>">
+									<?= $t ?>
+								</option>
+							<?php endforeach; ?>
+						</select>
+
+					</div>
+					<button type="submit" name="add_flats" class="btn btn-primary">
+						Add Flat
+					</button>
+
 				</form>
 			</div>
 		</div>
 	</div>
 </div>
 
-<?php
-
-include(__DIR__ . '/../../resources/layout/footer.php');
-
-?>
+<?php include(__DIR__ . '/../../resources/layout/footer.php'); ?>

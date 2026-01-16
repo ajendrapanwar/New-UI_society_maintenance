@@ -2,119 +2,128 @@
 
 require_once __DIR__ . '/../../core/config.php';
 
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') 
-{
-  	header('Location: logout.php');
-  	exit();
+
+//    ACCESS CONTROL
+
+if (
+	!isset($_SESSION['user_id']) ||
+	$_SESSION['user_role'] !== 'admin'
+) {
+	header('Location: ' . BASE_URL . 'logout.php');
+	exit();
 }
 
-if(isset($_POST['edit_user']))
-{
-	// Validate the form data
-  	$name = $_POST['name'];
-  	$email = $_POST['email'];
-  	$password = $_POST['password'];
-  	$id = $_POST['id'];
+$errors = [];
+$user = null;
 
-  	if (empty($name)) 
-  	{
-	    $errors[] = 'Please enter your name';
-  	}
-  	if (empty($email)) 
-  	{
-    	$errors[] = 'Please enter your email address';
-  	} 
-  	else if (!filter_var($email, FILTER_VALIDATE_EMAIL)) 
-  	{
-    	$errors[] = 'Please enter a valid email address';
-  	}
 
-  	// If the form data is valid, update the user's password
-  	if (empty($errors)) 
-  	{
-  		if(empty($password))
-  		{
-	  		$sql = "UPDATE users SET name = ?, email = ? WHERE id = ?";
+//    UPDATE USER
 
-	  		$pdo->prepare($sql)->execute([$name, $email, $id]);
-	  	}
-	  	else
-	  	{
-	  		$password = password_hash($password, PASSWORD_DEFAULT);
+if (isset($_POST['edit_user'])) {
 
-	  		$sql = "UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?";
+	$id       = (int) $_POST['id'];
+	$name     = trim($_POST['name']);
+	$email    = trim($_POST['email']);
+	$password = $_POST['password'];
 
-	  		$pdo->prepare($sql)->execute([$name, $email, $password, $id]);
-	  	}
+	if ($name === '') {
+		$errors[] = 'Please enter your name';
+	}
 
-  		$_SESSION['success'] = 'User Data has been edited';
+	if ($email === '') {
+		$errors[] = 'Please enter your email address';
+	} elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+		$errors[] = 'Please enter a valid email address';
+	}
 
-  		header('location:users.php');
-  		exit();
-  	}
+	if (empty($errors)) {
+
+		if ($password === '') {
+			$sql = "UPDATE users SET name = ?, email = ? WHERE id = ?";
+			$pdo->prepare($sql)->execute([$name, $email, $id]);
+		} else {
+			$hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+			$sql = "UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?";
+			$pdo->prepare($sql)->execute([$name, $email, $hashedPassword, $id]);
+		}
+
+		$_SESSION['success'] = 'User data has been updated successfully';
+		header('Location: ' . BASE_URL . 'users.php');
+		exit();
+	}
 }
 
-if(isset($_GET['id']))
-{
-	// Prepare a SELECT statement to retrieve the flats's details
-  	$stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-  	$stmt->execute([$_GET['id']]);
 
-  	// Fetch the user's details from the database
-  	$user = $stmt->fetch(PDO::FETCH_ASSOC);
+//    FETCH USER DATA
+
+if (isset($_GET['id']) && is_numeric($_GET['id'])) {
+
+	$stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+	$stmt->execute([(int)$_GET['id']]);
+	$user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+	if (!$user) {
+		header('Location: ' . BASE_URL . 'users.php');
+		exit();
+	}
+} else {
+	header('Location: ' . BASE_URL . 'users.php');
+	exit();
 }
 
 include(__DIR__ . '/../../resources/layout/header.php');
-
 ?>
 
 <div class="container-fluid px-4">
-    <h1 class="mt-4">Edit Users</h1>
-    <ol class="breadcrumb mb-4">
-    	<li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="flats.php">Users Management</a></li>
-        <li class="breadcrumb-item active">Edit User Data</li>
-    </ol>
+	<h1 class="mt-4">Edit User</h1>
+
+	<ol class="breadcrumb mb-4">
+		<li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
+		<li class="breadcrumb-item"><a href="<?= BASE_URL ?>users.php">Users Management</a></li>
+		<li class="breadcrumb-item active">Edit User</li>
+	</ol>
+
 	<div class="col-md-4">
-		<?php
 
-		if(isset($errors))
-        {
-            foreach ($errors as $error) 
-            {
-                echo "<div class='alert alert-danger'>$error</div>";
-            }
-        }
+		<?php foreach ($errors as $error): ?>
+			<div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+		<?php endforeach; ?>
 
-		?>
 		<div class="card">
 			<div class="card-header">
-				<h5 class="card-title">Edit Users Data</h5>
+				<h5 class="card-title">Edit User Data</h5>
 			</div>
+
 			<div class="card-body">
 				<form method="post">
-				  	<div class="mb-3">
-				    	<label for="name">Name</label>
-				    	<input type="text" class="form-control" id="name" name="name" placeholder="Enter name" value="<?php echo isset($user['name']) ? $user['name'] : ''; ?>">
-				  	</div>
-				  	<div class="mb-3">
-				    	<label for="email">Email address</label>
-				    	<input type="email" class="form-control" id="email" name="email" placeholder="Enter email" value="<?php echo isset($user['email']) ? $user['email'] : ''; ?>">
-				  	</div>
-				  	<div class="mb-3">
-				    	<label for="password">Password</label>
-				    	<input type="password" class="form-control" id="password" name="password" placeholder="Enter password">
-				  	</div>
-				  	<input type="hidden" name="id" value="<?php echo isset($user['id']) ? $user['id'] : ''; ?>" />
-				  	<button type="submit" name="edit_user" class="btn btn-primary">Edit</button>
+					<div class="mb-3">
+						<label>Name</label>
+						<input type="text" class="form-control"
+							name="name"
+							value="<?= htmlspecialchars($user['name']) ?>">
+					</div>
+
+					<div class="mb-3">
+						<label>Email</label>
+						<input type="email" class="form-control"
+							name="email"
+							value="<?= htmlspecialchars($user['email']) ?>">
+					</div>
+
+					<div class="mb-3">
+						<label>Password (Set New Password)</label>
+						<input type="password" class="form-control" name="password">
+					</div>
+
+					<input type="hidden" name="id" value="<?= $user['id'] ?>">
+
+					<button type="submit" name="edit_user" class="btn btn-primary">
+						Update
+					</button>
 				</form>
 			</div>
 		</div>
 	</div>
 </div>
 
-<?php
-
-include(__DIR__ . '/../../resources/layout/footer.php');
-
-?>
+<?php include(__DIR__ . '/../../resources/layout/footer.php'); ?>
