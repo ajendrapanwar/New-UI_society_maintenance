@@ -2,9 +2,7 @@
 
 require_once __DIR__ . '/../../core/config.php';
 
-
-//    ACCESS CONTROL
-
+// ===== ACCESS CONTROL =====
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     header('Location: ' . BASE_URL . 'logout.php');
     exit();
@@ -12,51 +10,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 
 $errors = [];
 
-
-//    UPDATE FLAT
-
-if (isset($_POST['edit_flats'])) {
-
-    $flat_number  = trim($_POST['flat_number']);
-    $floor        = trim($_POST['floor']);
-    $block_number = trim($_POST['block_number']);
-    $flat_type    = trim($_POST['flat_type']);
-    $id           = (int) $_POST['id'];
-
-    if ($flat_number === '') {
-        $errors[] = 'Flat Number is required';
-    }
-
-    if ($floor === '') {
-        $errors[] = 'Floor Number is required';
-    }
-
-    if ($flat_type === '') {
-        $errors[] = 'Please select flat type';
-    }
-
-    if (empty($errors)) {
-
-        $sql = "UPDATE flats 
-                SET flat_number = ?, floor = ?, block_number = ?, flat_type = ?
-                WHERE id = ?";
-
-        $pdo->prepare($sql)->execute([
-            $flat_number,
-            $floor,
-            $block_number,
-            $flat_type,
-            $id
-        ]);
-
-        $_SESSION['success'] = 'Flat data updated successfully';
-        header('Location: ' . BASE_URL . 'flats.php');
-        exit();
-    }
-}
-
-//    FETCH FLAT DATA
-
+// ===== FETCH FLAT DATA =====
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     header('Location: ' . BASE_URL . 'flats.php');
     exit();
@@ -71,10 +25,60 @@ if (!$flat) {
     exit();
 }
 
+
+// ===== HANDLE FORM SUBMIT =====
+if (isset($_POST['edit_flats'])) {
+
+    $floor        = trim($_POST['floor'] ?? '');
+    $flat_number  = trim($_POST['flat_number'] ?? '');
+    $block_number = trim($_POST['block_number'] ?? '');
+    $flat_type    = trim($_POST['flat_type'] ?? '');
+    $id           = (int) $_POST['id'];
+
+    // ===== VALIDATION =====
+    if ($floor === '') {
+        $errors['floor'] = 'Floor Number is required';
+    } elseif (!is_numeric($floor)) {
+        $errors['floor'] = 'Floor must be a number';
+    }
+
+    if ($flat_number === '') {
+        $errors['flat_number'] = 'Flat Number is required';
+    }
+
+    if ($block_number === '') {
+        $errors['block_number'] = 'Wing/Block is required';
+    }
+
+    if ($flat_type === '') {
+        $errors['flat_type'] = 'Please select flat type';
+    }
+
+    // ===== UPDATE IF NO ERRORS =====
+    if (empty($errors)) {
+        $stmt = $pdo->prepare("
+            UPDATE flats 
+            SET flat_number = ?, floor = ?, block_number = ?, flat_type = ?
+            WHERE id = ?
+        ");
+        $stmt->execute([
+            $flat_number,
+            $floor,
+            $block_number,
+            $flat_type,
+            $id
+        ]);
+
+        $_SESSION['success'] = 'Flat data updated successfully';
+        header('Location: ' . BASE_URL . 'flats.php');
+        exit();
+    }
+}
+
 include(__DIR__ . '/../../resources/layout/header.php');
 ?>
 
-<div class="container-fluid px-4">
+<div class="container-fluid px-4 mb-4">
     <h1 class="mt-4">Edit Flat</h1>
 
     <ol class="breadcrumb mb-4">
@@ -83,11 +87,12 @@ include(__DIR__ . '/../../resources/layout/header.php');
         <li class="breadcrumb-item active">Edit Flat</li>
     </ol>
 
-    <div class="col-md-4">
+    <div class="col-md-6">
 
-        <?php foreach ($errors as $error): ?>
-            <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
-        <?php endforeach; ?>
+        <?php if (!empty($_SESSION['success'])): ?>
+            <div class="alert alert-success"><?= htmlspecialchars($_SESSION['success']);
+                                                unset($_SESSION['success']); ?></div>
+        <?php endif; ?>
 
         <div class="card">
             <div class="card-header">
@@ -97,35 +102,55 @@ include(__DIR__ . '/../../resources/layout/header.php');
             <div class="card-body">
                 <form method="post">
 
-                    <div class="mb-3">
-                        <label class="form-label">Flat Number</label>
-                        <input type="text" class="form-control" name="flat_number"
-                               value="<?= htmlspecialchars($_POST['flat_number'] ?? $flat['flat_number']) ?>">
-                    </div>
-
-                    <div class="mb-3">
+                    <!-- Floor -->
+                    <div class="mb-2">
                         <label class="form-label">Floor</label>
-                        <input type="number" class="form-control" name="floor"
-                               value="<?= htmlspecialchars($_POST['floor'] ?? $flat['floor']) ?>">
+                        <input type="text" name="floor"
+                            class="form-control <?= isset($errors['floor']) ? 'is-invalid' : '' ?>"
+                            value="<?= htmlspecialchars($_POST['floor'] ?? $flat['floor']) ?>">
+                        <?php if (isset($errors['floor'])): ?>
+                            <div class="invalid-feedback"><?= $errors['floor'] ?></div>
+                        <?php endif; ?>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Block Number</label>
-                        <input type="text" class="form-control" name="block_number"
-                               value="<?= htmlspecialchars($_POST['block_number'] ?? $flat['block_number']) ?>">
+                    <!-- Flat Number -->
+                    <div class="mb-2">
+                        <label class="form-label">Flat Number</label>
+                        <input type="text" name="flat_number"
+                            class="form-control <?= isset($errors['flat_number']) ? 'is-invalid' : '' ?>"
+                            value="<?= htmlspecialchars($_POST['flat_number'] ?? $flat['flat_number']) ?>">
+                        <?php if (isset($errors['flat_number'])): ?>
+                            <div class="invalid-feedback"><?= $errors['flat_number'] ?></div>
+                        <?php endif; ?>
                     </div>
 
-                    <div class="mb-3">
+                    <!-- Wing/Block -->
+                    <div class="mb-2">
+                        <label class="form-label">Wing/Block</label>
+                        <input type="text" name="block_number"
+                            class="form-control <?= isset($errors['block_number']) ? 'is-invalid' : '' ?>"
+                            value="<?= htmlspecialchars($_POST['block_number'] ?? $flat['block_number']) ?>">
+                        <?php if (isset($errors['block_number'])): ?>
+                            <div class="invalid-feedback"><?= $errors['block_number'] ?></div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Type -->
+                    <div class="mb-2">
                         <label class="form-label">Type</label>
-                        <select name="flat_type" class="form-control">
-                            <option value="">Select Type</option>
-                            <?php foreach ($flatTypes as $t): ?>
-                                <option value="<?= $t ?>"
-                                    <?= (($_POST['flat_type'] ?? $flat['flat_type']) === $t) ? 'selected' : '' ?>>
-                                    <?= $t ?>
+                        <select name="flat_type"
+                            class="form-select <?= isset($errors['flat_type']) ? 'is-invalid' : '' ?>">
+                            <option value="" disabled <?= !isset($_POST['flat_type']) && !$flat['flat_type'] ? 'selected' : '' ?>>Select Type</option>
+                            <?php foreach ($flatTypes as $type): ?>
+                                <option value="<?= htmlspecialchars($type) ?>"
+                                    <?= ((isset($_POST['flat_type']) ? $_POST['flat_type'] : $flat['flat_type']) === $type) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($type) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                        <?php if (isset($errors['flat_type'])): ?>
+                            <div class="invalid-feedback"><?= $errors['flat_type'] ?></div>
+                        <?php endif; ?>
                     </div>
 
                     <input type="hidden" name="id" value="<?= $flat['id'] ?>">
@@ -133,6 +158,9 @@ include(__DIR__ . '/../../resources/layout/header.php');
                     <button type="submit" name="edit_flats" class="btn btn-primary">
                         Update Flat
                     </button>
+                    <a href="<?= BASE_URL ?>flats.php" class="btn btn-secondary">
+                        Back
+                    </a>
 
                 </form>
             </div>

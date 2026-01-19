@@ -100,14 +100,17 @@ $notification = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <a class="nav-link" href="<?= BASE_URL ?>users.php">Users</a>
                             <a class="nav-link" href="<?= BASE_URL ?>flats.php">Flats</a>
                             <a class="nav-link" href="<?= BASE_URL ?>allotments.php">Allotments</a>
-                            <a class="nav-link" href="<?= BASE_URL ?>bills.php">Bills</a>
+                            <a class="nav-link" href="<?= BASE_URL ?>maintanenceRate.php">Maintanence Rate</a>
+                            <a class="nav-link" href="<?= BASE_URL ?>maintanenceBillRecords.php">Maintanence Bill Records</a>
+                            <!-- <a class="nav-link" href="<?= BASE_URL ?>bills.php">Bills</a> -->
                             <!-- <a class="nav-link" href="<?= BASE_URL ?>complaints.php">Complaints</a>
                             <a class="nav-link" href="<?= BASE_URL ?>visitors.php">Visitors</a>
                             <a class="nav-link" href="<?= BASE_URL ?>reports.php">Reports</a> -->
                         <?php else: ?>
-                            <a class="nav-link" href="<?= BASE_URL ?>bills.php">Bills</a>
-                            <a class="nav-link" href="<?= BASE_URL ?>complaints.php">Complaints</a>
-                            <a class="nav-link" href="<?= BASE_URL ?>visitors.php">Visitors</a>
+                            <a class="nav-link" href="<?= BASE_URL ?>UserMaintanenceBills.php">Maintanence Bills</a>
+                            <!-- <a class="nav-link" href="<?= BASE_URL ?>bills.php">Bills</a> -->
+                            <!-- <a class="nav-link" href="<?= BASE_URL ?>complaints.php">Complaints</a> -->
+                            <!-- <a class="nav-link" href="<?= BASE_URL ?>visitors.php">Visitors</a> -->
                         <?php endif; ?>
 
                         <a class="nav-link" href="<?= BASE_URL ?>logout.php">Logout</a>

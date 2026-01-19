@@ -78,11 +78,5 @@ $flatTypes = [
     '2 BHK Flat',
     '3 BHK Flat',
     '4 BHK Flat',
-    '5 BHK Flat',
-    'Penthouse',
-    'Row House',
-    'Tenament',
-    'Duplex',
-    'Villa',
-    'Shop'
+    '5 BHK Flat'
 ];

@@ -1,15 +1,13 @@
 <?php
 require_once __DIR__ . '/../core/config.php';
 
-//    ACCESS CONTROL
-
+// ACCESS CONTROL
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 	header('Location: ' . BASE_URL . 'logout.php');
 	exit();
 }
 
-//    DELETE ALLOTMENT (SECURE)
-
+// DELETE ALLOTMENT
 if (
 	isset($_GET['action'], $_GET['id']) &&
 	$_GET['action'] === 'delete' &&
@@ -30,9 +28,7 @@ include __DIR__ . '/../resources/layout/header.php';
 	<h1 class="mt-4">Allotments Management</h1>
 
 	<ol class="breadcrumb mb-4">
-		<li class="breadcrumb-item">
-			<a href="<?= BASE_URL ?>dashboard.php">Dashboard</a>
-		</li>
+		<li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
 		<li class="breadcrumb-item active">Allotments</li>
 	</ol>
 
@@ -46,9 +42,7 @@ include __DIR__ . '/../resources/layout/header.php';
 	<div class="card">
 		<div class="card-header d-flex justify-content-between">
 			<h5 class="mb-0">Allotments List</h5>
-			<a href="<?= BASE_URL ?>add/add_allotments.php" class="btn btn-success btn-sm">
-				Add Allotment
-			</a>
+			<a href="<?= BASE_URL ?>add/add_allotments.php" class="btn btn-success btn-sm">Add Allotment</a>
 		</div>
 
 		<div class="card-body">
@@ -61,6 +55,7 @@ include __DIR__ . '/../resources/layout/header.php';
 							<th>Flat Number</th>
 							<th>Block Number</th>
 							<th>Type</th>
+							<th>Maintenance Rate</th>
 							<th>Move In</th>
 							<th>Move Out</th>
 							<th>Created At</th>
@@ -77,18 +72,19 @@ include __DIR__ . '/../resources/layout/header.php';
 <?php include __DIR__ . '/../resources/layout/footer.php'; ?>
 
 <!-- DataTables -->
-<link rel="stylesheet"
-	href="https://cdn.datatables.net/1.13.2/css/dataTables.bootstrap5.min.css">
-
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.2/css/dataTables.bootstrap5.min.css">
 <script src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
 	$(function() {
-
 		const table = $('#allotment-table').DataTable({
 			processing: true,
 			serverSide: true,
+
+			pageLength: 5,                 // 👈 added
+			lengthMenu: [5, 10, 25, 50],   // 👈 added
+
 			ajax: {
 				url: 'action.php',
 				type: 'POST',
@@ -96,46 +92,33 @@ include __DIR__ . '/../resources/layout/header.php';
 					action: 'fetch_allotments'
 				}
 			},
-			order: [
-				[0, 'desc']
-			],
-			columns: [{
-					data: 'id'
-				},
+			order: [[0, 'desc']],
+			columns: [
+				{ data: 'id' },
+				{ data: 'name' },
+				{ data: 'flat_number' },
+				{ data: 'block_number' },
+				{ data: 'flat_type' },
 				{
-					data: 'name'
+					data: 'rate',
+					render: function(data) {
+						return data ? data : 'N/A';
+					}
 				},
-				{
-					data: 'flat_number'
-				},
-				{
-					data: 'block_number'
-				},
-				{
-					data: 'flat_type'
-				},
-				{
-					data: 'move_in_date'
-				},
-				{
-					data: 'move_out_date'
-				},
-				{
-					data: 'created_at'
-				},
+				{ data: 'move_in_date' },
+				{ data: 'move_out_date' },
+				{ data: 'created_at' },
 				{
 					data: null,
 					orderable: false,
 					searchable: false,
 					render: function(data, type, row) {
 						return `
-                        <a href="edit/edit_allotments.php?id=${row.id}"
-                           class="btn btn-sm btn-primary">Edit</a>
-                        <button class="btn btn-sm btn-danger delete-btn"
-                                data-id="${row.id}">
-                            Delete
-                        </button>
-                    `;
+							<a href="edit/edit_allotments.php?id=${row.id}" 
+							   class="btn btn-sm btn-primary">Edit</a>
+							<button class="btn btn-sm btn-danger delete-btn" 
+							        data-id="${row.id}">Delete</button>
+						`;
 					}
 				}
 			]
@@ -148,6 +131,5 @@ include __DIR__ . '/../resources/layout/header.php';
 					'<?= BASE_URL ?>allotments.php?action=delete&id=' + id;
 			}
 		});
-
 	});
 </script>

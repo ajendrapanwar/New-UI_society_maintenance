@@ -91,6 +91,8 @@ include('../resources/layout/footer.php');
 		$('#flats-table').DataTable({
 			processing: true,
 			serverSide: true,
+			pageLength: 5,          // Show 5 rows per page
+			lengthMenu: [5, 10, 25, 50], // Options for rows per page
 			ajax: {
 				url: 'action.php',
 				type: 'POST',
@@ -98,34 +100,23 @@ include('../resources/layout/footer.php');
 					action: 'fetch_flats'
 				}
 			},
-			columns: [{
-					data: "id"
-				},
-				{
-					data: "flat_number"
-				},
-				{
-					data: "floor"
-				},
-				{
-					data: "block_number"
-				},
-				{
-					data: "flat_type"
-				},
-				{
-					data: "created_at"
-				},
+			columns: [
+				{ data: "id" },
+				{ data: "flat_number" },
+				{ data: "floor" },
+				{ data: "block_number" },
+				{ data: "flat_type" },
+				{ data: "created_at" },
 				{
 					data: null,
 					orderable: false,
 					render: function(data, type, row) {
 						return `
-                        <a href="edit/edit_flats.php?id=${row.id}" class="btn btn-sm btn-primary">Edit</a>
-                        <button class="btn btn-sm btn-danger delete_btn" data-id="${row.id}">
-                            Delete
-                        </button>
-                    `;
+							<a href="edit/edit_flats.php?id=${row.id}" class="btn btn-sm btn-primary">Edit</a>
+							<button class="btn btn-sm btn-danger delete_btn" data-id="${row.id}">
+								Delete
+							</button>
+						`;
 					}
 				}
 			]

@@ -1,9 +1,7 @@
 <?php
 require_once __DIR__ . '/../../core/config.php';
 
-
-//    ACCESS CONTROL
-
+/* ===== ACCESS CONTROL ===== */
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     header('Location: ' . BASE_URL . 'logout.php');
     exit();
@@ -11,36 +9,36 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 
 $errors = [];
 
-
-//    ADD ALLOTMENT
-
+/* ===== HANDLE FORM SUBMIT ===== */
 if (isset($_POST['add_allotment'])) {
 
-    $user_id       = $_POST['user_id'] ?? '';
-    $flat_id       = $_POST['flat_id'] ?? '';
-    $move_in_date  = $_POST['move_in_date'] ?? '';
-    $move_out_date = $_POST['move_out_date'] ?? null;
+    $user_id       = trim($_POST['user_id'] ?? '');
+    $flat_id       = trim($_POST['flat_id'] ?? '');
+    $move_in_date  = trim($_POST['move_in_date'] ?? '');
+    $move_out_date = trim($_POST['move_out_date'] ?? '');
     $created_at    = date('Y-m-d H:i:s');
 
-    if (empty($user_id)) {
-        $errors[] = 'User is required';
+    /* ===== VALIDATION ===== */
+    if ($user_id === '') {
+        $errors['user_id'] = 'Please select a user';
     }
 
-    if (empty($flat_id)) {
-        $errors[] = 'Flat is required';
+    if ($flat_id === '') {
+        $errors['flat_id'] = 'Please select a flat';
     }
 
-    if (empty($move_in_date)) {
-        $errors[] = 'Move-in date is required';
+    if ($move_in_date === '') {
+        $errors['move_in_date'] = 'Move-in date is required';
     }
 
     if (
-        !empty($move_out_date) &&
+        $move_out_date !== '' &&
         strtotime($move_out_date) < strtotime($move_in_date)
     ) {
-        $errors[] = 'Move-out date cannot be before move-in date';
+        $errors['move_out_date'] = 'Move-out date cannot be before move-in date';
     }
 
+    /* ===== INSERT ===== */
     if (empty($errors)) {
 
         $stmt = $pdo->prepare(
@@ -63,9 +61,7 @@ if (isset($_POST['add_allotment'])) {
     }
 }
 
-/* =======================
-   FETCH DATA
-======================= */
+/* ===== FETCH DATA ===== */
 $flats = $pdo->query(
     "SELECT id, block_number, flat_number 
      FROM flats 
@@ -81,7 +77,7 @@ $users = $pdo->query(
 include __DIR__ . '/../../resources/layout/header.php';
 ?>
 
-<div class="container-fluid px-4">
+<div class="container-fluid px-4 mb-4">
     <h1 class="mt-4">Add Allotment</h1>
 
     <ol class="breadcrumb mb-4">
@@ -94,11 +90,7 @@ include __DIR__ . '/../../resources/layout/header.php';
         <li class="breadcrumb-item active">Add</li>
     </ol>
 
-    <div class="col-md-4">
-
-        <?php foreach ($errors as $error): ?>
-            <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
-        <?php endforeach; ?>
+    <div class="col-md-5">
 
         <div class="card">
             <div class="card-header">
@@ -108,39 +100,63 @@ include __DIR__ . '/../../resources/layout/header.php';
             <div class="card-body">
                 <form method="post">
 
-                    <div class="mb-3">
-                        <label>User</label>
-                        <select class="form-control" name="user_id" required>
+                    <!-- USER -->
+                    <div class="mb-2">
+                        <label class="form-label">User</label>
+                        <select name="user_id"
+                            class="form-select <?= isset($errors['user_id']) ? 'is-invalid' : '' ?>">
                             <option value="">-- Select User --</option>
                             <?php foreach ($users as $user): ?>
-                                <option value="<?= $user['id'] ?>">
+                                <option value="<?= $user['id'] ?>"
+                                    <?= (($_POST['user_id'] ?? '') == $user['id']) ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($user['name']) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                        <?php if (isset($errors['user_id'])): ?>
+                            <div class="invalid-feedback"><?= $errors['user_id'] ?></div>
+                        <?php endif; ?>
                     </div>
 
-                    <div class="mb-3">
-                        <label>Flat</label>
-                        <select class="form-control" name="flat_id" required>
+                    <!-- FLAT -->
+                    <div class="mb-2">
+                        <label class="form-label">Flat</label>
+                        <select name="flat_id"
+                            class="form-select <?= isset($errors['flat_id']) ? 'is-invalid' : '' ?>">
                             <option value="">-- Select Flat --</option>
                             <?php foreach ($flats as $flat): ?>
-                                <option value="<?= $flat['id'] ?>">
-                                    <?= htmlspecialchars($flat['block_number']) ?>
-                                    - <?= htmlspecialchars($flat['flat_number']) ?>
+                                <option value="<?= $flat['id'] ?>"
+                                    <?= (($_POST['flat_id'] ?? '') == $flat['id']) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($flat['block_number']) ?> -
+                                    <?= htmlspecialchars($flat['flat_number']) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                        <?php if (isset($errors['flat_id'])): ?>
+                            <div class="invalid-feedback"><?= $errors['flat_id'] ?></div>
+                        <?php endif; ?>
                     </div>
 
-                    <div class="mb-3">
-                        <label>Move In Date</label>
-                        <input type="date" class="form-control" name="move_in_date" required>
+                    <!-- MOVE IN -->
+                    <div class="mb-2">
+                        <label class="form-label">Move In Date</label>
+                        <input type="date" name="move_in_date"
+                            class="form-control <?= isset($errors['move_in_date']) ? 'is-invalid' : '' ?>"
+                            value="<?= htmlspecialchars($_POST['move_in_date'] ?? '') ?>">
+                        <?php if (isset($errors['move_in_date'])): ?>
+                            <div class="invalid-feedback"><?= $errors['move_in_date'] ?></div>
+                        <?php endif; ?>
                     </div>
 
-                    <div class="mb-3">
-                        <label>Move Out Date</label>
-                        <input type="date" class="form-control" name="move_out_date">
+                    <!-- MOVE OUT -->
+                    <div class="mb-2">
+                        <label class="form-label">Move Out Date</label>
+                        <input type="date" name="move_out_date"
+                            class="form-control <?= isset($errors['move_out_date']) ? 'is-invalid' : '' ?>"
+                            value="<?= htmlspecialchars($_POST['move_out_date'] ?? '') ?>">
+                        <?php if (isset($errors['move_out_date'])): ?>
+                            <div class="invalid-feedback"><?= $errors['move_out_date'] ?></div>
+                        <?php endif; ?>
                     </div>
 
                     <button type="submit" name="add_allotment" class="btn btn-primary">
