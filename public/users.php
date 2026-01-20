@@ -26,7 +26,7 @@ include('../resources/layout/header.php');
     <h1 class="mt-4">User Management</h1>
 
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>users.php">Home</a></li>
+        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
         <li class="breadcrumb-item active">User Management</li>
     </ol>
 

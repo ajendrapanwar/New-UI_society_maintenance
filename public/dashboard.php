@@ -84,183 +84,180 @@ include('../resources/layout/header.php');
 
 
 <div class="container-fluid px-4">
-	<div class="d-flex justify-content-between align-items-center mt-4 mb-3">
-		<h1 class="mb-0">Dashboard</h1>
+
+	<!-- Header -->
+	<div class="d-flex flex-wrap justify-content-between align-items-center mt-4 mb-3 gap-2">
+		<h1 class="mb-0 fw-semibold">Dashboard</h1>
 
 		<?php if ($_SESSION['user_role'] === 'admin'): ?>
 			<?php if (date('j') >= 28): ?>
 				<a href="generateMonthlyBills.php"
-					class="btn btn-success run-bill-btn"
+					class="btn btn-success"
 					onclick="return confirm('Are you sure you want to run the maintenance billing job?');">
-					⚙️ Generate Bill
+					<i class="fa fa-gears me-1"></i> Generate Bill
 				</a>
 			<?php else: ?>
-				<button class="btn btn-secondary run-bill-btn" disabled>
-					🔒 Generate Bill (Available after 28th)
+				<button class="btn btn-outline-secondary" disabled>
+					<i class="fa fa-lock me-1"></i> Generate Bill (After 28th)
 				</button>
 			<?php endif; ?>
 		<?php endif; ?>
 	</div>
 
-	<ol class="breadcrumb mb-4">
-		<li class="breadcrumb-item active">Dashboard</li>
-	</ol>
+	<!-- Breadcrumb -->
+	<nav aria-label="breadcrumb">
+		<ol class="breadcrumb mb-4">
+			<li class="breadcrumb-item active">Dashboard</li>
+		</ol>
+	</nav>
 
-	<div class="row">
-		<?php
-		if ($_SESSION['user_role'] == 'admin') {
-		?>
+	<!-- Cards -->
+	<div class="row g-4">
+
+		<?php if ($_SESSION['user_role'] === 'admin'): ?>
+
+			<!-- Total Flats -->
 			<div class="col-xl-3 col-md-6">
-				<div class="card">
-					<div class="card-header">
-						<h5>Total Flats</h5>
-					</div>
-					<div class="card-body">
-						<p class="card-text"><?php echo $total_flats; ?></p>
-					</div>
-				</div>
-			</div>
-			<div class="col-xl-3 col-md-6">
-				<div class="card">
-					<div class="card-header">
-						<h5>Total Bills</h5>
-					</div>
-					<div class="card-body">
-						<p class="card-text"><?php echo $total_bills; ?></p>
-					</div>
-				</div>
-			</div>
-			<div class="col-xl-3 col-md-6">
-				<div class="card">
-					<div class="card-header">
-						<h5>Total Allotment</h5>
-					</div>
-					<div class="card-body">
-						<p class="card-text"><?php echo $total_allotments; ?></p>
-					</div>
-				</div>
-			</div>
-			<div class="col-xl-3 col-md-6">
-				<div class="card">
-					<div class="card-header">
-						<h5>Total In-process Complaints</h5>
-					</div>
-					<div class="card-body">
-						<p class="card-text"><?php echo $total_in_progress_complaints; ?></p>
-					</div>
-				</div>
-			</div>
-			<div class="col-xl-3 col-md-6 mt-3">
-				<div class="card">
-					<div class="card-header">
-						<h5>Total Visitors</h5>
-					</div>
-					<div class="card-body">
-						<p class="card-text"><?php echo $total_visitors; ?></p>
-					</div>
-				</div>
-			</div>
-			<div class="col-xl-3 col-md-6 mt-3">
-				<div class="card">
-					<div class="card-header">
-						<h5>Total Unresolved Complaints</h5>
-					</div>
-					<div class="card-body">
-						<p class="card-text"><?php echo $total_unresolved_complaints; ?></p>
-					</div>
-				</div>
-			</div>
-			<div class="col-xl-3 col-md-6 mt-3">
-				<div class="card">
-					<div class="card-header">
-						<h5>Total Resolved Complaints</h5>
-					</div>
-					<div class="card-body">
-						<p class="card-text"><?php echo $total_resolved_complaints; ?></p>
-					</div>
-				</div>
-			</div>
-			<div class="col-xl-3 col-md-6 mt-3">
-				<div class="card">
-					<div class="card-header">
-						<h5>Total Complaints</h5>
-					</div>
-					<div class="card-body">
-						<p class="card-text"><?php echo $total_complaints; ?></p>
-					</div>
-				</div>
-			</div>
-		<?php
-		} else {
-		?>
-			<div class="col-xl-4 col-md-6">
-				<div class="card">
-					<div class="card-header">
-						<h5>Total In-process Complaints</h5>
-					</div>
-					<div class="card-body">
-						<p class="card-text"><?php echo $total_in_progress_complaints; ?></p>
-					</div>
-				</div>
-			</div>
-			<div class="col-xl-4 col-md-6 mt-3">
-				<div class="card">
-					<div class="card-header">
-						<h5>Total Unresolved Complaints</h5>
-					</div>
-					<div class="card-body">
-						<p class="card-text"><?php echo $total_unresolved_complaints; ?></p>
-					</div>
-				</div>
-			</div>
-			<div class="col-xl-4 col-md-6 mt-3">
-				<div class="card">
-					<div class="card-header">
-						<h5>Total Resolved Complaints</h5>
-					</div>
-					<div class="card-body">
-						<p class="card-text"><?php echo $total_resolved_complaints; ?></p>
-					</div>
-				</div>
-			</div>
-			<div class="col-xl-4 col-md-6 mt-3">
-				<div class="card">
-					<div class="card-header">
-						<h5>Total Complaints</h5>
-					</div>
-					<div class="card-body">
-						<p class="card-text"><?php echo $total_complaints; ?></p>
-					</div>
-				</div>
-			</div>
-			<div class="col-xl-4 col-md-6">
-				<div class="card">
-					<div class="card-header">
-						<h5>Total Bills</h5>
-					</div>
-					<div class="card-body">
-						<p class="card-text"><?php echo $total_bills; ?></p>
+				<div class="card shadow-sm h-100">
+					<div class="card-body d-flex justify-content-between align-items-center">
+						<div>
+							<div class="text-muted small">Total Flats</div>
+							<div class="display-6 fw-bold"><?= $total_flats ?></div>
+						</div>
+						<i class="fa fa-building fa-2x text-primary"></i>
 					</div>
 				</div>
 			</div>
 
-			<div class="col-xl-4 col-md-6 mt-3">
-				<div class="card">
-					<div class="card-header">
-						<h5>Total Visitors</h5>
-					</div>
-					<div class="card-body">
-						<p class="card-text"><?php echo $total_visitors; ?></p>
+			<!-- Total Bills -->
+			<div class="col-xl-3 col-md-6">
+				<div class="card shadow-sm h-100">
+					<div class="card-body d-flex justify-content-between align-items-center">
+						<div>
+							<div class="text-muted small">Total Bills</div>
+							<div class="display-6 fw-bold"><?= $total_bills ?></div>
+						</div>
+						<i class="fa fa-file-invoice fa-2x text-success"></i>
 					</div>
 				</div>
 			</div>
 
+			<!-- Total Allotments -->
+			<div class="col-xl-3 col-md-6">
+				<div class="card shadow-sm h-100">
+					<div class="card-body d-flex justify-content-between align-items-center">
+						<div>
+							<div class="text-muted small">Total Allotments</div>
+							<div class="display-6 fw-bold"><?= $total_allotments ?></div>
+						</div>
+						<i class="fa fa-house-user fa-2x text-warning"></i>
+					</div>
+				</div>
+			</div>
 
-		<?php
-		}
-		?>
+			<!-- In Process -->
+			<div class="col-xl-3 col-md-6">
+				<div class="card shadow-sm h-100">
+					<div class="card-body d-flex justify-content-between align-items-center">
+						<div>
+							<div class="text-muted small">In-Process Complaints</div>
+							<div class="display-6 fw-bold"><?= $total_in_progress_complaints ?></div>
+						</div>
+						<i class="fa fa-spinner fa-2x text-info"></i>
+					</div>
+				</div>
+			</div>
+
+			<!-- Visitors -->
+			<div class="col-xl-3 col-md-6">
+				<div class="card shadow-sm h-100">
+					<div class="card-body d-flex justify-content-between align-items-center">
+						<div>
+							<div class="text-muted small">Total Visitors</div>
+							<div class="display-6 fw-bold"><?= $total_visitors ?></div>
+						</div>
+						<i class="fa fa-users fa-2x text-secondary"></i>
+					</div>
+				</div>
+			</div>
+
+			<!-- Unresolved -->
+			<div class="col-xl-3 col-md-6">
+				<div class="card shadow-sm h-100">
+					<div class="card-body d-flex justify-content-between align-items-center">
+						<div>
+							<div class="text-muted small">Unresolved</div>
+							<div class="display-6 fw-bold"><?= $total_unresolved_complaints ?></div>
+						</div>
+						<i class="fa fa-exclamation-triangle fa-2x text-danger"></i>
+					</div>
+				</div>
+			</div>
+
+			<!-- Resolved -->
+			<div class="col-xl-3 col-md-6">
+				<div class="card shadow-sm h-100">
+					<div class="card-body d-flex justify-content-between align-items-center">
+						<div>
+							<div class="text-muted small">Resolved</div>
+							<div class="display-6 fw-bold"><?= $total_resolved_complaints ?></div>
+						</div>
+						<i class="fa fa-check-circle fa-2x text-success"></i>
+					</div>
+				</div>
+			</div>
+
+			<!-- Total Complaints -->
+			<div class="col-xl-3 col-md-6">
+				<div class="card shadow-sm h-100">
+					<div class="card-body d-flex justify-content-between align-items-center">
+						<div>
+							<div class="text-muted small">Total Complaints</div>
+							<div class="display-6 fw-bold"><?= $total_complaints ?></div>
+						</div>
+						<i class="fa fa-list fa-2x text-primary"></i>
+					</div>
+				</div>
+			</div>
+
+		<?php else: ?>
+
+			<!-- USER VIEW -->
+			<div class="col-md-4">
+				<div class="card shadow-sm h-100 text-center">
+					<div class="card-body">
+						<div class="text-muted">In-Process</div>
+						<div class="display-5 fw-bold"><?= $total_in_progress_complaints ?></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="col-md-4">
+				<div class="card shadow-sm h-100 text-center">
+					<div class="card-body">
+						<div class="text-muted">Unresolved</div>
+						<div class="display-5 fw-bold"><?= $total_unresolved_complaints ?></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="col-md-4">
+				<div class="card shadow-sm h-100 text-center">
+					<div class="card-body">
+						<div class="text-muted">Resolved</div>
+						<div class="display-5 fw-bold"><?= $total_resolved_complaints ?></div>
+					</div>
+				</div>
+			</div>
+
+		<?php endif; ?>
+
 	</div>
 </div>
+
+
+
+
 <?php
 include('../resources/layout/footer.php');
 ?>
