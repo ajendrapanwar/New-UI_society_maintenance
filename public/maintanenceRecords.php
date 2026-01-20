@@ -25,7 +25,7 @@ include __DIR__ . '/../resources/layout/header.php';
 ?>
 
 <div class="container-fluid px-4">
-	<h1 class="mt-4">Maintenance Bill Records Management</h1>
+	<h1 class="mt-4">Maintenance Records</h1>
 
 	<ol class="breadcrumb mb-4">
 		<li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>

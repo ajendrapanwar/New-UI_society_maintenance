@@ -23,12 +23,16 @@ if (!$rateData) {
 
 $flat_type = $rateData['flat_type'];
 $rate      = $rateData['rate'];
+$overdue_fine = $rateData['overdue_fine'];
+
 
 /* ===== HANDLE UPDATE ===== */
 if (isset($_POST['update_rate'])) {
 
-    $flat_type = trim($_POST['flat_type'] ?? '');
-    $rate      = trim($_POST['rate'] ?? '');
+    $flat_type    = trim($_POST['flat_type'] ?? '');
+    $rate         = trim($_POST['rate'] ?? '');
+    $overdue_fine = trim($_POST['overdue_fine'] ?? '');
+
 
     /* ===== VALIDATION ===== */
     if ($flat_type === '') {
@@ -40,6 +44,15 @@ if (isset($_POST['update_rate'])) {
     } elseif (!is_numeric($rate)) {
         $errors['rate'] = 'Rate must be numeric';
     }
+
+    if ($overdue_fine === '') {
+        $errors['overdue_fine'] = 'Overdue fine is required';
+    } elseif (!is_numeric($overdue_fine)) {
+        $errors['overdue_fine'] = 'Overdue fine must be numeric';
+    } elseif ($overdue_fine < 0) {
+        $errors['overdue_fine'] = 'Overdue fine cannot be negative';
+    }
+
 
     /* ===== DUPLICATE CHECK (EXCEPT CURRENT) ===== */
     if (empty($errors)) {
@@ -57,9 +70,12 @@ if (isset($_POST['update_rate'])) {
     /* ===== UPDATE ===== */
     if (empty($errors)) {
         $stmt = $pdo->prepare(
-            "UPDATE maintenance_rates SET flat_type = ?, rate = ? WHERE id = ?"
+            "UPDATE maintenance_rates 
+     SET flat_type = ?, rate = ?, overdue_fine = ?
+     WHERE id = ?"
         );
-        $stmt->execute([$flat_type, $rate, $id]);
+        $stmt->execute([$flat_type, $rate, $overdue_fine, $id]);
+
 
         $_SESSION['success'] = 'Maintenance rate updated successfully';
         header('Location: ' . BASE_URL . 'maintanenceRate.php');
@@ -97,7 +113,7 @@ include(__DIR__ . '/../../resources/layout/header.php');
                     <div class="mb-2">
                         <label class="form-label">Flat Type</label>
                         <select name="flat_type"
-                                class="form-select <?= isset($errors['flat_type']) ? 'is-invalid' : '' ?>">
+                            class="form-select <?= isset($errors['flat_type']) ? 'is-invalid' : '' ?>">
                             <option value="" disabled>Select Flat Type</option>
                             <?php foreach ($flatTypes as $type): ?>
                                 <option value="<?= htmlspecialchars($type) ?>"
@@ -118,9 +134,9 @@ include(__DIR__ . '/../../resources/layout/header.php');
                     <div class="mb-2">
                         <label class="form-label">Rate (₹)</label>
                         <input type="text"
-                               name="rate"
-                               class="form-control <?= isset($errors['rate']) ? 'is-invalid' : '' ?>"
-                               value="<?= htmlspecialchars($rate) ?>">
+                            name="rate"
+                            class="form-control <?= isset($errors['rate']) ? 'is-invalid' : '' ?>"
+                            value="<?= htmlspecialchars($rate) ?>">
 
                         <?php if (isset($errors['rate'])): ?>
                             <div class="invalid-feedback">
@@ -128,6 +144,22 @@ include(__DIR__ . '/../../resources/layout/header.php');
                             </div>
                         <?php endif; ?>
                     </div>
+
+                    <!-- Overdue Fine -->
+                    <div class="mb-2">
+                        <label class="form-label">Overdue Fine (₹)</label>
+                        <input type="text"
+                            name="overdue_fine"
+                            class="form-control <?= isset($errors['overdue_fine']) ? 'is-invalid' : '' ?>"
+                            value="<?= htmlspecialchars($overdue_fine) ?>">
+
+                        <?php if (isset($errors['overdue_fine'])): ?>
+                            <div class="invalid-feedback">
+                                <?= $errors['overdue_fine'] ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
 
                     <button type="submit" name="update_rate" class="btn btn-primary">
                         Update Rate

@@ -59,6 +59,7 @@ include('../resources/layout/header.php');
                             <th>ID</th>
                             <th>Flat Type</th>
                             <th>Rate (₹)</th>
+                            <th>Overdue Fine (₹)</th>
                             <th>Created At</th>
                             <th>Action</th>
                         </tr>
@@ -96,6 +97,7 @@ $(document).ready(function () {
             { data: "id" },
             { data: "flat_type" },
             { data: "rate" },
+            { data: "overdue_fine" },
             { data: "created_at" },
             {
                 data: null,
