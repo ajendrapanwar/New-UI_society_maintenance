@@ -122,9 +122,9 @@ include('../resources/layout/header.php');
 	<div class="d-flex flex-wrap justify-content-between align-items-center mt-4 mb-3 gap-2">
 		<h1 class="mb-0 fw-semibold">Dashboard</h1>
 
-		<?php if ($_SESSION['user_role'] === 'admin'): ?>
+		<!-- <?php if ($_SESSION['user_role'] === 'admin'): ?>
 			<?php if (date('j') >= 28): ?>
-				<a href="generateMonthlyBills.php"
+				<a href="manualGenerateMonthlyBills.php.php"
 					class="btn btn-success"
 					onclick="return confirm('Are you sure you want to run the maintenance billing job?');">
 					<i class="fa fa-gears me-1"></i> Generate Bill
@@ -134,7 +134,7 @@ include('../resources/layout/header.php');
 					<i class="fa fa-lock me-1"></i> Generate Bill (After 28th)
 				</button>
 			<?php endif; ?>
-		<?php endif; ?>
+		<?php endif; ?> -->
 	</div>
 
 	<!-- Breadcrumb -->

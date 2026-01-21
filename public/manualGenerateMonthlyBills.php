@@ -1,24 +1,30 @@
 <?php
 require_once __DIR__ . '/../core/config.php';
 
-// ================= ACCESS CONTROL – ADMIN ONLY =================
+
+//    ACCESS CONTROL – ADMIN ONLY
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     exit('Unauthorized access');
 }
 
-// ================= DATE CONTEXT =================
+
+//    DATE CONTEXT
 $today        = date('Y-m-d');
 $currentDay   = date('j');   // 1–31
 $currentMonth = date('n');   // 1–12
 $currentYear  = date('Y');
 
-// ================= 1️⃣ GENERATE CURRENT MONTH BILLS ON 1ST =================
+/* ===========================================================
+   1️⃣ GENERATE NEXT MONTH BILLS
+   👉 Allowed only from 28–31
+   =========================================================== */
 $generated = 0;
 
-if ($currentDay == 1) {
+if ($currentDay >= 28) {
 
-    $targetMonth = $currentMonth;  // Current month
-    $targetYear  = $currentYear;
+    // Target = NEXT MONTH
+    $targetMonth = date('n', strtotime('+1 month'));
+    $targetYear  = date('Y', strtotime('+1 month'));
 
     $stmt = $pdo->prepare("
         SELECT a.user_id, a.flat_id, f.flat_type
@@ -43,7 +49,9 @@ if ($currentDay == 1) {
         ");
         $check->execute([$userId, $flatId, $targetMonth, $targetYear]);
 
-        if ($check->fetchColumn() > 0) continue;
+        if ($check->fetchColumn() > 0) {
+            continue;
+        }
 
         // Fetch rate
         $rateStmt = $pdo->prepare("
@@ -52,7 +60,7 @@ if ($currentDay == 1) {
         $rateStmt->execute([$flatType]);
         $rate = $rateStmt->fetchColumn() ?? 0;
 
-        // Due date = 7th of the bill month
+        // Due date = 7th of bill month
         $dueDate = date('Y-m-d', strtotime("$targetYear-$targetMonth-07"));
 
         // Insert bill
@@ -77,7 +85,11 @@ if ($currentDay == 1) {
     }
 }
 
-// ================= 2️⃣ APPLY OVERDUE FINE (ONE-TIME ONLY) =================
+/* ===========================================================
+   2️⃣ APPLY OVERDUE FINE (ONE-TIME ONLY)
+   👉 From 8th of the bill month
+   =========================================================== */
+
 $overdueUpdated = 0;
 
 if ($currentDay >= 8) {
@@ -96,6 +108,7 @@ if ($currentDay >= 8) {
 
     foreach ($bills as $bill) {
 
+        // Get fine
         $fineStmt = $pdo->prepare("
             SELECT overdue_fine
             FROM maintenance_rates
@@ -108,6 +121,7 @@ if ($currentDay >= 8) {
 
         $total = $bill['amount'] + $fine;
 
+        // ONE-TIME UPDATE
         $update = $pdo->prepare("
             UPDATE maintenance_bills
             SET fine_amount = ?,
@@ -121,8 +135,11 @@ if ($currentDay >= 8) {
     }
 }
 
-// ================= RESULT =================
+/* ===========================================================
+   RESULT
+   =========================================================== */
+
 echo "<h3>Maintenance Job Result</h3>";
-echo "📌 Bills Generated (Current Month): <b>$generated</b><br>";
+echo "📌 Bills Generated (Next Month): <b>$generated</b><br>";
 echo "⚠️ Bills Marked Overdue (One-Time Fine): <b>$overdueUpdated</b><br>";
 echo "🕒 Run Date: $today";
