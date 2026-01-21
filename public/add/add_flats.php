@@ -39,13 +39,22 @@ if (isset($_POST['add_flats'])) {
         $errors['flat_type'] = 'Please select flat type';
     }
 
+    // ===== CHECK DUPLICATE FLAT =====
+    if (empty($errors)) {
+        $check = $pdo->prepare("SELECT id FROM flats WHERE floor = ? AND flat_number = ? AND block_number = ?");
+        $check->execute([$floor, $flat_number, $block_number]);
+        if ($check->fetch()) {
+            $errors['duplicate'] = "This flat already exists on floor {$floor}, flat number {$flat_number}, block {$block_number}";
+        }
+    }
+
     // ===== INSERT IF NO ERRORS =====
     if (empty($errors)) {
         $stmt = $pdo->prepare("
-            INSERT INTO flats 
-            (flat_number, floor, block_number, flat_type, created_at)
-            VALUES (?, ?, ?, ?, ?)
-        ");
+        INSERT INTO flats 
+        (flat_number, floor, block_number, flat_type, created_at)
+        VALUES (?, ?, ?, ?, ?)
+    ");
         $stmt->execute([
             $flat_number,
             $floor,
@@ -75,7 +84,8 @@ include(__DIR__ . '/../../resources/layout/header.php');
     <div class="col-md-6">
 
         <?php if (!empty($_SESSION['success'])): ?>
-            <div class="alert alert-success"><?= htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?></div>
+            <div class="alert alert-success"><?= htmlspecialchars($_SESSION['success']);
+                                                unset($_SESSION['success']); ?></div>
         <?php endif; ?>
 
         <div class="card">
@@ -84,14 +94,19 @@ include(__DIR__ . '/../../resources/layout/header.php');
             </div>
 
             <div class="card-body">
+                
+                <?php if (isset($errors['duplicate'])): ?>
+                    <div class="alert alert-danger"><?= htmlspecialchars($errors['duplicate']) ?></div>
+                <?php endif; ?>
+
                 <form method="post">
 
                     <!-- Floor -->
                     <div class="mb-2">
                         <label class="form-label">Floor</label>
-                        <input type="text" name="floor" 
-                               class="form-control <?= isset($errors['floor']) ? 'is-invalid' : '' ?>"
-                               value="<?= htmlspecialchars($_POST['floor'] ?? '') ?>">
+                        <input type="text" name="floor"
+                            class="form-control <?= isset($errors['floor']) ? 'is-invalid' : '' ?>"
+                            value="<?= htmlspecialchars($_POST['floor'] ?? '') ?>">
                         <?php if (isset($errors['floor'])): ?>
                             <div class="invalid-feedback"><?= $errors['floor'] ?></div>
                         <?php endif; ?>
@@ -100,9 +115,9 @@ include(__DIR__ . '/../../resources/layout/header.php');
                     <!-- Flat Number -->
                     <div class="mb-2">
                         <label class="form-label">Flat Number</label>
-                        <input type="text" name="flat_number" 
-                               class="form-control <?= isset($errors['flat_number']) ? 'is-invalid' : '' ?>"
-                               value="<?= htmlspecialchars($_POST['flat_number'] ?? '') ?>">
+                        <input type="text" name="flat_number"
+                            class="form-control <?= isset($errors['flat_number']) ? 'is-invalid' : '' ?>"
+                            value="<?= htmlspecialchars($_POST['flat_number'] ?? '') ?>">
                         <?php if (isset($errors['flat_number'])): ?>
                             <div class="invalid-feedback"><?= $errors['flat_number'] ?></div>
                         <?php endif; ?>
@@ -112,18 +127,18 @@ include(__DIR__ . '/../../resources/layout/header.php');
                     <div class="mb-2">
                         <label class="form-label">Wing/Block</label>
                         <input type="text" name="block_number"
-                               class="form-control <?= isset($errors['block_number']) ? 'is-invalid' : '' ?>"
-                               value="<?= htmlspecialchars($_POST['block_number'] ?? '') ?>">
+                            class="form-control <?= isset($errors['block_number']) ? 'is-invalid' : '' ?>"
+                            value="<?= htmlspecialchars($_POST['block_number'] ?? '') ?>">
                         <?php if (isset($errors['block_number'])): ?>
                             <div class="invalid-feedback"><?= $errors['block_number'] ?></div>
                         <?php endif; ?>
                     </div>
 
                     <!-- Type -->
-                    <div class="mb-2">
+                    <div class="mb-3">
                         <label class="form-label">Type</label>
-                        <select name="flat_type" 
-                                class="form-select <?= isset($errors['flat_type']) ? 'is-invalid' : '' ?>">
+                        <select name="flat_type"
+                            class="form-select <?= isset($errors['flat_type']) ? 'is-invalid' : '' ?>">
                             <option value="" disabled <?= !isset($_POST['flat_type']) ? 'selected' : '' ?>>Select Type</option>
                             <?php foreach ($flatTypes as $type): ?>
                                 <option value="<?= htmlspecialchars($type) ?>"

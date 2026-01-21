@@ -146,7 +146,7 @@ include(__DIR__ . '/../../resources/layout/header.php');
                     </div>
 
                     <!-- Overdue Fine -->
-                    <div class="mb-2">
+                    <div class="mb-3">
                         <label class="form-label">Overdue Fine (₹)</label>
                         <input type="text"
                             name="overdue_fine"

@@ -75,76 +75,83 @@ if (isset($_POST['action'])) {
 			'flats.flat_type',
 			'maintenance_rates.rate',
 			'allotments.move_in_date',
-			'allotments.move_out_date',
 			'allotments.created_at'
 		);
 
-		// Base query
+		// ================= BASE QUERY =================
 		$query = "
 		SELECT " . implode(", ", $columns) . "
 		FROM allotments
 		INNER JOIN flats ON allotments.flat_id = flats.id
 		INNER JOIN users ON allotments.user_id = users.id
-		LEFT JOIN maintenance_rates ON flats.flat_type = maintenance_rates.flat_type
+		LEFT JOIN maintenance_rates 
+			ON flats.flat_type = maintenance_rates.flat_type
 		";
 
-		// Filtering
+		// ================= FILTERING =================
 		$filterQuery = '';
 		if (!empty($_POST['search']['value'])) {
 			$search = $_POST['search']['value'];
-			$filterQuery = " WHERE (flats.flat_number LIKE :search OR users.name LIKE :search)";
+			$filterQuery = "
+			WHERE (
+				flats.flat_number LIKE :search 
+				OR users.name LIKE :search
+			)
+		";
 		}
 
-		// Count total records
+		// ================= TOTAL RECORDS =================
 		$stmtTotal = $pdo->prepare("SELECT COUNT(*) FROM allotments");
 		$stmtTotal->execute();
 		$recordsTotal = $stmtTotal->fetchColumn();
 
-		// Count filtered records
+		// ================= FILTERED RECORDS =================
 		if ($filterQuery) {
-			$stmtFiltered = $pdo->prepare("SELECT COUNT(*) FROM allotments
-            INNER JOIN flats ON allotments.flat_id = flats.id
-            INNER JOIN users ON allotments.user_id = users.id
-            LEFT JOIN maintenance_rates ON flats.flat_type = maintenance_rates.flat_type
-            $filterQuery");
+			$stmtFiltered = $pdo->prepare("
+			SELECT COUNT(*) 
+			FROM allotments
+			INNER JOIN flats ON allotments.flat_id = flats.id
+			INNER JOIN users ON allotments.user_id = users.id
+			LEFT JOIN maintenance_rates 
+				ON flats.flat_type = maintenance_rates.flat_type
+			$filterQuery
+		");
 			$stmtFiltered->execute([':search' => "%$search%"]);
 			$recordsFiltered = $stmtFiltered->fetchColumn();
 		} else {
 			$recordsFiltered = $recordsTotal;
 		}
 
-		// Add filter to main query
-		$query .= $filterQuery;
-
-		// Ordering
+		// ================= ORDERING =================
 		$orderColumnIndex = $_POST['order'][0]['column'];
 		$orderColumn = $columns[$orderColumnIndex];
 		$orderDir = $_POST['order'][0]['dir'] === 'asc' ? 'ASC' : 'DESC';
+
+		$query .= $filterQuery;
 		$query .= " ORDER BY $orderColumn $orderDir";
 
-		// Pagination
-		$start = (int)$_POST['start'];
-		$length = (int)$_POST['length'];
+		// ================= PAGINATION =================
+		$start  = (int) $_POST['start'];
+		$length = (int) $_POST['length'];
 		$query .= " LIMIT $start, $length";
 
-		// Fetch data
+		// ================= FETCH DATA =================
 		$stmt = $pdo->prepare($query);
 		if ($filterQuery) {
 			$stmt->execute([':search' => "%$search%"]);
 		} else {
 			$stmt->execute();
 		}
+
 		$data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-		// Response
-		$response = [
+		// ================= RESPONSE =================
+		echo json_encode([
 			"draw" => intval($_POST['draw']),
 			"recordsTotal" => intval($recordsTotal),
 			"recordsFiltered" => intval($recordsFiltered),
 			"data" => $data
-		];
-
-		echo json_encode($response);
+		]);
 		exit();
 	}
 
@@ -596,12 +603,12 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills') {
 //	VIEW FOR USER PAY AND VIEW
 if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills_user') {
 
-    header('Content-Type: application/json'); 
+	header('Content-Type: application/json');
 
-    $userId = $_SESSION['user_id'];
+	$userId = $_SESSION['user_id'];
 
-    // Get user's latest allotment
-    $stmt = $pdo->prepare("
+	// Get user's latest allotment
+	$stmt = $pdo->prepare("
         SELECT a.flat_id, f.flat_number, f.block_number, f.flat_type
         FROM allotments a
         JOIN flats f ON a.flat_id = f.id
@@ -609,31 +616,31 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills_user') {
         ORDER BY a.id DESC
         LIMIT 1
     ");
-    $stmt->execute([$userId]);
-    $userAllotment = $stmt->fetch(PDO::FETCH_ASSOC);
+	$stmt->execute([$userId]);
+	$userAllotment = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$userAllotment) {
-        echo json_encode([
-            "draw" => intval($_POST['draw']),
-            "recordsTotal" => 0,
-            "recordsFiltered" => 0,
-            "data" => []
-        ]);
-        exit;
-    }
+	if (!$userAllotment) {
+		echo json_encode([
+			"draw" => intval($_POST['draw']),
+			"recordsTotal" => 0,
+			"recordsFiltered" => 0,
+			"data" => []
+		]);
+		exit;
+	}
 
-    $flatId = $userAllotment['flat_id'];
-    $flatType = $userAllotment['flat_type'];
+	$flatId = $userAllotment['flat_id'];
+	$flatType = $userAllotment['flat_type'];
 
-    // Fetch maintenance rate
-    $rateStmt = $pdo->prepare("SELECT rate, overdue_fine FROM maintenance_rates WHERE flat_type = ?");
-    $rateStmt->execute([$flatType]);
-    $rateData = $rateStmt->fetch(PDO::FETCH_ASSOC);
-    $baseAmount = $rateData['rate'] ?? 0;
-    $overdueFineRate = $rateData['overdue_fine'] ?? 0;
+	// Fetch maintenance rate
+	$rateStmt = $pdo->prepare("SELECT rate, overdue_fine FROM maintenance_rates WHERE flat_type = ?");
+	$rateStmt->execute([$flatType]);
+	$rateData = $rateStmt->fetch(PDO::FETCH_ASSOC);
+	$baseAmount = $rateData['rate'] ?? 0;
+	$overdueFineRate = $rateData['overdue_fine'] ?? 0;
 
-    // Fetch all bills for this user/flat
-    $stmt = $pdo->prepare("
+	// Fetch all bills for this user/flat
+	$stmt = $pdo->prepare("
         SELECT mb.id AS bill_id, mb.bill_month, mb.bill_year, mb.amount, mb.fine_amount, mb.status, mb.due_date,
                mp.payment_mode, mp.payment_id, mp.paid_on
         FROM maintenance_bills mb
@@ -641,73 +648,73 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills_user') {
         WHERE mb.user_id = ? AND mb.flat_id = ?
         ORDER BY mb.bill_year DESC, mb.bill_month DESC
     ");
-    $stmt->execute([$userId, $flatId]);
-    $bills = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	$stmt->execute([$userId, $flatId]);
+	$bills = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Filter by search term in PHP
-    $search = $_POST['search']['value'] ?? '';
-    $filteredBills = [];
-    foreach ($bills as $bill) {
-        $monthName = date('F', mktime(0, 0, 0, $bill['bill_month'], 1));
-        $bill['month_name'] = $monthName;
+	// Filter by search term in PHP
+	$search = $_POST['search']['value'] ?? '';
+	$filteredBills = [];
+	foreach ($bills as $bill) {
+		$monthName = date('F', mktime(0, 0, 0, $bill['bill_month'], 1));
+		$bill['month_name'] = $monthName;
 
-        $matchesSearch = empty($search) || 
-            str_contains(strtolower($monthName), strtolower($search)) ||
-            str_contains(strtolower($bill['bill_year']), strtolower($search)) ||
-            str_contains(strtolower($bill['status']), strtolower($search)) ||
-            str_contains(strtolower($bill['payment_mode'] ?? ''), strtolower($search)) ||
-            str_contains(strtolower($bill['payment_id'] ?? ''), strtolower($search));
+		$matchesSearch = empty($search) ||
+			str_contains(strtolower($monthName), strtolower($search)) ||
+			str_contains(strtolower($bill['bill_year']), strtolower($search)) ||
+			str_contains(strtolower($bill['status']), strtolower($search)) ||
+			str_contains(strtolower($bill['payment_mode'] ?? ''), strtolower($search)) ||
+			str_contains(strtolower($bill['payment_id'] ?? ''), strtolower($search));
 
-        if ($matchesSearch) {
-            $filteredBills[] = $bill;
-        }
-    }
+		if ($matchesSearch) {
+			$filteredBills[] = $bill;
+		}
+	}
 
-    $recordsTotal = count($bills);
-    $recordsFiltered = count($filteredBills);
+	$recordsTotal = count($bills);
+	$recordsFiltered = count($filteredBills);
 
-    // Pagination
-    $start = (int)($_POST['start'] ?? 0);
-    $length = (int)($_POST['length'] ?? 10);
-    $pageData = array_slice($filteredBills, $start, $length);
+	// Pagination
+	$start = (int)($_POST['start'] ?? 0);
+	$length = (int)($_POST['length'] ?? 10);
+	$pageData = array_slice($filteredBills, $start, $length);
 
-    // Format for DataTables
-    $data = [];
-    foreach ($pageData as $bill) {
-        $fineAmount = $bill['fine_amount'] ?? 0;
-        $isOverdue = false;
+	// Format for DataTables
+	$data = [];
+	foreach ($pageData as $bill) {
+		$fineAmount = $bill['fine_amount'] ?? 0;
+		$isOverdue = false;
 
-        if ($bill['status'] !== 'paid') {
-            $dueWithGrace = strtotime($bill['due_date'] . ' +7 days');
-            if (time() > $dueWithGrace && $fineAmount == 0) {
-                $fineAmount = $overdueFineRate;
-                $isOverdue = true;
-            }
-        }
+		if ($bill['status'] !== 'paid') {
+			$dueWithGrace = strtotime($bill['due_date'] . ' +7 days');
+			if (time() > $dueWithGrace && $fineAmount == 0) {
+				$fineAmount = $overdueFineRate;
+				$isOverdue = true;
+			}
+		}
 
-        $totalAmount = ($bill['amount'] ?? $baseAmount) + $fineAmount;
+		$totalAmount = ($bill['amount'] ?? $baseAmount) + $fineAmount;
 
-        $data[] = [
-            'month_year'   => $bill['month_name'] . ' ' . $bill['bill_year'],
-            'amount'       => number_format($bill['amount'] ?? $baseAmount, 2),
-            'fine'         => number_format($fineAmount, 2),
-            'total'        => number_format($totalAmount, 2),
-            'status'       => $bill['status'],
-            'payment_id'   => $bill['payment_id'] ?? '-',
-            'payment_mode' => ucfirst($bill['payment_mode'] ?? '-'),
-            'paid_on'      => $bill['paid_on'] ? date('d-m-Y H:i', strtotime($bill['paid_on'])) : '-',
-            'overdue'      => $isOverdue ? 'Yes' : 'No',
-            'action'       => $bill['status'] === 'paid'
-                ? '<a href="pay_Details.php?bill_id=' . $bill['bill_id'] . '" class="btn btn-sm btn-info">View</a>'
-                : '<a href="pay_bill.php?bill_id=' . $bill['bill_id'] . '" class="btn btn-sm btn-success">Pay Now</a>'
-        ];
-    }
+		$data[] = [
+			'month_year'   => $bill['month_name'] . ' ' . $bill['bill_year'],
+			'amount'       => number_format($bill['amount'] ?? $baseAmount, 2),
+			'fine'         => number_format($fineAmount, 2),
+			'total'        => number_format($totalAmount, 2),
+			'status'       => $bill['status'],
+			'payment_id'   => $bill['payment_id'] ?? '-',
+			'payment_mode' => ucfirst($bill['payment_mode'] ?? '-'),
+			'paid_on'      => $bill['paid_on'] ? date('d-m-Y H:i', strtotime($bill['paid_on'])) : '-',
+			'overdue'      => $isOverdue ? 'Yes' : 'No',
+			'action'       => $bill['status'] === 'paid'
+				? '<a href="pay_Details.php?bill_id=' . $bill['bill_id'] . '" class="btn btn-sm btn-info">View</a>'
+				: '<a href="pay_bill.php?bill_id=' . $bill['bill_id'] . '" class="btn btn-sm btn-success">Pay Now</a>'
+		];
+	}
 
-    echo json_encode([
-        "draw" => intval($_POST['draw']),
-        "recordsTotal" => $recordsTotal,
-        "recordsFiltered" => $recordsFiltered,
-        "data" => $data
-    ]);
-    exit;
+	echo json_encode([
+		"draw" => intval($_POST['draw']),
+		"recordsTotal" => $recordsTotal,
+		"recordsFiltered" => $recordsFiltered,
+		"data" => $data
+	]);
+	exit;
 }

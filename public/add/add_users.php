@@ -46,12 +46,22 @@ if (isset($_POST['add_user'])) {
     if (!in_array($gender, ['Male', 'Female', 'Other'])) $errors['gender'] = 'Please select gender';
     if (!in_array($role, ['admin', 'user'])) $errors['role'] = 'Please select role';
 
-    /* ===== CHECK DUPLICATE EMAIL ===== */
+    /* ===== CHECK DUPLICATE EMAIL & MOBILE ===== */
     if (empty($errors)) {
-        $check = $pdo->prepare("SELECT id FROM users WHERE email = ?");
-        $check->execute([$email]);
-        if ($check->fetch()) $errors['email'] = 'Email already exists';
+        $check = $pdo->prepare("SELECT email, mobile FROM users WHERE email = ? OR mobile = ?");
+        $check->execute([$email, $mobile]);
+        $existing = $check->fetch(PDO::FETCH_ASSOC);
+
+        if ($existing) {
+            if ($existing['email'] === $email) {
+                $errors['email'] = 'Email already exists';
+            }
+            if ($existing['mobile'] === $mobile) {
+                $errors['mobile'] = 'Mobile number already exists';
+            }
+        }
     }
+
 
     /* ===== INSERT USER ===== */
     if (empty($errors)) {

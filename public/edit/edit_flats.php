@@ -54,13 +54,25 @@ if (isset($_POST['edit_flats'])) {
         $errors['flat_type'] = 'Please select flat type';
     }
 
+    // ===== CHECK DUPLICATE FLAT (exclude current flat) =====
+    if (empty($errors)) {
+        $check = $pdo->prepare("
+        SELECT id FROM flats 
+        WHERE floor = ? AND flat_number = ? AND block_number = ? AND id != ?
+    ");
+        $check->execute([$floor, $flat_number, $block_number, $id]);
+        if ($check->fetch()) {
+            $errors['duplicate'] = "This flat already exists on floor {$floor}, flat number {$flat_number}, block {$block_number}";
+        }
+    }
+
     // ===== UPDATE IF NO ERRORS =====
     if (empty($errors)) {
         $stmt = $pdo->prepare("
-            UPDATE flats 
-            SET flat_number = ?, floor = ?, block_number = ?, flat_type = ?
-            WHERE id = ?
-        ");
+        UPDATE flats 
+        SET flat_number = ?, floor = ?, block_number = ?, flat_type = ?
+        WHERE id = ?
+    ");
         $stmt->execute([
             $flat_number,
             $floor,
@@ -100,6 +112,11 @@ include(__DIR__ . '/../../resources/layout/header.php');
             </div>
 
             <div class="card-body">
+
+                <?php if (isset($errors['duplicate'])): ?>
+                    <div class="alert alert-danger"><?= htmlspecialchars($errors['duplicate']) ?></div>
+                <?php endif; ?>
+
                 <form method="post">
 
                     <!-- Floor -->
@@ -136,7 +153,7 @@ include(__DIR__ . '/../../resources/layout/header.php');
                     </div>
 
                     <!-- Type -->
-                    <div class="mb-2">
+                    <div class="mb-3">
                         <label class="form-label">Type</label>
                         <select name="flat_type"
                             class="form-select <?= isset($errors['flat_type']) ? 'is-invalid' : '' ?>">

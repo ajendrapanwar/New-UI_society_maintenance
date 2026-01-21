@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../core/config.php';
 
-/* ===== ACCESS CONTROL ===== */
+/* ================= ACCESS CONTROL ================= */
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     header('Location: ' . BASE_URL . 'logout.php');
     exit();
@@ -9,16 +9,15 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 
 $errors = [];
 
-/* ===== HANDLE FORM SUBMIT ===== */
+/* ================= HANDLE FORM SUBMIT ================= */
 if (isset($_POST['add_allotment'])) {
 
-    $user_id       = trim($_POST['user_id'] ?? '');
-    $flat_id       = trim($_POST['flat_id'] ?? '');
-    $move_in_date  = trim($_POST['move_in_date'] ?? '');
-    $move_out_date = trim($_POST['move_out_date'] ?? '');
-    $created_at    = date('Y-m-d H:i:s');
+    $user_id      = trim($_POST['user_id'] ?? '');
+    $flat_id      = trim($_POST['flat_id'] ?? '');
+    $move_in_date = trim($_POST['move_in_date'] ?? '');
+    $created_at   = date('Y-m-d H:i:s');
 
-    /* ===== VALIDATION ===== */
+    /* ================= VALIDATION ================= */
     if ($user_id === '') {
         $errors['user_id'] = 'Please select a user';
     }
@@ -31,27 +30,19 @@ if (isset($_POST['add_allotment'])) {
         $errors['move_in_date'] = 'Move-in date is required';
     }
 
-    if (
-        $move_out_date !== '' &&
-        strtotime($move_out_date) < strtotime($move_in_date)
-    ) {
-        $errors['move_out_date'] = 'Move-out date cannot be before move-in date';
-    }
-
-    /* ===== INSERT ===== */
+    /* ================= INSERT ================= */
     if (empty($errors)) {
 
         $stmt = $pdo->prepare(
             "INSERT INTO allotments 
-            (user_id, flat_id, move_in_date, move_out_date, created_at)
-            VALUES (?, ?, ?, ?, ?)"
+             (user_id, flat_id, move_in_date, created_at)
+             VALUES (?, ?, ?, ?)"
         );
 
         $stmt->execute([
             $user_id,
             $flat_id,
             $move_in_date,
-            $move_out_date ?: null,
             $created_at
         ]);
 
@@ -61,17 +52,22 @@ if (isset($_POST['add_allotment'])) {
     }
 }
 
-/* ===== FETCH DATA ===== */
-$flats = $pdo->query(
-    "SELECT id, block_number, flat_number 
-     FROM flats 
-     ORDER BY block_number, flat_number"
+/* ================= FETCH USERS WITHOUT ALLOTMENT ================= */
+$users = $pdo->query(
+    "SELECT u.id, u.name
+     FROM users u
+     LEFT JOIN allotments a ON u.id = a.user_id
+     WHERE a.user_id IS NULL
+     ORDER BY u.name"
 )->fetchAll(PDO::FETCH_ASSOC);
 
-$users = $pdo->query(
-    "SELECT id, name 
-     FROM users 
-     ORDER BY name"
+/* ================= FETCH FLATS NOT ALLOTTED ================= */
+$flats = $pdo->query(
+    "SELECT f.id, f.block_number, f.flat_number
+     FROM flats f
+     LEFT JOIN allotments a ON f.id = a.flat_id
+     WHERE a.flat_id IS NULL
+     ORDER BY f.block_number, f.flat_number"
 )->fetchAll(PDO::FETCH_ASSOC);
 
 include __DIR__ . '/../../resources/layout/header.php';
@@ -138,24 +134,13 @@ include __DIR__ . '/../../resources/layout/header.php';
                     </div>
 
                     <!-- MOVE IN -->
-                    <div class="mb-2">
+                    <div class="mb-3">
                         <label class="form-label">Move In Date</label>
                         <input type="date" name="move_in_date"
                             class="form-control <?= isset($errors['move_in_date']) ? 'is-invalid' : '' ?>"
                             value="<?= htmlspecialchars($_POST['move_in_date'] ?? '') ?>">
                         <?php if (isset($errors['move_in_date'])): ?>
                             <div class="invalid-feedback"><?= $errors['move_in_date'] ?></div>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- MOVE OUT -->
-                    <div class="mb-2">
-                        <label class="form-label">Move Out Date</label>
-                        <input type="date" name="move_out_date"
-                            class="form-control <?= isset($errors['move_out_date']) ? 'is-invalid' : '' ?>"
-                            value="<?= htmlspecialchars($_POST['move_out_date'] ?? '') ?>">
-                        <?php if (isset($errors['move_out_date'])): ?>
-                            <div class="invalid-feedback"><?= $errors['move_out_date'] ?></div>
                         <?php endif; ?>
                     </div>
 
