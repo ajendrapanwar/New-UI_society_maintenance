@@ -17,20 +17,19 @@ $generated = 0;
 
 if ($currentDay == 1) {
 
-    $targetMonth = $currentMonth;  // Current month
+    $targetMonth = $currentMonth;
     $targetYear  = $currentYear;
 
+    // Fetch all active allotments
     $stmt = $pdo->prepare("
         SELECT a.user_id, a.flat_id, f.flat_type
         FROM allotments a
         JOIN flats f ON f.id = a.flat_id
-        WHERE a.move_out_date IS NULL OR a.move_out_date >= CURDATE()
     ");
     $stmt->execute();
     $allotments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($allotments as $row) {
-
         $userId   = $row['user_id'];
         $flatId   = $row['flat_id'];
         $flatType = $row['flat_type'];
@@ -42,7 +41,6 @@ if ($currentDay == 1) {
               AND bill_month = ? AND bill_year = ?
         ");
         $check->execute([$userId, $flatId, $targetMonth, $targetYear]);
-
         if ($check->fetchColumn() > 0) continue;
 
         // Fetch rate
@@ -81,7 +79,6 @@ if ($currentDay == 1) {
 $overdueUpdated = 0;
 
 if ($currentDay >= 8) {
-
     $overdueStmt = $pdo->prepare("
         SELECT mb.id, mb.amount, f.flat_type
         FROM maintenance_bills mb
@@ -95,11 +92,8 @@ if ($currentDay >= 8) {
     $bills = $overdueStmt->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($bills as $bill) {
-
         $fineStmt = $pdo->prepare("
-            SELECT overdue_fine
-            FROM maintenance_rates
-            WHERE flat_type = ?
+            SELECT overdue_fine FROM maintenance_rates WHERE flat_type = ?
         ");
         $fineStmt->execute([$bill['flat_type']]);
         $fine = $fineStmt->fetchColumn() ?? 0;
@@ -110,9 +104,7 @@ if ($currentDay >= 8) {
 
         $update = $pdo->prepare("
             UPDATE maintenance_bills
-            SET fine_amount = ?,
-                total_amount = ?,
-                status = 'overdue'
+            SET fine_amount = ?, total_amount = ?, status = 'overdue'
             WHERE id = ?
         ");
         $update->execute([$fine, $total, $bill['id']]);
