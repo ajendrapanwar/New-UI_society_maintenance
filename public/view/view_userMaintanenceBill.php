@@ -2,71 +2,66 @@
 require_once __DIR__ . '/../../core/config.php';
 
 /* ================= ACCESS CONTROL ================= */
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
+if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'user') {
     header('Location: ' . BASE_URL . 'logout.php');
     exit();
 }
 
-$allotmentId = $_GET['id'] ?? '';
+$userId = $_SESSION['user_id'];
 
-if (!ctype_digit($allotmentId)) {
-    die('Invalid Allotment ID');
-}
-
-/* ================= USER + FLAT INFO ================= */
+/* ================= GET USER + FLAT INFO ================= */
 $stmt = $pdo->prepare("
     SELECT 
+        u.id AS user_id,
         u.name,
         u.email,
+        a.flat_id,
         f.flat_number,
         f.block_number,
         f.flat_type
     FROM allotments a
     JOIN users u ON u.id = a.user_id
     JOIN flats f ON f.id = a.flat_id
-    WHERE a.id = ?
+    WHERE u.id = ?
+    ORDER BY a.id DESC
+    LIMIT 1
 ");
-$stmt->execute([$allotmentId]);
+$stmt->execute([$userId]);
 $user = $stmt->fetch();
 
 if (!$user) {
-    die('User not found');
+    die('No allotment found for your account.');
 }
+
+$flatId = $user['flat_id'];
+$flatType = $user['flat_type'];
 
 include __DIR__ . '/../../resources/layout/header.php';
 ?>
 
 <div class="container-fluid px-4">
-    <h1 class="mt-4">Maintenance Bill Records</h1>
-
+    <h1 class="mt-4">My Maintenance Bill History</h1>
     <ol class="breadcrumb mb-4">
         <li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>maintanenceRecords.php">Maintenance Records</a></li>
-        <li class="breadcrumb-item active">User Bills</li>
+        <li class="breadcrumb-item active">Bills History</li>
     </ol>
 
     <!-- USER INFO -->
-    <div class="card mb-4 shadow-sm">
+    <div class="card mb-4 border-0 shadow-sm">
         <div class="card-body d-flex flex-wrap gap-4">
             <div><strong>Name:</strong> <?= htmlspecialchars($user['name']) ?></div>
             <div><strong>Email:</strong> <?= htmlspecialchars($user['email']) ?></div>
             <div><strong>Flat:</strong> <?= htmlspecialchars($user['flat_number']) ?></div>
             <div><strong>Block:</strong> <?= htmlspecialchars($user['block_number']) ?></div>
-            <div><strong>Type:</strong> <?= htmlspecialchars($user['flat_type']) ?></div>
+            <div><strong>Flat Type:</strong> <?= htmlspecialchars($flatType) ?></div>
         </div>
     </div>
 
-    <?php if (!empty($_SESSION['success'])): ?>
-        <div class="alert alert-success">
-            <?= $_SESSION['success']; unset($_SESSION['success']); ?>
-        </div>
-    <?php endif; ?>
-
-    <!-- DATATABLE -->
+    <!-- BILLS TABLE -->
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table id="bills-table" class="table table-bordered table-striped">
+                <table id="user-bills-table" class="table table-bordered table-striped">
                     <thead class="table-dark">
                         <tr>
                             <th>Month / Year</th>
@@ -78,7 +73,7 @@ include __DIR__ . '/../../resources/layout/header.php';
                             <th>Mode</th>
                             <th>Paid On</th>
                             <th>Overdue</th>
-                            <th>Action</th>
+                            <th width="150">Action</th>
                         </tr>
                     </thead>
                 </table>
@@ -96,7 +91,7 @@ include __DIR__ . '/../../resources/layout/header.php';
 
 <script>
 $(function () {
-    $('#bills-table').DataTable({
+    $('#user-bills-table').DataTable({
         processing: true,
         serverSide: true,
         pageLength: 5,
@@ -107,8 +102,9 @@ $(function () {
             url: '<?= BASE_URL ?>action.php',
             type: 'POST',
             data: {
-                action: 'fetch_user_bills',
-                allotment_id: '<?= $allotmentId ?>'
+                action: 'fetch_user_bills_user',
+                user_id: '<?= $userId ?>',
+                flat_id: '<?= $flatId ?>'
             }
         },
 

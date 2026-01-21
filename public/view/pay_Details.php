@@ -63,7 +63,7 @@ include __DIR__ . '/../../resources/layout/header.php';
     <h1 class="mt-4">Bill Details</h1>
     <ol class="breadcrumb mb-4">
         <li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="user_maintenance_history.php">My Bills</a></li>
+        <li class="breadcrumb-item"><a href="view_userMaintanenceBill.php">Bills History</a></li>
         <li class="breadcrumb-item active">Bill Details</li>
     </ol>
 

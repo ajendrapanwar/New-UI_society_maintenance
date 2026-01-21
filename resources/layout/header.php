@@ -123,12 +123,12 @@ $notification = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </a>
 
                             <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>maintanenceRecords.php">
-                                <i class="fa fa-file-invoice"></i> Bill Records
+                                <i class="fa fa-file-invoice"></i> Maintanence Records
                             </a>
 
                         <?php else: ?>
 
-                            <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>view/view_userMaintanenceBil.php">
+                            <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>view/view_userMaintanenceBill.php">
                                 <i class="fa fa-receipt"></i> Maintenance Bills
                             </a>
 

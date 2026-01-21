@@ -29,7 +29,7 @@ include __DIR__ . '/../resources/layout/header.php';
 
 	<ol class="breadcrumb mb-4">
 		<li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
-		<li class="breadcrumb-item active">Bill Records</li>
+		<li class="breadcrumb-item active">Maintanence Records</li>
 	</ol>
 
 	<?php if (!empty($_SESSION['success'])): ?>
