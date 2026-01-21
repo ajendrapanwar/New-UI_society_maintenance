@@ -5,11 +5,6 @@ error_reporting(E_ALL);
 
 require_once __DIR__ . '/../../core/config.php';
 
-// if (!isset($_SESSION['u ser_id'])) {
-//     header('Location: ' . BASE_URL . 'login.php');
-//     exit();
-// }
-
 // echo '<pre>'; print_r($_SESSION); echo '</pre>';
 
 
