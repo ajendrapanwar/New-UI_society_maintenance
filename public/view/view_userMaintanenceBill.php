@@ -71,7 +71,6 @@ include __DIR__ . '/../../resources/layout/header.php';
                             <th>Fine</th>
                             <th>Total</th>
                             <th>Status</th>
-                            <th>Payment ID</th>
                             <th>Mode</th>
                             <th>Paid On</th>
                             <th>Overdue</th>
@@ -116,7 +115,6 @@ $(function () {
             { data: 'fine' },
             { data: 'total' },
             { data: 'status' },
-            { data: 'payment_id' },
             { data: 'payment_mode' },
             { data: 'paid_on' },
             { data: 'overdue' },

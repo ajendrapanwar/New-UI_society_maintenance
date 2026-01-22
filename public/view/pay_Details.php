@@ -27,7 +27,6 @@ $stmt = $pdo->prepare("
         mb.due_date,
         mb.amount AS base_amount,
         mp.payment_mode,
-        mp.payment_id,
         mp.paid_on,
         f.flat_number,
         f.block_number,
@@ -86,7 +85,6 @@ include __DIR__ . '/../../resources/layout/header.php';
             <?php if ($bill['status'] === 'paid'): ?>
                 <div class="mb-2"><b>Paid On:</b> <?= date('d-m-Y', strtotime($bill['paid_on'])) ?></div>
                 <div class="mb-2"><b>Payment Method:</b> <?= ucfirst($bill['payment_mode']) ?></div>
-                <div class="mb-2"><b>Payment ID:</b> <?= $bill['payment_id'] ?? '-' ?></div>
             <?php else: ?>
                 <div class="mb-2"><b>Overdue:</b> <?= $isOverdue ? 'Yes' : 'No' ?></div>
                 <div class="alert alert-warning">This bill is not yet paid.</div>

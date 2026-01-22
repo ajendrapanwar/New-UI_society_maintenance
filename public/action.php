@@ -366,11 +366,7 @@ if (isset($_POST['action'])) {
 
 
 //	MARK MAINTENANCE BILL AS CASH PAID
-if (
-	isset($_GET['action'], $_GET['bill_id']) &&
-	$_GET['action'] === 'mark_cash_payment' &&
-	ctype_digit($_GET['bill_id'])
-) {
+if (isset($_GET['action'], $_GET['bill_id']) && $_GET['action'] === 'mark_cash_payment' && ctype_digit($_GET['bill_id'])) {
 
 	// Admin access check
 	requireRole(['admin', 'cashier']);
@@ -396,22 +392,17 @@ if (
 		exit();
 	}
 
-	// Generate CASH payment ID
-	$paymentId = 'CASH-' . strtoupper(uniqid());
 
 	try {
 		$pdo->beginTransaction();
 
-		// Insert payment (MATCHING TABLE)
 		$stmt = $pdo->prepare("
-            INSERT INTO maintenance_payments
-            (maintenance_bill_id, payment_mode, payment_id, paid_on, created_at)
-            VALUES (?, 'cash', ?, NOW(), NOW())
-        ");
-		$stmt->execute([
-			$billId,
-			$paymentId
-		]);
+			INSERT INTO maintenance_payments
+			(maintenance_bill_id, payment_mode, paid_on, created_at)
+			VALUES (?, 'cash', NOW(), NOW())
+		");
+		$stmt->execute([$billId]);
+
 
 		// Update bill status
 		$stmt = $pdo->prepare("
@@ -433,6 +424,54 @@ if (
 	exit();
 }
 
+// MARK MAINTENANCE BILL AS ONLINE PAID 
+if (isset($_POST['action']) && $_POST['action'] === 'mark_online_payment') {
+
+	requireRole(['admin', 'cashier']);
+
+	$billId = $_POST['bill_id'] ?? '';
+	$mode   = $_POST['payment_mode'] ?? '';
+	$note   = trim($_POST['note'] ?? '');
+
+	if (!ctype_digit($billId) || !in_array($mode, ['upi', 'credit_card', 'debit_card', 'netbanking']) || $note === '') {
+		http_response_code(400);
+		exit;
+	}
+
+	if (!isset($_FILES['proof']) || $_FILES['proof']['error'] !== 0) {
+		http_response_code(400);
+		exit;
+	}
+
+	$ext = strtolower(pathinfo($_FILES['proof']['name'], PATHINFO_EXTENSION));
+	if (!in_array($ext, ['jpg', 'jpeg', 'png', 'pdf'])) {
+		http_response_code(400);
+		exit;
+	}
+
+	$proofName = 'payment_' . time() . '.' . $ext;
+	move_uploaded_file($_FILES['proof']['tmp_name'], __DIR__ . '/uploads/' . $proofName);
+
+
+	$pdo->beginTransaction();
+
+	$pdo->prepare("
+		INSERT INTO maintenance_payments
+		(maintenance_bill_id, payment_mode, note, proof, paid_on, created_at)
+		VALUES (?, ?, ?, ?, NOW(), NOW())
+	")->execute([$billId, $mode, $note, $proofName]);
+
+
+	$pdo->prepare("
+		UPDATE maintenance_bills SET status='paid' WHERE id=?
+	")->execute([$billId]);
+
+	$pdo->commit();
+	exit;
+}
+
+
+// fetch_user_bills
 if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills') {
 
 	header('Content-Type: application/json');
@@ -494,7 +533,6 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills') {
             ' ',
             mb.bill_year
         ) LIKE :search
-        OR mp.payment_id LIKE :search
         OR mp.payment_mode LIKE :search
         OR mb.amount LIKE :search
         OR mb.total_amount LIKE :search
@@ -537,9 +575,8 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills') {
 		2 => 'mb.fine_amount',
 		3 => 'mb.total_amount',
 		4 => 'mb.status',
-		5 => 'mp.payment_id',
-		6 => 'mp.payment_mode',
-		7 => 'mp.paid_on'
+		5 => 'mp.payment_mode',
+		6 => 'mp.paid_on'
 	];
 
 	$orderCol = $orderMap[$_POST['order'][0]['column'] ?? 0] ?? 'mb.bill_year';
@@ -549,7 +586,6 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills') {
 	$stmt = $pdo->prepare("
         SELECT 
             mb.*,
-            mp.payment_id,
             mp.payment_mode,
             mp.paid_on
         FROM maintenance_bills mb
@@ -584,20 +620,36 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills') {
 			'fine'         => '₹' . number_format($r['fine_amount'], 2),
 			'total'        => '<strong>₹' . number_format($r['total_amount'], 2) . '</strong>',
 			'status'       => '<span class="badge bg-' . ($r['status'] === 'paid' ? 'success' : 'warning') . '">' . ucfirst($r['status']) . '</span>',
-			'payment_id'   => $r['payment_id'] ?? '-',
 			'payment_mode' => ucfirst($r['payment_mode'] ?? '-'),
 			'paid_on'      => $r['paid_on'] ? date('d-m-Y H:i', strtotime($r['paid_on'])) : '-',
 			'overdue'      => $r['status'] === 'overdue' ? 'Yes' : 'No',
+			// 		'action' => (
+			// 			$r['status'] !== 'paid' &&
+			// 			in_array($_SESSION['user_role'], ['admin', 'cashier'])
+			// 		)
+			// 			? '<a href="' . BASE_URL . 'action.php?action=mark_cash_payment&bill_id=' . $r['id'] . '" 
+			//     class="btn btn-sm btn-success px-2 py-1 d-inline-flex align-items-center gap-1"
+			//     onclick="return confirm(\'Mark this payment as CASH?\');">
+			//     Cash Paid
+			//   </a>'
+			// 			: '<span class="text-muted">Paid</span>'
+
 			'action' => (
 				$r['status'] !== 'paid' &&
 				in_array($_SESSION['user_role'], ['admin', 'cashier'])
 			)
-				? '<a href="' . BASE_URL . 'action.php?action=mark_cash_payment&bill_id=' . $r['id'] . '" 
-        class="btn btn-sm btn-success"
-        onclick="return confirm(\'Mark this payment as CASH?\');">
-        Cash Paid
-      </a>'
+				? '
+					<select 
+						class="form-select form-select-sm payment-type"
+						data-bill="' . $r['id'] . '"
+						style="min-width:110px">
+						<option value="">Payment</option>
+						<option value="cash">Cash</option>
+						<option value="online">Online</option>
+					</select>'
 				: '<span class="text-muted">Paid</span>'
+
+
 
 		];
 	}
@@ -610,6 +662,13 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills') {
 	]);
 	exit;
 }
+
+
+
+
+
+
+
 
 //	VIEW FOR USER PAY AND VIEW
 if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills_user') {
@@ -653,7 +712,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills_user') {
 	// Fetch all bills for this user/flat
 	$stmt = $pdo->prepare("
         SELECT mb.id AS bill_id, mb.bill_month, mb.bill_year, mb.amount, mb.fine_amount, mb.status, mb.due_date,
-               mp.payment_mode, mp.payment_id, mp.paid_on
+               mp.payment_mode, mp.paid_on
         FROM maintenance_bills mb
         LEFT JOIN maintenance_payments mp ON mp.maintenance_bill_id = mb.id
         WHERE mb.user_id = ? AND mb.flat_id = ?
@@ -673,8 +732,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills_user') {
 			str_contains(strtolower($monthName), strtolower($search)) ||
 			str_contains(strtolower($bill['bill_year']), strtolower($search)) ||
 			str_contains(strtolower($bill['status']), strtolower($search)) ||
-			str_contains(strtolower($bill['payment_mode'] ?? ''), strtolower($search)) ||
-			str_contains(strtolower($bill['payment_id'] ?? ''), strtolower($search));
+			str_contains(strtolower($bill['payment_mode'] ?? ''), strtolower($search));
 
 		if ($matchesSearch) {
 			$filteredBills[] = $bill;
@@ -711,7 +769,6 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills_user') {
 			'fine'         => number_format($fineAmount, 2),
 			'total'        => number_format($totalAmount, 2),
 			'status'       => $bill['status'],
-			'payment_id'   => $bill['payment_id'] ?? '-',
 			'payment_mode' => ucfirst($bill['payment_mode'] ?? '-'),
 			'paid_on'      => $bill['paid_on'] ? date('d-m-Y H:i', strtotime($bill['paid_on'])) : '-',
 			'overdue'      => $isOverdue ? 'Yes' : 'No',
