@@ -2,10 +2,16 @@
 require_once __DIR__ . '/../../core/config.php';
 
 /* ================= ACCESS CONTROL ================= */
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
-    header('Location: ' . BASE_URL . 'logout.php');
-    exit();
-}
+// if (
+//     !isset($_SESSION['user_id']) ||
+//     !in_array($_SESSION['user_role'], ['admin', 'cashier'])
+// ) {
+//     header('Location: ' . BASE_URL . 'logout.php');
+//     exit();
+// }
+
+// Admin access check
+requireRole(['admin', 'cashier']);
 
 $allotmentId = $_GET['id'] ?? '';
 
@@ -40,7 +46,12 @@ include __DIR__ . '/../../resources/layout/header.php';
     <h1 class="mt-4">Maintenance Bill Records</h1>
 
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
+        <?php if ($_SESSION['user_role'] !== 'cashier'): ?>
+            <li class="breadcrumb-item">
+                <a href="<?= BASE_URL ?>dashboard.php">Dashboard</a>
+            </li>
+        <?php endif; ?>
+
         <li class="breadcrumb-item"><a href="<?= BASE_URL ?>maintanenceRecords.php">Maintenance Records</a></li>
         <li class="breadcrumb-item active">User Bills</li>
     </ol>
@@ -58,7 +69,8 @@ include __DIR__ . '/../../resources/layout/header.php';
 
     <?php if (!empty($_SESSION['success'])): ?>
         <div class="alert alert-success">
-            <?= $_SESSION['success']; unset($_SESSION['success']); ?>
+            <?= $_SESSION['success'];
+            unset($_SESSION['success']); ?>
         </div>
     <?php endif; ?>
 
@@ -95,35 +107,58 @@ include __DIR__ . '/../../resources/layout/header.php';
 <script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
-$(function () {
-    $('#bills-table').DataTable({
-        processing: true,
-        serverSide: true,
-        pageLength: 5,
-        lengthMenu: [5, 10, 25, 50],
-        order: [[0, 'desc']],
+    $(function() {
+        $('#bills-table').DataTable({
+            processing: true,
+            serverSide: true,
+            pageLength: 5,
+            lengthMenu: [5, 10, 25, 50],
+            order: [
+                [0, 'desc']
+            ],
 
-        ajax: {
-            url: '<?= BASE_URL ?>action.php',
-            type: 'POST',
-            data: {
-                action: 'fetch_user_bills',
-                allotment_id: '<?= $allotmentId ?>'
-            }
-        },
+            ajax: {
+                url: '<?= BASE_URL ?>action.php',
+                type: 'POST',
+                data: {
+                    action: 'fetch_user_bills',
+                    allotment_id: '<?= $allotmentId ?>'
+                }
+            },
 
-        columns: [
-            { data: 'month_year' },
-            { data: 'amount' },
-            { data: 'fine' },
-            { data: 'total' },
-            { data: 'status' },
-            { data: 'payment_id' },
-            { data: 'payment_mode' },
-            { data: 'paid_on' },
-            { data: 'overdue' },
-            { data: 'action', orderable: false, searchable: false }
-        ]
+            columns: [{
+                    data: 'month_year'
+                },
+                {
+                    data: 'amount'
+                },
+                {
+                    data: 'fine'
+                },
+                {
+                    data: 'total'
+                },
+                {
+                    data: 'status'
+                },
+                {
+                    data: 'payment_id'
+                },
+                {
+                    data: 'payment_mode'
+                },
+                {
+                    data: 'paid_on'
+                },
+                {
+                    data: 'overdue'
+                },
+                {
+                    data: 'action',
+                    orderable: false,
+                    searchable: false
+                }
+            ]
+        });
     });
-});
 </script>

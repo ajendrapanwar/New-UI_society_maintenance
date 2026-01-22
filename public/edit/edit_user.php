@@ -67,7 +67,9 @@ if (isset($_POST['edit_user'])) {
 		}
 	}
 	if (!in_array($gender, ['Male', 'Female', 'Other'])) $errors['gender'] = 'Please select gender';
-	if (!in_array($role, ['admin', 'user'])) $errors['role'] = 'Please select role';
+	if (!in_array($role, ['admin', 'cashier', 'user'])) {
+		$errors['role'] = 'Please select role';
+	}
 
 	// CHECK DUPLICATE EMAIL & MOBILE (exclude current user)
 	if (empty($errors)) {
@@ -175,10 +177,12 @@ include(__DIR__ . '/../../resources/layout/header.php');
 
 							<div class="col-md-6 mb-3">
 								<label class="form-label">Role</label>
-								<select name="user_role" class="form-select" autocomplete="off" required>
+								<select name="user_role" class="form-select" required>
 									<option value="user" <?= $role === 'user' ? 'selected' : '' ?>>User</option>
+									<option value="cashier" <?= $role === 'cashier' ? 'selected' : '' ?>>Cashier</option>
 									<option value="admin" <?= $role === 'admin' ? 'selected' : '' ?>>Admin</option>
 								</select>
+
 								<?php if (isset($errors['role'])): ?><small class="text-danger"><?= $errors['role'] ?></small><?php endif; ?>
 							</div>
 

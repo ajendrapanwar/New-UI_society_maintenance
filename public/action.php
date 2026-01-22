@@ -6,6 +6,9 @@ error_reporting(E_ALL);
 
 require_once __DIR__ . '/../core/config.php';
 
+// requireRole(['admin', 'cashier','user']);
+
+
 if (isset($_POST['action'])) {
 
 	if ($_POST['action'] == 'fetch_flats') {
@@ -370,9 +373,7 @@ if (
 ) {
 
 	// Admin access check
-	if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
-		die('Unauthorized');
-	}
+	requireRole(['admin', 'cashier']);
 
 	$billId = $_GET['bill_id'];
 
@@ -587,11 +588,17 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills') {
 			'payment_mode' => ucfirst($r['payment_mode'] ?? '-'),
 			'paid_on'      => $r['paid_on'] ? date('d-m-Y H:i', strtotime($r['paid_on'])) : '-',
 			'overdue'      => $r['status'] === 'overdue' ? 'Yes' : 'No',
-			'action'       => $r['status'] !== 'paid'
-				? '<a href="' . BASE_URL . 'action.php?action=mark_cash_payment&bill_id=' . $r['id'] . '" class="btn btn-sm btn-success" onclick="return confirm(\'Mark this payment as CASH?\');">
-   						Cash Paid 
-					</a>'
+			'action' => (
+				$r['status'] !== 'paid' &&
+				in_array($_SESSION['user_role'], ['admin', 'cashier'])
+			)
+				? '<a href="' . BASE_URL . 'action.php?action=mark_cash_payment&bill_id=' . $r['id'] . '" 
+        class="btn btn-sm btn-success"
+        onclick="return confirm(\'Mark this payment as CASH?\');">
+        Cash Paid
+      </a>'
 				: '<span class="text-muted">Paid</span>'
+
 		];
 	}
 

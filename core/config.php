@@ -82,3 +82,20 @@ $flatTypes = [
     '4 BHK Flat',
     '5 BHK Flat'
 ];
+
+
+function requireRole(array $roles)
+{
+    if (
+        !isset($_SESSION['user_id']) ||
+        !in_array($_SESSION['user_role'], $roles)
+    )
+     {
+        http_response_code(403);
+        exit('Unauthorized access');
+    }
+// {
+//     header('Location: ' . BASE_URL . 'logout.php');
+//     exit();
+// }
+}

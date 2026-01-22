@@ -47,8 +47,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btn_login'])) {
             $_SESSION['user_name'] = $user['name'];
 
             // Role-based redirect
-            if ($user['role'] === 'user') {
+            if ($user['role'] === 'admin') {
                 header('Location: ' . BASE_URL . 'dashboard.php');
+            } elseif ($user['role'] === 'cashier') {
+                header('Location: ' . BASE_URL . 'maintanenceRecords.php');
             } else {
                 header('Location: ' . BASE_URL . 'dashboard.php');
             }

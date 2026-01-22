@@ -3,9 +3,11 @@ require_once __DIR__ . '/../core/config.php';
 
 
 //    ACCESS CONTROL – ADMIN ONLY
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
-    exit('Unauthorized access');
-}
+// if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
+//     exit('Unauthorized access');
+// }
+
+requireRole(['admin']);
 
 
 //    DATE CONTEXT

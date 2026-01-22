@@ -10,9 +10,18 @@ header("Expires: Tue, 01 Jan 2000 00:00:00 GMT");
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Pragma: no-cache");
 
-if (!isset($_SESSION['user_id'])) {
-	header('Location: ' . BASE_URL . 'logout.php');
-	exit;
+// if (!isset($_SESSION['user_id'])) {
+// 	header('Location: ' . BASE_URL . 'logout.php');
+// 	exit;
+// }
+
+/* ================= ACCESS CONTROL ================= */
+if (
+    !isset($_SESSION['user_id']) ||
+    !in_array($_SESSION['user_role'], ['admin', 'user'])
+) {
+    header('Location: ' . BASE_URL . 'logout.php');
+    exit();
 }
 
 

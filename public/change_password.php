@@ -3,10 +3,12 @@
 require_once __DIR__ . '/../core/config.php';
 
 // ✅ Allow BOTH admin & user
-if (!isset($_SESSION['user_id'])) {
-	header('Location: ' . BASE_URL . 'index.php');
-	exit();
-}
+// if (!isset($_SESSION['user_id'])) {
+// 	header('Location: ' . BASE_URL . 'index.php');
+// 	exit();
+// }
+
+requireRole(['admin','user']);
 
 $errors = [];
 $success = '';

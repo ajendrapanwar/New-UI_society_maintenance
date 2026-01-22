@@ -107,33 +107,43 @@ $notification = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                         <?php if ($_SESSION['user_role'] === 'admin'): ?>
 
-                            <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>users.php">
+                            <!-- ADMIN MENU -->
+                            <a class="nav-link" href="<?= BASE_URL ?>users.php">
                                 <i class="fa fa-users"></i> Users
                             </a>
 
-                            <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>flats.php">
+                            <a class="nav-link" href="<?= BASE_URL ?>flats.php">
                                 <i class="fa fa-building"></i> Flats
                             </a>
 
-                            <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>allotments.php">
+                            <a class="nav-link" href="<?= BASE_URL ?>allotments.php">
                                 <i class="fa fa-house-user"></i> Allotments
                             </a>
 
-                            <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>maintanenceRate.php">
+                            <a class="nav-link" href="<?= BASE_URL ?>maintanenceRate.php">
                                 <i class="fa fa-indian-rupee-sign"></i> Maintenance Rate
                             </a>
 
-                            <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>maintanenceRecords.php">
-                                <i class="fa fa-file-invoice"></i> Maintanence Records
+                            <a class="nav-link" href="<?= BASE_URL ?>maintanenceRecords.php">
+                                <i class="fa fa-file-invoice"></i> Maintenance Records
+                            </a>
+
+                        <?php elseif ($_SESSION['user_role'] === 'cashier'): ?>
+
+                            <!-- CASHIER MENU -->
+                            <a class="nav-link" href="<?= BASE_URL ?>maintanenceRecords.php">
+                                <i class="fa fa-file-invoice"></i> Maintenance Records
                             </a>
 
                         <?php else: ?>
 
-                            <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>view/view_userMaintanenceBill.php">
+                            <!-- USER MENU -->
+                            <a class="nav-link" href="<?= BASE_URL ?>view/view_userMaintanenceBill.php">
                                 <i class="fa fa-receipt"></i> Maintenance Bills
                             </a>
 
                         <?php endif; ?>
+
 
                         <hr class="text-secondary my-2">
 

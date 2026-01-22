@@ -2,10 +2,13 @@
 
 require_once __DIR__ . '/../core/config.php';
 
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
-	header('Location: ' . BASE_URL . 'logout.php');
-	exit();
-}
+// if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
+// 	header('Location: ' . BASE_URL . 'logout.php');
+// 	exit();
+// }
+
+// Admin access check
+requireRole(['admin']);
 
 if (
 	isset($_GET['action'], $_GET['id']) &&

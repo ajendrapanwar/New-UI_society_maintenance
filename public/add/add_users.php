@@ -5,10 +5,13 @@ $errors = [];
 $name = $email = $mobile = $dob = $gender = $role = '';
 $password = '';
 
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
-    header('Location: logout.php');
-    exit();
-}
+// if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
+//     header('Location: logout.php');
+//     exit();
+// }
+
+// Admin access check
+requireRole(['admin']);
 
 /* ===== HANDLE FORM SUBMIT ===== */
 if (isset($_POST['add_user'])) {
@@ -44,7 +47,7 @@ if (isset($_POST['add_user'])) {
     }
 
     if (!in_array($gender, ['Male', 'Female', 'Other'])) $errors['gender'] = 'Please select gender';
-    if (!in_array($role, ['admin', 'user'])) $errors['role'] = 'Please select role';
+    if (!in_array($role, ['admin','cashier', 'user'])) $errors['role'] = 'Please select role';
 
     /* ===== CHECK DUPLICATE EMAIL & MOBILE ===== */
     if (empty($errors)) {
@@ -154,6 +157,7 @@ include(__DIR__ . '/../../resources/layout/header.php');
                                 <select name="user_role" class="form-select" autocomplete="off" required>
                                     <option value="">Select Role</option>
                                     <option value="user" <?= $role === 'user' ? 'selected' : '' ?>>User</option>
+                                    <option value="cashier" <?= $role === 'cashier' ? 'selected' : '' ?>>Cashier</option>
                                     <option value="admin" <?= $role === 'admin' ? 'selected' : '' ?>>Admin</option>
                                 </select>
                                 <?php if (isset($errors['role'])): ?><small class="text-danger"><?= $errors['role'] ?></small><?php endif; ?>

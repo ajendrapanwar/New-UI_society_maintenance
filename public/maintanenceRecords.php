@@ -2,10 +2,17 @@
 require_once __DIR__ . '/../core/config.php';
 
 // ACCESS CONTROL
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
-	header('Location: ' . BASE_URL . 'logout.php');
-	exit();
-}
+// if (
+//     !isset($_SESSION['user_id']) ||
+//     !in_array($_SESSION['user_role'], ['admin', 'cashier'])
+// ) {
+//     header('Location: ' . BASE_URL . 'logout.php');
+//     exit();
+// }
+
+// Admin access check
+requireRole(['admin', 'cashier']);
+
 
 // DELETE ALLOTMENT
 if (
@@ -28,7 +35,12 @@ include __DIR__ . '/../resources/layout/header.php';
 	<h1 class="mt-4">Maintenance Records</h1>
 
 	<ol class="breadcrumb mb-4">
-		<li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
+		<?php if ($_SESSION['user_role'] !== 'cashier'): ?>
+			<li class="breadcrumb-item">
+				<a href="<?= BASE_URL ?>dashboard.php">Dashboard</a>
+			</li>
+		<?php endif; ?>
+
 		<li class="breadcrumb-item active">Maintanence Records</li>
 	</ol>
 
@@ -46,7 +58,7 @@ include __DIR__ . '/../resources/layout/header.php';
 					<thead>
 						<tr>
 							<th>ID</th>
-                            <th>Flat Number</th>
+							<th>Flat Number</th>
 							<th>Block Number</th>
 							<th>Allotted To</th>
 							<th>Type</th>
@@ -68,42 +80,52 @@ include __DIR__ . '/../resources/layout/header.php';
 <script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
-$(function () {
-	$('#allotment-table').DataTable({
-		processing: true,
-		serverSide: true,
+	$(function() {
+		$('#allotment-table').DataTable({
+			processing: true,
+			serverSide: true,
 
-		pageLength: 5,
-		lengthMenu: [5, 10, 25, 50],
+			pageLength: 5,
+			lengthMenu: [5, 10, 25, 50],
 
-		ajax: {
-			url: 'action.php',
-			type: 'POST',
-			data: {
-				action: 'maintenanceBillRecords'
-			}
-		},
+			ajax: {
+				url: 'action.php',
+				type: 'POST',
+				data: {
+					action: 'maintenanceBillRecords'
+				}
+			},
 
-		order: [[0, 'desc']],
-		columns: [
-			{ data: 'id' },
-			{ data: 'flat_number' },
-			{ data: 'block_number' },
-			{ data: 'name' },
-			{ data: 'flat_type' },
-			{
-				data: null,
-				orderable: false,
-				searchable: false,
-				render: function (data, type, row) {
-					return `
+			order: [
+				[0, 'desc']
+			],
+			columns: [{
+					data: 'id'
+				},
+				{
+					data: 'flat_number'
+				},
+				{
+					data: 'block_number'
+				},
+				{
+					data: 'name'
+				},
+				{
+					data: 'flat_type'
+				},
+				{
+					data: null,
+					orderable: false,
+					searchable: false,
+					render: function(data, type, row) {
+						return `
 						<a href="view/view_maintanenceBillRecords.php?id=${row.id}"
 						   class="btn btn-sm btn-warning">View</a>
 					`;
+					}
 				}
-			}
-		]
+			]
+		});
 	});
-});
 </script>
-
