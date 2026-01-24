@@ -91,35 +91,56 @@ include __DIR__ . '/../../resources/layout/header.php';
 <script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
-$(function () {
-    $('#user-bills-table').DataTable({
-        processing: true,
-        serverSide: true,
-        pageLength: 5,
-        lengthMenu: [5, 10, 25, 50],
-        order: [[0, 'desc']],
+    $(function() {
+        $('#user-bills-table').DataTable({
+            processing: true,
+            serverSide: true,
+            pageLength: 5,
+            lengthMenu: [5, 10, 25, 50],
+            order: [
+                [0, 'desc']
+            ],
 
-        ajax: {
-            url: '<?= BASE_URL ?>action.php',
-            type: 'POST',
-            data: {
-                action: 'fetch_user_bills_user',
-                user_id: '<?= $userId ?>',
-                flat_id: '<?= $flatId ?>'
-            }
-        },
+            ajax: {
+                url: '<?= BASE_URL ?>action.php',
+                type: 'POST',
+                data: {
+                    action: 'fetch_user_bills_user',
+                    user_id: '<?= $userId ?>',
+                    flat_id: '<?= $flatId ?>'
+                }
+            },
 
-        columns: [
-            { data: 'month_year' },
-            { data: 'amount' },
-            { data: 'fine' },
-            { data: 'total' },
-            { data: 'status' },
-            { data: 'payment_mode' },
-            { data: 'paid_on' },
-            { data: 'overdue' },
-            { data: 'action', orderable: false, searchable: false }
-        ]
+            columns: [{
+                    data: 'month_year'
+                },
+                {
+                    data: 'amount'
+                },
+                {
+                    data: 'fine'
+                },
+                {
+                    data: 'total'
+                },
+                {
+                    data: 'status'
+                },
+                {
+                    data: 'payment_mode'
+                },
+                {
+                    data: 'paid_on'
+                },
+                {
+                    data: 'overdue'
+                },
+                {
+                    data: 'action',
+                    orderable: false,
+                    searchable: false
+                }
+            ]
+        });
     });
-});
 </script>

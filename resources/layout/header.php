@@ -1,22 +1,21 @@
 <?php
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+
 
 require_once __DIR__ . '/../../core/config.php';
 
 // echo '<pre>'; print_r($_SESSION); echo '</pre>';
 
+// ================= SAFETY CHECK =================
+requireRole(['admin', 'cashier', 'user']);
 
-$stmt = $pdo->prepare("
-    SELECT message, link 
-    FROM notifications 
-    WHERE user_id = ? AND read_status = ? 
-    ORDER BY id DESC
-");
-$stmt->execute([$_SESSION['user_id'], 'unread']);
-$notification = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -25,7 +24,7 @@ $notification = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
+    <title>Dashboard</title>
 
     <!-- CSS -->
     <link rel="stylesheet" href="<?= BASE_URL ?>../assets/css/styles.css">
@@ -48,29 +47,6 @@ $notification = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <i class="fas fa-bars"></i>
         </button>
 
-        <!-- Notifications -->
-        <!-- <ul class="navbar-nav ms-auto me-3">
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                    <?= count($notification) ? '<span class="badge bg-danger">' . count($notification) . '</span>' : '' ?>
-                    <i class="fa-solid fa-bell"></i>
-                </a>
-
-                <ul class="dropdown-menu dropdown-menu-end" style="max-height:400px; overflow:auto;">
-                    <?php if ($notification): ?>
-                        <?php foreach ($notification as $msg): ?>
-                            <li>
-                                <a class="dropdown-item" href="<?= BASE_URL . $msg['link'] ?>">
-                                    <?= htmlspecialchars($msg['message']) ?>
-                                </a>
-                            </li>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <li class="dropdown-item text-muted">No Notification Found</li>
-                    <?php endif; ?>
-                </ul>
-            </li>
-        </ul> -->
 
         <!-- User Menu -->
         <ul class="navbar-nav ms-auto me-3">
@@ -128,11 +104,19 @@ $notification = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <i class="fa fa-file-invoice"></i> Maintenance Records
                             </a>
 
+                            <a class="nav-link" href="<?= BASE_URL ?>all_bill.php">
+                                <i class="fa fa-file-invoice"></i> Maintenance Bills
+                            </a>
+
                         <?php elseif ($_SESSION['user_role'] === 'cashier'): ?>
 
                             <!-- CASHIER MENU -->
                             <a class="nav-link" href="<?= BASE_URL ?>maintanenceRecords.php">
                                 <i class="fa fa-file-invoice"></i> Maintenance Records
+                            </a>
+
+                            <a class="nav-link" href="<?= BASE_URL ?>all_bill.php">
+                                <i class="fa fa-file-invoice"></i> Maintenance Bills
                             </a>
 
                         <?php else: ?>
