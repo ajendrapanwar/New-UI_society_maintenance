@@ -28,12 +28,10 @@ include __DIR__ . '/../resources/layout/header.php';
     <div class="card">
 
         <!-- FILTERS -->
-        <!-- FILTER BAR -->
-        <!-- <div class="card mb-3 shadow-sm filter-card"> -->
         <div class="card-body py-3">
             <div class="row align-items-end g-3">
 
-                <div class="col-md-3 col-sm-6">
+                <div class="col-md-2 col-sm-6">
                     <label class="filter-label">Month</label>
                     <select id="filter-month" class="form-select form-select-sm">
                         <option value="">All Months</option>
@@ -45,7 +43,7 @@ include __DIR__ . '/../resources/layout/header.php';
                     </select>
                 </div>
 
-                <div class="col-md-3 col-sm-6">
+                <div class="col-md-2 col-sm-6">
                     <label class="filter-label">Year</label>
                     <select id="filter-year" class="form-select form-select-sm">
                         <option value="">All Years</option>
@@ -58,7 +56,7 @@ include __DIR__ . '/../resources/layout/header.php';
                     </select>
                 </div>
 
-                <div class="col-md-3 col-sm-6">
+                <div class="col-md-2 col-sm-6">
                     <label class="filter-label">Status</label>
                     <select id="filter-status" class="form-select form-select-sm">
                         <option value="">All Status</option>
@@ -68,15 +66,22 @@ include __DIR__ . '/../resources/layout/header.php';
                     </select>
                 </div>
 
-                <div class="col-xl-1 col-md-3 col-sm-6 d-grid">
+                <div class="col-md-2 col-sm-6 d-grid">
                     <button id="reset-filters" class="btn btn-outline-secondary btn-sm">
                         <i class="bi bi-arrow-counterclockwise"></i> Reset
                     </button>
                 </div>
 
+                <!-- EXPORT BUTTON (RIGHT SIDE) -->
+                <div class="col-4 col-md-2 col-sm-3 d-grid ms-auto">
+                    <button id="export-excel" class="btn btn-success btn-sm">
+                        <i class="bi bi-file-earmark-excel"></i> Export Excel
+                    </button>
+                </div>
+
             </div>
         </div>
-        <!-- </div> -->
+
 
 
         <div class="card-body">
@@ -175,4 +180,21 @@ include __DIR__ . '/../resources/layout/header.php';
         });
 
     });
+</script>
+
+
+<script>
+$('#export-excel').on('click', function () {
+
+    let month  = $('#filter-month').val();
+    let year   = $('#filter-year').val();
+    let status = $('#filter-status').val();
+
+    let url = '<?= BASE_URL ?>action.php?action=export_all_bills'
+        + '&month=' + month
+        + '&year=' + year
+        + '&status=' + status;
+
+    window.location.href = url; // triggers download
+});
 </script>

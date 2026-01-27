@@ -869,10 +869,8 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills_user') {
 }
 
 
-/* =========================================================
-   FETCH ALL MAINTENANCE BILLS (NO SEARCH)
-   Filters: Month | Year | Status
-   ========================================================= */
+
+// FETCH ALL MAINTENANCE BILLS (NO SEARCH) Filters: Month | Year | Status
 if (isset($_POST['action']) && $_POST['action'] === 'fetch_all_bills') {
 
 	header('Content-Type: application/json');
@@ -1000,5 +998,91 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_all_bills') {
 		"recordsFiltered" => intval($recordsFiltered),
 		"data"            => $data
 	]);
+	exit;
+}
+
+
+// EXPORT ALL BILLS TO EXCEL
+if (isset($_GET['action']) && $_GET['action'] === 'export_all_bills') {
+
+	requireRole(['admin', 'cashier']);
+
+	$month  = $_GET['month']  ?? '';
+	$year   = $_GET['year']   ?? '';
+	$status = $_GET['status'] ?? '';
+
+	$where = [];
+	$params = [];
+
+	if (ctype_digit($month)) {
+		$where[] = 'mb.bill_month = ?';
+		$params[] = $month;
+	}
+
+	if (ctype_digit($year)) {
+		$where[] = 'mb.bill_year = ?';
+		$params[] = $year;
+	}
+
+	if (in_array($status, ['paid', 'pending', 'overdue'])) {
+		$where[] = 'mb.status = ?';
+		$params[] = $status;
+	}
+
+	$whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
+	$stmt = $pdo->prepare("
+		SELECT 
+			f.flat_number,
+			f.block_number,
+			CONCAT(
+				MONTHNAME(STR_TO_DATE(CONCAT(mb.bill_year,'-',mb.bill_month,'-01'),'%Y-%m-%d')),
+				' ',
+				mb.bill_year
+			) AS month_year,
+			mb.amount,
+			mb.fine_amount,
+			mb.total_amount,
+			mb.status,
+			mp.payment_mode,
+			mp.paid_on,
+			CASE 
+				WHEN mb.status != 'paid' AND mb.due_date < CURDATE() THEN 'Yes'
+				ELSE 'No'
+			END AS overdue
+		FROM maintenance_bills mb
+		JOIN flats f ON f.id = mb.flat_id
+		LEFT JOIN maintenance_payments mp 
+			ON mp.maintenance_bill_id = mb.id
+		$whereSql
+		ORDER BY mb.bill_year DESC, mb.bill_month DESC
+	");
+
+	$stmt->execute($params);
+	$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+	// ===== Excel Headers =====
+	header("Content-Type: application/vnd.ms-excel");
+	header("Content-Disposition: attachment; filename=maintenance_bills.xls");
+	header("Pragma: no-cache");
+	header("Expires: 0");
+
+	echo "Flat\tBlock\tMonth/Year\tAmount\tFine\tTotal\tStatus\tPayment Mode\tPaid On\tOverdue\n";
+
+	foreach ($rows as $row) {
+		echo implode("\t", [
+			$row['flat_number'],
+			$row['block_number'],
+			$row['month_year'],
+			$row['amount'],
+			$row['fine_amount'],
+			$row['total_amount'],
+			ucfirst($row['status']),
+			$row['payment_mode'] ?? '-',
+			$row['paid_on'] ?? '-',
+			$row['overdue']
+		]) . "\n";
+	}
+
 	exit;
 }
