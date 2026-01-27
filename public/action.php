@@ -1086,3 +1086,68 @@ if (isset($_GET['action']) && $_GET['action'] === 'export_all_bills') {
 
 	exit;
 }
+
+
+
+// Guards Fetch
+if (isset($_POST['action']) && $_POST['action'] === 'fetch_guards') {
+
+    $columns = [
+        'id',
+        'name',
+        'mobile',
+        'dob',
+        'gender',
+        'shift',
+        'joining_date',
+        'salary'
+    ];
+
+    $limit  = $_POST['length'];
+    $start  = $_POST['start'];
+    $order  = $columns[$_POST['order'][0]['column']];
+    $dir    = $_POST['order'][0]['dir'];
+    $search = $_POST['search']['value'];
+
+    $where = '';
+    $params = [];
+
+    if (!empty($search)) {
+        $where = "WHERE name LIKE ? OR mobile LIKE ?";
+        $params[] = "%$search%";
+        $params[] = "%$search%";
+    }
+
+    /* ===== TOTAL ===== */
+    $total = $pdo->query("SELECT COUNT(*) FROM security_guards")->fetchColumn();
+
+    /* ===== FILTERED ===== */
+    if ($where) {
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM security_guards $where");
+        $stmt->execute($params);
+        $filtered = $stmt->fetchColumn();
+    } else {
+        $filtered = $total;
+    }
+
+    /* ===== DATA ===== */
+    $sql = "
+        SELECT id, name, mobile, dob, gender, shift, joining_date, salary
+        FROM security_guards
+        $where
+        ORDER BY $order $dir
+        LIMIT $start, $limit
+    ";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+
+    echo json_encode([
+        "draw" => intval($_POST['draw']),
+        "recordsTotal" => $total,
+        "recordsFiltered" => $filtered,
+        "data" => $stmt->fetchAll(PDO::FETCH_ASSOC)
+    ]);
+    exit;
+}
+
