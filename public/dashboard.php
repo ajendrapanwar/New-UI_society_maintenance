@@ -12,11 +12,11 @@ header("Pragma: no-cache");
 
 // ACCESS CONTROL
 if (
-    !isset($_SESSION['user_id']) ||
-    !in_array($_SESSION['user_role'], ['admin', 'user'])
+	!isset($_SESSION['user_id']) ||
+	!in_array($_SESSION['user_role'], ['admin', 'user'])
 ) {
-    header('Location: ' . BASE_URL . 'logout.php');
-    exit();
+	header('Location: ' . BASE_URL . 'logout.php');
+	exit();
 }
 
 
@@ -165,7 +165,7 @@ include('../resources/layout/header.php');
 				</div>
 			</div>
 
-			<!-- Total Bills -->
+			<!-- Total Pending / Overdue Bills -->
 			<div class="col-xl-3 col-md-6">
 				<div class="card shadow-sm h-100">
 					<div class="card-body d-flex justify-content-between align-items-center">
@@ -258,42 +258,18 @@ include('../resources/layout/header.php');
 
 			<!--------------------- USER VIEW ---------------------->
 		<?php else: ?>
-			<!-- <div class="col-xl-3 col-md-6">
-				<div class="card shadow-sm h-100">
-					<div class="card-body d-flex justify-content-between align-items-center">
-						<div>
-							<div class="text-muted small">In-Process Complaints</div>
-							<div class="display-6 fw-bold"><?= $total_in_progress_complaints ?></div>
-						</div>
-						<i class="fa fa-spinner fa-2x text-info"></i>
-					</div>
-				</div>
-			</div>
-
+			<!-- User Pending / Overdue Bills -->
 			<div class="col-xl-3 col-md-6">
 				<div class="card shadow-sm h-100">
 					<div class="card-body d-flex justify-content-between align-items-center">
 						<div>
-							<div class="text-muted small">Unresolved</div>
-							<div class="display-6 fw-bold"><?= $total_unresolved_complaints ?></div>
+							<div class="text-muted small">Pending / Overdue Bills</div>
+							<div class="display-6 fw-bold"><?= $total_bills ?></div>
 						</div>
-						<i class="fa fa-exclamation-triangle fa-2x text-danger"></i>
+						<i class="fa fa-file-invoice fa-2x text-warning"></i>
 					</div>
 				</div>
 			</div>
-
-			<div class="col-xl-3 col-md-6">
-				<div class="card shadow-sm h-100">
-					<div class="card-body d-flex justify-content-between align-items-center">
-						<div>
-							<div class="text-muted small">Resolved</div>
-							<div class="display-6 fw-bold"><?= $total_resolved_complaints ?></div>
-						</div>
-						<i class="fa fa-check-circle fa-2x text-success"></i>
-					</div>
-				</div>
-			</div> -->
-
 		<?php endif; ?>
 	</div>
 </div>
