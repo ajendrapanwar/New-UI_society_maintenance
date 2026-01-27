@@ -85,45 +85,45 @@ requireRole(['admin', 'cashier', 'user']);
 
                             <!-- ADMIN MENU -->
                             <a class="nav-link" href="<?= BASE_URL ?>users.php">
-                                <i class="fa fa-users"></i> Users
+                                <i class="fa fa-users pe-1"></i> Users
                             </a>
 
                             <a class="nav-link" href="<?= BASE_URL ?>flats.php">
-                                <i class="fa fa-building"></i> Flats
+                                <i class="fa fa-building pe-1"></i> Flats
                             </a>
 
                             <a class="nav-link" href="<?= BASE_URL ?>allotments.php">
-                                <i class="fa fa-house-user"></i> Allotments
+                                <i class="fa fa-house-user pe-1"></i> Allotments
                             </a>
 
                             <a class="nav-link" href="<?= BASE_URL ?>maintanenceRate.php">
-                                <i class="fa fa-indian-rupee-sign"></i> Maintenance Rate
+                                <i class="fa fa-indian-rupee-sign pe-1"></i> Maintenance Rate
                             </a>
 
                             <a class="nav-link" href="<?= BASE_URL ?>maintanenceRecords.php">
-                                <i class="fa fa-file-invoice"></i> Maintenance Records
+                                <i class="fa fa-file-invoice pe-1"></i> Maintenance Records
                             </a>
 
                             <a class="nav-link" href="<?= BASE_URL ?>all_bill.php">
-                                <i class="fa fa-file-invoice"></i> Maintenance Bills
+                                <i class="fa fa-file-invoice pe-1"></i> Maintenance Bills
                             </a>
 
                         <?php elseif ($_SESSION['user_role'] === 'cashier'): ?>
 
                             <!-- CASHIER MENU -->
                             <a class="nav-link" href="<?= BASE_URL ?>maintanenceRecords.php">
-                                <i class="fa fa-file-invoice"></i> Maintenance Records
+                                <i class="fa fa-file-invoice pe-1"></i> Maintenance Records
                             </a>
 
                             <a class="nav-link" href="<?= BASE_URL ?>all_bill.php">
-                                <i class="fa fa-file-invoice"></i> Maintenance Bills
+                                <i class="fa fa-file-invoice pe-1"></i> Maintenance Bills
                             </a>
 
                         <?php else: ?>
 
                             <!-- USER MENU -->
                             <a class="nav-link" href="<?= BASE_URL ?>view/view_userMaintanenceBill.php">
-                                <i class="fa fa-receipt"></i> Maintenance Bills
+                                <i class="fa fa-receipt pe-1"></i> Maintenance Bills
                             </a>
 
                         <?php endif; ?>
