@@ -7,7 +7,7 @@ require_once __DIR__ . '/../core/config.php';
 // 	exit();
 // }
 
-requireRole(['admin','user']);
+requireRole(['admin','cashier','user']);
 
 $errors = [];
 $success = '';

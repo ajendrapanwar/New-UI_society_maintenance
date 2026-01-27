@@ -39,7 +39,7 @@ requireRole(['admin', 'cashier', 'user']);
 
         <!-- Brand -->
         <a class="navbar-brand ps-3 mt-1" href="<?= BASE_URL ?>dashboard.php">
-            Society Admin
+            Society Maintenance
         </a>
 
         <!-- Sidebar Toggle -->
