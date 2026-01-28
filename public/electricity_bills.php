@@ -1,9 +1,12 @@
 <?php
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+
 require_once __DIR__ . '/../core/config.php';
-
-/* ================= ACCESS CONTROL ================= */
 requireRole(['admin', 'cashier']);
-
 include __DIR__ . '/../resources/layout/header.php';
 ?>
 
@@ -15,13 +18,12 @@ include __DIR__ . '/../resources/layout/header.php';
 </style>
 
 <div class="container-fluid px-4">
-    <h1 class="mt-4">Security Guard Bills</h1>
+    <h1 class="mt-4">Electricity Bills</h1>
 
     <ol class="breadcrumb mb-4">
         <li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
-        <li class="breadcrumb-item active">Security Guard Bills</li>
+        <li class="breadcrumb-item active">Electricity Bills</li>
     </ol>
-
 
     <?php if (isset($_SESSION['success'])): ?>
         <div class="alert alert-success"><?= htmlspecialchars($_SESSION['success']) ?></div>
@@ -30,14 +32,18 @@ include __DIR__ . '/../resources/layout/header.php';
 
     <!-- TABLE -->
     <div class="card">
-
         <div class="card-header">
             <div class="row">
                 <div class="col-6">
-                    <h5 class="card-title">Security Guard</h5>
+                    <h5 class="card-title">Maintenance Bills Lists</h5>
                 </div>
                 <div class="col-6 text-end">
-                    <a href="<?= BASE_URL ?>guards.php" class="btn btn-primary btn-sm">View Guard</a>
+                    <button id="export-excel" class="btn btn-dark btn-sm">
+                        <i class="bi bi-file-earmark-excel"></i> Export Excel
+                    </button>
+                    <a href="<?= BASE_URL ?>add/add_electricity_bill.php" class="btn btn-success btn-sm">
+                        Add Electricity Bills
+                    </a>
                 </div>
             </div>
         </div>
@@ -45,6 +51,7 @@ include __DIR__ . '/../resources/layout/header.php';
         <!-- FILTERS -->
         <div class="card-body py-3">
             <div class="row align-items-end g-3">
+
                 <div class="col-md-2 col-sm-6">
                     <label class="filter-label">Month</label>
                     <select id="filter-month" class="form-select form-select-sm">
@@ -56,6 +63,7 @@ include __DIR__ . '/../resources/layout/header.php';
                         ?>
                     </select>
                 </div>
+
                 <div class="col-md-2 col-sm-6">
                     <label class="filter-label">Year</label>
                     <select id="filter-year" class="form-select form-select-sm">
@@ -68,6 +76,7 @@ include __DIR__ . '/../resources/layout/header.php';
                         ?>
                     </select>
                 </div>
+
                 <div class="col-md-2 col-sm-6">
                     <label class="filter-label">Status</label>
                     <select id="filter-status" class="form-select form-select-sm">
@@ -77,135 +86,161 @@ include __DIR__ . '/../resources/layout/header.php';
                         <option value="overdue">Overdue</option>
                     </select>
                 </div>
+
                 <div class="col-4 col-md-2 col-sm-3 d-grid">
                     <button id="reset-filters" class="btn btn-outline-dark btn-sm">
                         <i class="bi bi-arrow-counterclockwise"></i> Reset
                     </button>
                 </div>
-
-                <!-- EXPORT BUTTON (RIGHT SIDE) -->
-                <div class="col-4 col-md-2 col-sm-3 d-grid ms-auto">
-                    <button id="export-excel" class="btn btn-dark btn-sm">
-                        <i class="bi bi-file-earmark-excel"></i> Export Excel
-                    </button>
-                </div>
-
             </div>
         </div>
 
 
+        <div class="container-fluid px-4">
+            <table id="electricityTable" class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Total Amount</th>
+                        <th>Paid</th>
+                        <th>Pending</th>
+                        <th>Status</th>
+                        <th>Last Paid</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+            </table>
 
-        <!-- <div class="card-body">
-            <div class="table-responsive">
-                <table id="bills-table" class="table table-bordered table-striped">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Flat</th>
-                            <th>Block</th>
-                            <th>Month / Year</th>
-                            <th>Amount</th>
-                            <th>Fine</th>
-                            <th>Total</th>
-                            <th>Status</th>
-                            <th>Payment Mode</th>
-                            <th>Paid On</th>
-                            <th>Overdue</th>
-                        </tr>
-                    </thead>
-                </table>
-            </div>
-        </div> -->
+        </div>
+
+
     </div>
 </div>
 
-<?php include __DIR__ . '/../resources/layout/footer.php'; ?>
+
+<!-- PAY MODAL -->
+<div class="modal fade" id="payBillModal">
+    <div class="modal-dialog">
+        <form id="payBillForm">
+            <input type="hidden" name="bill_id" id="bill_id">
+
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5>Pay Electricity Bill</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <label>Paid Amount</label>
+                    <input type="number" step="0.01" name="paid_amount" class="form-control" required>
+
+                    <label class="mt-2">Payment Mode</label>
+                    <select name="payment_mode" class="form-control">
+                        <option value="cash">Cash</option>
+                        <option value="online">Online</option>
+                    </select>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-primary">Pay</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 
 <!-- DataTables -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.2/css/dataTables.bootstrap5.min.css">
 <script src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
 
-<!-- <script>
+<script>
     $(function() {
 
-        let table = $('#bills-table').DataTable({
+        let table = $('#electricityTable').DataTable({
             processing: true,
             serverSide: true,
-            searching: false, // ✅ DISABLE SEARCH BOX
-            pageLength: 10,
-            order: [
-                [2, 'desc']
-            ],
-
+            searching: false,
             ajax: {
                 url: '<?= BASE_URL ?>action.php',
                 type: 'POST',
                 data: function(d) {
-                    d.action = 'fetch_all_bills';
+                    d.action = 'fetch_electricity_bills';
                     d.month = $('#filter-month').val();
                     d.year = $('#filter-year').val();
                     d.status = $('#filter-status').val();
                 }
             },
-
             columns: [{
-                    data: 'flat_number'
-                },
-                {
-                    data: 'block_number'
-                },
-                {
                     data: 'month_year'
                 },
                 {
                     data: 'amount'
                 },
                 {
-                    data: 'fine'
+                    data: 'paid'
                 },
                 {
-                    data: 'total'
+                    data: 'pending'
                 },
                 {
                     data: 'status'
                 },
                 {
-                    data: 'payment_mode'
-                },
+                    data: 'last_paid'
+                }, // NEW COLUMN
                 {
-                    data: 'paid_on'
-                },
-                {
-                    data: 'overdue'
+                    data: 'action'
                 }
             ]
         });
 
-        $('#filter-month, #filter-year, #filter-status').on('change', function() {
+        // Filter change
+        $('#filter-month, #filter-year, #filter-status').change(function() {
             table.ajax.reload();
         });
 
-        $('#reset-filters').on('click', function() {
+        // Reset filters
+        $('#reset-filters').click(function() {
             $('#filter-month, #filter-year, #filter-status').val('');
             table.ajax.reload();
         });
+
+        // Open modal
+        $(document).on('click', '.pay-bill', function() {
+            $('#bill_id').val($(this).data('id'));
+            $('#payBillModal').modal('show');
+        });
+
+        // Submit payment
+        $('#payBillForm').submit(function(e) {
+            e.preventDefault();
+
+            $.post(
+                '<?= BASE_URL ?>action.php',
+                $(this).serialize() + '&action=pay_electricity_bill',
+                function() {
+                    $('#payBillModal').modal('hide');
+                    table.ajax.reload(null, false);
+                }
+            );
+        });
+
+        $('#export-excel').click(function() {
+            let month = $('#filter-month').val();
+            let year = $('#filter-year').val();
+            let status = $('#filter-status').val();
+
+            window.location.href = '<?= BASE_URL ?>action.php?action=electricity_bills_export_excel' +
+                '&month=' + month +
+                '&year=' + year +
+                '&status=' + status;
+        });
+
 
     });
 </script>
 
 
-<script>
-    $('#export-excel').on('click', function() {
-
-        let month = $('#filter-month').val();
-        let year = $('#filter-year').val();
-        let status = $('#filter-status').val();
-
-        let url = '<?= BASE_URL ?>action.php?action=export_all_bills' +
-            '&month=' + month +
-            '&year=' + year +
-            '&status=' + status;
-
-        window.location.href = url; // triggers download
-    });
-</script> -->
+<?php include __DIR__ . '/../resources/layout/footer.php'; ?>

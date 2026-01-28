@@ -22,6 +22,11 @@ requireRole(['admin', 'cashier', 'user']);
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery first -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
 
     <style>
         .nav-link {
@@ -64,7 +69,7 @@ requireRole(['admin', 'cashier', 'user']);
 
                 <div class="sb-sidenav-menu mt-3">
                     <div class="nav flex-column">
-                        <!-------------- Admin Sidebar -------------->
+                        <!---------------------------- Admin Sidebar ---------------------------->
                         <?php if ($_SESSION['user_role'] === 'admin'): ?>
                             <!-- COLLECTION -->
                             <a class="nav-link collapsed sidebar-toggle" data-target="#collectionMenu">
@@ -72,41 +77,45 @@ requireRole(['admin', 'cashier', 'user']);
                             </a>
                             <div class="collapse" id="collectionMenu" data-menu="collection">
                                 <nav class="nav flex-column ms-2">
-                                    <a class="nav-link" data-menu="collection" href="<?= BASE_URL ?>users.php"><i class="fa fa-users pe-1"></i> Users</a>
-                                    <a class="nav-link" data-menu="collection" href="<?= BASE_URL ?>flats.php"><i class="fa fa-building pe-1"></i> Flats</a>
-                                    <a class="nav-link" data-menu="collection" href="<?= BASE_URL ?>allotments.php"><i class="fa fa-house-user pe-1"></i> Allotments</a>
-                                    <a class="nav-link" data-menu="collection" href="<?= BASE_URL ?>maintanenceRate.php"><i class="fa fa-indian-rupee-sign pe-1"></i> Maintenance Rate</a>
-                                    <a class="nav-link" data-menu="collection" href="<?= BASE_URL ?>maintanenceRecords.php"><i class="fa fa-file-invoice pe-1"></i> Maintenance Records</a>
-                                    <a class="nav-link" data-menu="collection" href="<?= BASE_URL ?>all_bill.php"><i class="fa fa-file-invoice pe-1"></i> Maintenance Bills</a>
+                                    <a class="nav-link py-2" data-menu="collection" href="<?= BASE_URL ?>users.php"><i class="fa fa-users pe-1"></i> Users</a>
+                                    <a class="nav-link py-2" data-menu="collection" href="<?= BASE_URL ?>flats.php"><i class="fa fa-building pe-1"></i> Flats</a>
+                                    <a class="nav-link py-2" data-menu="collection" href="<?= BASE_URL ?>allotments.php"><i class="fa fa-house-user pe-1"></i> Allotments</a>
+                                    <a class="nav-link py-2" data-menu="collection" href="<?= BASE_URL ?>maintanenceRate.php"><i class="fa fa-indian-rupee-sign pe-1"></i> Maintenance Rate</a>
+                                    <a class="nav-link py-2" data-menu="collection" href="<?= BASE_URL ?>maintanenceRecords.php"><i class="fa fa-file-invoice pe-1"></i> Maintenance Records</a>
+                                    <a class="nav-link py-2" data-menu="collection" href="<?= BASE_URL ?>all_bill.php"><i class="fa fa-file-invoice pe-1"></i> Maintenance Bills</a>
                                 </nav>
                             </div>
 
                             <!-- EXPENSE -->
                             <a class="nav-link collapsed sidebar-toggle mt-2" data-target="#expenseMenu">
-                                <i class="fa fa-money-bill-wave pe-2"></i> Expense<i class="fas fa-angle-down float-end ps-1"></i>
+                                <i class="fa fa-money-bill-wave pe-2"></i> Expense
+                                <i class="fas fa-angle-down float-end ps-1"></i>
                             </a>
+
                             <div class="collapse" id="expenseMenu" data-menu="expense">
                                 <nav class="nav flex-column ms-2">
 
                                     <!-- SALARY SUB-DROPDOWN -->
-                                    <a class="nav-link collapsed sidebar-toggle mt-1" data-target="#salaryMenu">
-                                        <i class="fa fa-wallet pe-2"></i> Salary<i class="fas fa-angle-down float-end ps-1"></i>
+                                    <a class="nav-link collapsed sidebar-toggle py-2" data-target="#salaryMenu" data-parent="expenseMenu">
+                                        <i class="fa fa-wallet pe-2"></i> Salary
+                                        <i class="fas fa-angle-down float-end ps-1"></i>
                                     </a>
 
                                     <div class="collapse" id="salaryMenu">
                                         <nav class="nav flex-column ms-3">
-                                            <a class="nav-link" href="<?= BASE_URL ?>salary_security.php"><i class="fa fa-user-shield pe-1"></i> Security Salary</a>
-                                            <a class="nav-link" href="<?= BASE_URL ?>TEST.php"><i class="fa fa-user-shield pe-1"></i> TEST</a>
+                                            <a class="nav-link py-2" data-menu="expense" href="<?= BASE_URL ?>salary_security.php"><i class="fa fa-user-shield pe-1"></i> Security Salary</a>
+                                            <a class="nav-link py-2" data-menu="expense" href="<?= BASE_URL ?>salary_sweeper.php"> <i class="fa-solid fa-broom pe-1"></i> Sweeper Salary</a>
+                                            <a class="nav-link py-2" data-menu="expense" href="<?= BASE_URL ?>salary_garbageCollector.php"><i class="fa-solid fa-trash pe-1"></i> Garbage Collector Salary</a>
                                         </nav>
                                     </div>
                                 </nav>
+
                                 <!-- SINGLE LINK -->
-                                <a class="nav-link ms-2" href="<?= BASE_URL ?>monthly_bills.php">
-                                    <i class="fa fa-file-invoice pe-1"></i> Monthly Bills
-                                </a>
+                                <a class="nav-link py-2 ms-2" data-menu="expense" href="<?= BASE_URL ?>electricity_bills.php"><i class="fa fa-file-invoice pe-1"></i> Electricity Bill</a>
                             </div>
 
-                            <!-------------- Cashier Sidebar -------------->
+
+                            <!---------------------------- Cashier Sidebar ---------------------------->
                         <?php elseif ($_SESSION['user_role'] === 'cashier'): ?>
                             <!-- COLLECTION -->
                             <a class="nav-link collapsed sidebar-toggle" data-target="#collectionMenu">
@@ -121,31 +130,33 @@ requireRole(['admin', 'cashier', 'user']);
 
                             <!-- EXPENSE -->
                             <a class="nav-link collapsed sidebar-toggle mt-2" data-target="#expenseMenu">
-                                <i class="fa fa-money-bill-wave pe-2"></i> Expense<i class="fas fa-angle-down float-end ps-1"></i>
+                                <i class="fa fa-money-bill-wave pe-2"></i> Expense
+                                <i class="fas fa-angle-down float-end ps-1"></i>
                             </a>
+
                             <div class="collapse" id="expenseMenu" data-menu="expense">
                                 <nav class="nav flex-column ms-2">
 
                                     <!-- SALARY SUB-DROPDOWN -->
-                                    <a class="nav-link collapsed sidebar-toggle mt-1" data-target="#salaryMenu">
-                                        <i class="fa fa-wallet pe-2"></i> Salary<i class="fas fa-angle-down float-end ps-1"></i>
+                                    <a class="nav-link collapsed sidebar-toggle py-2" data-target="#salaryMenu" data-parent="expenseMenu">
+                                        <i class="fa fa-wallet pe-2"></i> Salary
+                                        <i class="fas fa-angle-down float-end ps-1"></i>
                                     </a>
 
                                     <div class="collapse" id="salaryMenu">
                                         <nav class="nav flex-column ms-3">
-                                            <a class="nav-link" href="<?= BASE_URL ?>salary_security.php"><i class="fa fa-user-shield pe-1"></i> Security Salary</a>
-                                            <a class="nav-link" href="<?= BASE_URL ?>salary_security.php"><i class="fa fa-user-shield pe-1"></i> Security Salary</a>
-                                            <a class="nav-link" href="<?= BASE_URL ?>salary_security.php"><i class="fa fa-user-shield pe-1"></i> Security Salary</a>
+                                            <a class="nav-link py-2" data-menu="expense" href="<?= BASE_URL ?>salary_security.php"><i class="fa fa-user-shield pe-1"></i> Security Salary</a>
+                                            <a class="nav-link py-2" data-menu="expense" href="<?= BASE_URL ?>salary_sweeper.php"> <i class="fa-solid fa-broom pe-1"></i> Sweeper Salary</a>
+                                            <a class="nav-link py-2" data-menu="expense" href="<?= BASE_URL ?>salary_garbageCollector.php"><i class="fa-solid fa-trash pe-1"></i> Garbage Collector Salary</a>
                                         </nav>
                                     </div>
                                 </nav>
+
                                 <!-- SINGLE LINK -->
-                                <a class="nav-link ms-2" href="<?= BASE_URL ?>monthly_bills.php">
-                                    <i class="fa fa-file-invoice pe-1"></i> Monthly Bills
-                                </a>
+                                <a class="nav-link py-2 ms-2" data-menu="expense" href="<?= BASE_URL ?>electricity_bills.php"><i class="fa fa-file-invoice pe-1"></i> Electricity Bill</a>
                             </div>
 
-                            <!-------------- User Sidebar -------------->
+                            <!---------------------------- User Sidebar ---------------------------->
                         <?php else: ?>
                             <a class="nav-link" href="<?= BASE_URL ?>view/view_userMaintanenceBill.php"><i class="fa fa-receipt pe-2"></i>My Bills
                             </a>
@@ -179,32 +190,45 @@ requireRole(['admin', 'cashier', 'user']);
                         const currentUrl = window.location.href;
 
                         document.querySelectorAll('.nav-link[href]').forEach(link => {
-                            if (currentUrl.includes(link.getAttribute('href'))) {
+                            const href = link.getAttribute('href');
+                            if (!href || !currentUrl.includes(href)) return;
 
-                                const menuType = link.getAttribute('data-menu');
-                                if (!menuType) return;
+                            // Highlight active link
+                            link.classList.add('active');
 
-                                const menu = document.querySelector(`#${menuType}Menu`);
-                                if (!menu) return;
+                            // Open parent menu
+                            const menuType = link.dataset.menu;
+                            if (menuType) {
+                                const parentMenu = document.getElementById(menuType + 'Menu');
+                                if (parentMenu) {
+                                    bootstrap.Collapse.getOrCreateInstance(parentMenu, {
+                                        toggle: true
+                                    });
+                                }
+                            }
 
-                                bootstrap.Collapse.getOrCreateInstance(menu, {
+                            // Open salary submenu if inside it
+                            const salaryMenu = link.closest('#salaryMenu');
+                            if (salaryMenu) {
+                                bootstrap.Collapse.getOrCreateInstance(salaryMenu, {
                                     toggle: true
                                 });
 
-                                // Optional: highlight active link
-                                link.classList.add('active');
+                                const expenseMenu = document.getElementById('expenseMenu');
+                                bootstrap.Collapse.getOrCreateInstance(expenseMenu, {
+                                    toggle: true
+                                });
                             }
                         });
 
-                        // Toggle click behavior
+                        // Sidebar toggle click
                         document.querySelectorAll('.sidebar-toggle').forEach(toggle => {
                             toggle.addEventListener('click', function(e) {
                                 e.preventDefault();
-
                                 const target = document.querySelector(this.dataset.target);
-                                if (!target) return;
-
-                                bootstrap.Collapse.getOrCreateInstance(target).toggle();
+                                if (target) {
+                                    bootstrap.Collapse.getOrCreateInstance(target).toggle();
+                                }
                             });
                         });
 

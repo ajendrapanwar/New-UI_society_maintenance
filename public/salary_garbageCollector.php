@@ -15,11 +15,11 @@ include __DIR__ . '/../resources/layout/header.php';
 </style>
 
 <div class="container-fluid px-4">
-    <h1 class="mt-4">Security Guard Bills</h1>
+    <h1 class="mt-4">Garbage Collector Bills</h1>
 
     <ol class="breadcrumb mb-4">
         <li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
-        <li class="breadcrumb-item active">Security Guard Bills</li>
+        <li class="breadcrumb-item active">Garbage Collector Bills</li>
     </ol>
 
 
@@ -34,10 +34,10 @@ include __DIR__ . '/../resources/layout/header.php';
         <div class="card-header">
             <div class="row">
                 <div class="col-6">
-                    <h5 class="card-title">Security Guard</h5>
+                    <h5 class="card-title">Garbage Collector</h5>
                 </div>
                 <div class="col-6 text-end">
-                    <a href="<?= BASE_URL ?>guards.php" class="btn btn-primary btn-sm">View Guard</a>
+                    <a href="<?= BASE_URL ?>garbageCollector.php" class="btn btn-primary btn-sm">View Garbage Collector</a>
                 </div>
             </div>
         </div>

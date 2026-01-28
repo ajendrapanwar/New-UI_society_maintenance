@@ -26,8 +26,8 @@ include('../resources/layout/header.php');
 
     <ol class="breadcrumb mb-4">
         <li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>salary_security.php">All Security Guard</a></li>
-        <li class="breadcrumb-item active">All Guard</li>
+        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>salary_security.php">Security Guard Bills</a></li>
+        <li class="breadcrumb-item active">View Guard</li>
     </ol>
 
     <?php if (!empty($_SESSION['success'])): ?>

@@ -1088,50 +1088,49 @@ if (isset($_GET['action']) && $_GET['action'] === 'export_all_bills') {
 }
 
 
-
 // Guards Fetch
 if (isset($_POST['action']) && $_POST['action'] === 'fetch_guards') {
 
-    $columns = [
-        'id',
-        'name',
-        'mobile',
-        'dob',
-        'gender',
-        'shift',
-        'joining_date',
-        'salary'
-    ];
+	$columns = [
+		'id',
+		'name',
+		'mobile',
+		'dob',
+		'gender',
+		'shift',
+		'joining_date',
+		'salary'
+	];
 
-    $limit  = $_POST['length'];
-    $start  = $_POST['start'];
-    $order  = $columns[$_POST['order'][0]['column']];
-    $dir    = $_POST['order'][0]['dir'];
-    $search = $_POST['search']['value'];
+	$limit  = $_POST['length'];
+	$start  = $_POST['start'];
+	$order  = $columns[$_POST['order'][0]['column']];
+	$dir    = $_POST['order'][0]['dir'];
+	$search = $_POST['search']['value'];
 
-    $where = '';
-    $params = [];
+	$where = '';
+	$params = [];
 
-    if (!empty($search)) {
-        $where = "WHERE name LIKE ? OR mobile LIKE ?";
-        $params[] = "%$search%";
-        $params[] = "%$search%";
-    }
+	if (!empty($search)) {
+		$where = "WHERE name LIKE ? OR mobile LIKE ?";
+		$params[] = "%$search%";
+		$params[] = "%$search%";
+	}
 
-    /* ===== TOTAL ===== */
-    $total = $pdo->query("SELECT COUNT(*) FROM security_guards")->fetchColumn();
+	/* ===== TOTAL ===== */
+	$total = $pdo->query("SELECT COUNT(*) FROM security_guards")->fetchColumn();
 
-    /* ===== FILTERED ===== */
-    if ($where) {
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM security_guards $where");
-        $stmt->execute($params);
-        $filtered = $stmt->fetchColumn();
-    } else {
-        $filtered = $total;
-    }
+	/* ===== FILTERED ===== */
+	if ($where) {
+		$stmt = $pdo->prepare("SELECT COUNT(*) FROM security_guards $where");
+		$stmt->execute($params);
+		$filtered = $stmt->fetchColumn();
+	} else {
+		$filtered = $total;
+	}
 
-    /* ===== DATA ===== */
-    $sql = "
+	/* ===== DATA ===== */
+	$sql = "
         SELECT id, name, mobile, dob, gender, shift, joining_date, salary
         FROM security_guards
         $where
@@ -1139,15 +1138,190 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_guards') {
         LIMIT $start, $limit
     ";
 
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
+	$stmt = $pdo->prepare($sql);
+	$stmt->execute($params);
 
-    echo json_encode([
-        "draw" => intval($_POST['draw']),
-        "recordsTotal" => $total,
-        "recordsFiltered" => $filtered,
-        "data" => $stmt->fetchAll(PDO::FETCH_ASSOC)
-    ]);
-    exit;
+	echo json_encode([
+		"draw" => intval($_POST['draw']),
+		"recordsTotal" => $total,
+		"recordsFiltered" => $filtered,
+		"data" => $stmt->fetchAll(PDO::FETCH_ASSOC)
+	]);
+	exit;
 }
 
+
+
+// FETCH ELECTRICITY BILLS
+if (isset($_POST['action']) && $_POST['action'] === 'fetch_electricity_bills') {
+
+	header('Content-Type: application/json');
+
+	$draw   = intval($_POST['draw'] ?? 0);
+	$start  = intval($_POST['start'] ?? 0);
+	$length = intval($_POST['length'] ?? 10);
+
+	$recordsTotal = $pdo->query("SELECT COUNT(*) FROM electricity_bills")->fetchColumn();
+	$recordsFiltered = $recordsTotal;
+
+	$stmt = $pdo->prepare("
+		SELECT
+			id,
+			month,
+			year,
+			amount,
+			paid_amount,
+			(amount - paid_amount) AS pending,
+			status,
+			last_paid_on
+		FROM electricity_bills
+		WHERE 1
+			" . (!empty($_POST['month']) ? " AND month = :month" : "") . "
+			" . (!empty($_POST['year']) ? " AND year = :year" : "") . "
+			" . (!empty($_POST['status']) ? " AND status = :status" : "") . "
+		ORDER BY year DESC, month DESC
+		LIMIT :start, :length
+	");
+
+
+	if (!empty($_POST['month'])) $stmt->bindValue(':month', (int)$_POST['month'], PDO::PARAM_INT);
+	if (!empty($_POST['year'])) $stmt->bindValue(':year', (int)$_POST['year'], PDO::PARAM_INT);
+	if (!empty($_POST['status'])) $stmt->bindValue(':status', $_POST['status'], PDO::PARAM_STR);
+
+
+	$stmt->bindValue(':start', $start, PDO::PARAM_INT);
+	$stmt->bindValue(':length', $length, PDO::PARAM_INT);
+	$stmt->execute();
+
+	$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	$data = [];
+
+	foreach ($rows as $r) {
+
+		$data[] = [
+			'month_year' => date('F', mktime(0, 0, 0, $r['month'], 1)) . ' ' . $r['year'],
+			'amount'     => '₹' . number_format($r['amount'], 2),
+			'paid'       => '₹' . number_format($r['paid_amount'], 2),
+			'pending'    => '₹' . number_format($r['pending'], 2),
+			'status'     => '<span class="badge bg-' .
+				($r['status'] == 'paid' ? 'success' : ($r['status'] == 'partial' ? 'info' : 'warning')) .
+				'">' . ucfirst($r['status']) . '</span>',
+			'last_paid'  => $r['last_paid_on'] ? date('d-M-Y', strtotime($r['last_paid_on'])) : '—',
+			'action'     =>
+			$r['status'] !== 'paid'
+				? '<button class="btn btn-sm btn-primary pay-bill" data-id="' . $r['id'] . '">Pay</button>'
+				: '<span class="text-muted">Paid</span>'
+		];
+	}
+
+	echo json_encode([
+		"draw" => $draw,
+		"recordsTotal" => $recordsTotal,
+		"recordsFiltered" => $recordsFiltered,
+		"data" => $data
+	]);
+	exit;
+}
+
+// 🔹 PAY ELECTRICITY BILL (POPUP SUBMIT)
+if (isset($_POST['action']) && $_POST['action'] === 'pay_electricity_bill') {
+
+	requireRole(['admin', 'cashier']);
+
+	$billId     = (int) $_POST['bill_id'];
+	$paidAmount = (float) $_POST['paid_amount'];
+	$mode       = $_POST['payment_mode'];
+
+	$stmt = $pdo->prepare("
+        SELECT amount, paid_amount
+        FROM electricity_bills
+        WHERE id = ?
+    ");
+	$stmt->execute([$billId]);
+	$bill = $stmt->fetch(PDO::FETCH_ASSOC);
+
+	if (!$bill) exit;
+
+	$newPaid = $bill['paid_amount'] + $paidAmount;
+	$status  = ($newPaid >= $bill['amount']) ? 'paid' : 'partial';
+
+	$pdo->beginTransaction();
+
+	// Payment history
+	$pdo->prepare("
+        INSERT INTO electricity_payments
+        (electricity_bill_id, paid_amount, payment_mode, paid_on)
+        VALUES (?, ?, ?, NOW())
+    ")->execute([$billId, $paidAmount, $mode]);
+
+	// Update bill
+	$pdo->prepare("
+        UPDATE electricity_bills
+        SET paid_amount = ?, status = ?, last_paid_on = NOW()
+        WHERE id = ?
+    ")->execute([$newPaid, $status, $billId]);
+
+	$pdo->commit();
+	exit;
+}
+
+
+// 🔹 EXPORT ELECTRICITY BILLS TO EXCEL
+if (isset($_GET['action']) && $_GET['action'] === 'electricity_bills_export_excel') {
+
+    requireRole(['admin', 'cashier']);
+
+    header("Content-Type: application/vnd.ms-excel");
+    header("Content-Disposition: attachment; filename=electricity_bills_" . date('Ymd_His') . ".xls");
+
+    // Get filters from GET
+    $month  = $_GET['month'] ?? '';
+    $year   = $_GET['year'] ?? '';
+    $status = $_GET['status'] ?? '';
+
+    $query = "SELECT month, year, amount, paid_amount, (amount - paid_amount) AS pending, status, last_paid_on FROM electricity_bills WHERE 1";
+    $params = [];
+
+    if (!empty($month)) {
+        $query .= " AND month = :month";
+        $params[':month'] = $month;
+    }
+    if (!empty($year)) {
+        $query .= " AND year = :year";
+        $params[':year'] = $year;
+    }
+    if (!empty($status)) {
+        $query .= " AND status = :status";
+        $params[':status'] = $status;
+    }
+
+    $stmt = $pdo->prepare($query);
+    $stmt->execute($params);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    echo "<table border='1'>";
+    echo "<tr>
+            <th>Month</th>
+            <th>Year</th>
+            <th>Total Amount</th>
+            <th>Paid</th>
+            <th>Pending</th>
+            <th>Status</th>
+            <th>Last Paid</th>
+          </tr>";
+
+    foreach ($rows as $r) {
+        echo "<tr>";
+        echo "<td>" . date('F', mktime(0, 0, 0, $r['month'], 1)) . "</td>";
+        echo "<td>{$r['year']}</td>";
+        echo "<td>₹" . number_format($r['amount'], 2) . "</td>";
+        echo "<td>₹" . number_format($r['paid_amount'], 2) . "</td>";
+        echo "<td>₹" . number_format($r['pending'], 2) . "</td>";
+        echo "<td>" . ucfirst($r['status']) . "</td>";
+        echo "<td>" . ($r['last_paid_on'] ? date('d-M-Y', strtotime($r['last_paid_on'])) : '—') . "</td>";
+        echo "</tr>";
+    }
+
+    echo "</table>";
+    exit;
+}
