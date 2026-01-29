@@ -35,7 +35,7 @@ include __DIR__ . '/../resources/layout/header.php';
         <div class="card-header">
             <div class="row">
                 <div class="col-6">
-                    <h5 class="card-title">Maintenance Bills Lists</h5>
+                    <h5 class="card-title">Electricity Bills Lists</h5>
                 </div>
                 <div class="col-6 text-end">
                     <button id="export-excel" class="btn btn-dark btn-sm">
@@ -100,7 +100,8 @@ include __DIR__ . '/../resources/layout/header.php';
             <table id="electricityTable" class="table table-bordered">
                 <thead>
                     <tr>
-                        <th>Month</th>
+                        <th>Month/Year</th>
+                        <th>Reading</th>
                         <th>Total Amount</th>
                         <th>Paid</th>
                         <th>Pending</th>
@@ -120,34 +121,60 @@ include __DIR__ . '/../resources/layout/header.php';
 
 <!-- PAY MODAL -->
 <div class="modal fade" id="payBillModal">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-md">
         <form id="payBillForm">
-            <input type="hidden" name="bill_id" id="bill_id">
 
             <div class="modal-content">
+
                 <div class="modal-header">
-                    <h5>Pay Electricity Bill</h5>
+                    <h5 class="modal-title">Pay Electricity Bill</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
 
                 <div class="modal-body">
-                    <label>Paid Amount</label>
-                    <input type="number" step="0.01" name="paid_amount" class="form-control" required>
+
+                    <input type="hidden" name="bill_id" id="bill_id">
+                    <input type="hidden" id="total_amount_hidden">
+                    <input type="hidden" id="paid_amount_hidden">
+
+                    <div class="mb-2">
+                        <label>Total Amount</label>
+                        <input type="text" id="total_amount" class="form-control" readonly>
+                    </div>
+
+                    <div class="mb-2">
+                        <label>Already Paid</label>
+                        <input type="text" id="already_paid" class="form-control" readonly>
+                    </div>
+
+                    <div class="mb-2">
+                        <label>Pending Amount</label>
+                        <input type="text" id="pending_amount" class="form-control" readonly>
+                    </div>
+
+                    <div class="mb-2">
+                        <label>Pay Amount</label>
+                        <input type="number" step="0.01" name="paid_amount" id="pay_amount" class="form-control" required>
+                    </div>
 
                     <label class="mt-2">Payment Mode</label>
                     <select name="payment_mode" class="form-control">
                         <option value="cash">Cash</option>
                         <option value="online">Online</option>
                     </select>
+
                 </div>
 
                 <div class="modal-footer">
-                    <button class="btn btn-primary">Pay</button>
+                    <button type="submit" class="btn btn-primary">Pay Now</button>
                 </div>
+
             </div>
+
         </form>
     </div>
 </div>
+
 
 
 <!-- DataTables -->
@@ -176,6 +203,9 @@ include __DIR__ . '/../resources/layout/header.php';
                     data: 'month_year'
                 },
                 {
+                    data: 'reading'
+                },
+                {
                     data: 'amount'
                 },
                 {
@@ -189,7 +219,7 @@ include __DIR__ . '/../resources/layout/header.php';
                 },
                 {
                     data: 'last_paid'
-                }, // NEW COLUMN
+                },
                 {
                     data: 'action'
                 }
@@ -209,13 +239,50 @@ include __DIR__ . '/../resources/layout/header.php';
 
         // Open modal
         $(document).on('click', '.pay-bill', function() {
-            $('#bill_id').val($(this).data('id'));
-            $('#payBillModal').modal('show');
+            let id = $(this).data('id');
+            $('#bill_id').val(id);
+
+            $.post('<?= BASE_URL ?>action.php', {
+                action: 'get_electricity_bill',
+                id: id
+            }, function(res) {
+
+                let total = parseFloat(res.amount);
+                let paid = parseFloat(res.paid_amount);
+                let pending = parseFloat(res.pending);
+
+                $('#total_amount').val('₹ ' + total.toFixed(2));
+                $('#already_paid').val('₹ ' + paid.toFixed(2));
+                $('#pending_amount').val('₹ ' + pending.toFixed(2));
+
+                $('#total_amount_hidden').val(total);
+                $('#paid_amount_hidden').val(paid);
+
+                $('#pay_amount').val('');
+                $('#payBillModal').modal('show');
+
+            }, 'json');
         });
+
 
         // Submit payment
         $('#payBillForm').submit(function(e) {
             e.preventDefault();
+
+            let pay = parseFloat($('#pay_amount').val());
+            let total = parseFloat($('#total_amount_hidden').val());
+            let paid = parseFloat($('#paid_amount_hidden').val());
+            let pending = total - paid;
+
+            if (pay > pending) {
+                alert("You cannot pay more than pending amount!");
+                return false;
+            }
+
+            if (paid + pay > total) {
+                alert("Payment exceeds total bill amount!");
+                return false;
+            }
 
             $.post(
                 '<?= BASE_URL ?>action.php',
@@ -227,6 +294,7 @@ include __DIR__ . '/../resources/layout/header.php';
             );
         });
 
+        // Export Excel
         $('#export-excel').click(function() {
             let month = $('#filter-month').val();
             let year = $('#filter-year').val();

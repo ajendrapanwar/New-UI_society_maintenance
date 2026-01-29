@@ -6,9 +6,16 @@ error_reporting(E_ALL);
 
 
 require_once __DIR__ . '/../../core/config.php';
+
 requireRole(['admin']);
 
 $errors = [];
+$monthError = '';
+$yearError  = '';
+$readingError = '';
+$amountError  = '';
+$fileError    = '';
+
 
 if (isset($_POST['add_electricity_bill'])) {
 
@@ -18,20 +25,37 @@ if (isset($_POST['add_electricity_bill'])) {
     $amount  = $_POST['amount'] ?? '';
 
     /* ===== VALIDATION ===== */
-    if (!ctype_digit($month) || $month < 1 || $month > 12)
-        $errors[] = 'Invalid month';
 
-    if (!ctype_digit($year))
-        $errors[] = 'Invalid year';
+    // Month
+    if (!ctype_digit($month) || $month < 1 || $month > 12) {
+        $monthError = "Please select a valid month";
+        $errors[] = 1;
+    }
 
-    if (!is_numeric($reading) || $reading <= 0)
-        $errors[] = 'Invalid meter reading';
+    // Year
+    if (!ctype_digit($year)) {
+        $yearError = "Please select a valid year";
+        $errors[] = 1;
+    }
 
-    if (!is_numeric($amount) || $amount <= 0)
-        $errors[] = 'Invalid amount';
+    // Meter Reading
+    if ($reading === '' || !is_numeric($reading) || $reading <= 0) {
+        $readingError = "Meter reading is required";
+        $errors[] = 1;
+    }
 
-    if (!isset($_FILES['bill_file']) || $_FILES['bill_file']['error'] !== 0)
-        $errors[] = 'Bill file is required';
+    // Amount
+    if ($amount === '' || !is_numeric($amount) || $amount <= 0) {
+        $amountError = "Amount is required";
+        $errors[] = 1;
+    }
+
+    // File
+    if (!isset($_FILES['bill_file']) || $_FILES['bill_file']['error'] !== 0) {
+        $fileError = "Bill file is required";
+        $errors[] = 1;
+    }
+
 
     /* ===== DUPLICATE MONTH CHECK ===== */
     if (!$errors) {
@@ -41,9 +65,12 @@ if (isset($_POST['add_electricity_bill'])) {
         $check->execute([$month, $year]);
 
         if ($check->fetch()) {
-            $errors[] = 'Electricity bill already exists for this month';
+            $monthError = "Electricity bill already exists for this month & year";
+            $yearError  = "Electricity bill already exists for this month & year";
+            $errors[] = "Duplicate month/year"; // global fail flag
         }
     }
+
 
     /* ===== FILE UPLOAD ===== */
     if (!$errors) {
@@ -81,7 +108,7 @@ if (isset($_POST['add_electricity_bill'])) {
         $stmt->execute([$month, $year, $reading, $amount, $fileName]);
 
         $_SESSION['success'] = 'Electricity bill added successfully';
-        header('Location: electricity_bills.php');
+        header('Location:' . BASE_URL . 'electricity_bills.php');
         exit;
     }
 }
@@ -95,7 +122,7 @@ include(__DIR__ . '/../../resources/layout/header.php');
     <ol class="breadcrumb mb-4">
         <li class="breadcrumb-item"><a href="../dashboard.php">Dashboard</a></li>
         <li class="breadcrumb-item"><a href="../electricity_bills.php">Electricity Bills
-</a></li>
+            </a></li>
         <li class="breadcrumb-item active">Add User</li>
     </ol>
 
@@ -113,37 +140,69 @@ include(__DIR__ . '/../../resources/layout/header.php');
 
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Month</label>
-                                <select name="bill_month" class="form-control" required>
+                                <select name="bill_month" class="form-control <?= $monthError ? 'is-invalid' : '' ?>" required>
                                     <option value="">Select Month</option>
                                     <?php for ($m = 1; $m <= 12; $m++): ?>
-                                        <option value="<?= $m ?>"><?= date('F', mktime(0, 0, 0, $m, 1)) ?></option>
+                                        <option value="<?= $m ?>" <?= ($month == $m) ? 'selected' : '' ?>>
+                                            <?= date('F', mktime(0, 0, 0, $m, 1)) ?>
+                                        </option>
                                     <?php endfor; ?>
                                 </select>
+
+                                <?php if ($monthError): ?>
+                                    <div class="invalid-feedback"><?= $monthError ?></div>
+                                <?php endif; ?>
                             </div>
+
 
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Year</label>
-                                <select name="bill_year" class="form-control" required>
+                                <select name="bill_year" class="form-control <?= $yearError ? 'is-invalid' : '' ?>" required>
                                     <option value="">Select Year</option>
                                     <?php for ($y = date('Y'); $y >= 2020; $y--): ?>
-                                        <option value="<?= $y ?>"><?= $y ?></option>
+                                        <option value="<?= $y ?>" <?= ($year == $y) ? 'selected' : '' ?>><?= $y ?></option>
                                     <?php endfor; ?>
                                 </select>
+
+                                <?php if ($yearError): ?>
+                                    <div class="invalid-feedback"><?= $yearError ?></div>
+                                <?php endif; ?>
                             </div>
+
 
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Meter Reading</label>
-                                <input type="number" step="0.01" name="reading" class="form-control" required>
+                                <input type="number" step="0.01" name="reading"
+                                    value="<?= htmlspecialchars($reading ?? '') ?>"
+                                    class="form-control <?= $readingError ? 'is-invalid' : '' ?>">
+
+                                <?php if ($readingError): ?>
+                                    <div class="invalid-feedback"><?= $readingError ?></div>
+                                <?php endif; ?>
                             </div>
+
 
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Amount</label>
-                                <input type="number" step="0.01" name="amount" class="form-control" required>
+                                <input type="number" step="0.01" name="amount"
+                                    value="<?= htmlspecialchars($amount ?? '') ?>"
+                                    class="form-control <?= $amountError ? 'is-invalid' : '' ?>">
+
+                                <?php if ($amountError): ?>
+                                    <div class="invalid-feedback"><?= $amountError ?></div>
+                                <?php endif; ?>
                             </div>
+
 
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Upload Bill</label>
-                                <input type="file" name="bill_file" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
+                                <input type="file" name="bill_file"
+                                    class="form-control <?= $fileError ? 'is-invalid' : '' ?>"
+                                    accept=".jpg,.jpeg,.png,.pdf">
+
+                                <?php if ($fileError): ?>
+                                    <div class="invalid-feedback"><?= $fileError ?></div>
+                                <?php endif; ?>
                             </div>
 
                         </div>

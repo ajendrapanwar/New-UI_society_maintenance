@@ -542,7 +542,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'mark_online_payment') {
 	exit;
 }
 
-// fetch_user_bills
+// FETCH USER BILLS
 if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills') {
 
 	header('Content-Type: application/json');
@@ -730,7 +730,6 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills') {
 	exit;
 }
 
-
 //	VIEW FOR USER PAY AND VIEW
 if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills_user') {
 
@@ -868,8 +867,6 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills_user') {
 	exit;
 }
 
-
-
 // FETCH ALL MAINTENANCE BILLS (NO SEARCH) Filters: Month | Year | Status
 if (isset($_POST['action']) && $_POST['action'] === 'fetch_all_bills') {
 
@@ -1001,9 +998,8 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_all_bills') {
 	exit;
 }
 
-
 // EXPORT ALL BILLS TO EXCEL
-if (isset($_GET['action']) && $_GET['action'] === 'export_all_bills') {
+if (isset($_GET['action']) && $_GET['action'] === 'export_all_maintenance_bills') {
 
 	requireRole(['admin', 'cashier']);
 
@@ -1088,6 +1084,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'export_all_bills') {
 }
 
 
+
+
 // Guards Fetch
 if (isset($_POST['action']) && $_POST['action'] === 'fetch_guards') {
 
@@ -1152,6 +1150,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_guards') {
 
 
 
+
 // FETCH ELECTRICITY BILLS
 if (isset($_POST['action']) && $_POST['action'] === 'fetch_electricity_bills') {
 
@@ -1169,6 +1168,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_electricity_bills') {
 			id,
 			month,
 			year,
+			reading,
 			amount,
 			paid_amount,
 			(amount - paid_amount) AS pending,
@@ -1200,13 +1200,14 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_electricity_bills') {
 
 		$data[] = [
 			'month_year' => date('F', mktime(0, 0, 0, $r['month'], 1)) . ' ' . $r['year'],
+			'reading'    => $r['reading'],
 			'amount'     => '₹' . number_format($r['amount'], 2),
 			'paid'       => '₹' . number_format($r['paid_amount'], 2),
 			'pending'    => '₹' . number_format($r['pending'], 2),
 			'status'     => '<span class="badge bg-' .
 				($r['status'] == 'paid' ? 'success' : ($r['status'] == 'partial' ? 'info' : 'warning')) .
 				'">' . ucfirst($r['status']) . '</span>',
-			'last_paid'  => $r['last_paid_on'] ? date('d-M-Y', strtotime($r['last_paid_on'])) : '—',
+			'last_paid'  => $r['last_paid_on'] ? date('d-M-Y', strtotime($r['last_paid_on'])) : '-',
 			'action'     =>
 			$r['status'] !== 'paid'
 				? '<button class="btn btn-sm btn-primary pay-bill" data-id="' . $r['id'] . '">Pay</button>'
@@ -1223,7 +1224,23 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_electricity_bills') {
 	exit;
 }
 
-// 🔹 PAY ELECTRICITY BILL (POPUP SUBMIT)
+// FETCH SINGLE ELECTRICITY BILL DETAILS
+if (isset($_POST['action']) && $_POST['action'] == 'get_electricity_bill') {
+
+	$id = (int) $_POST['id'];
+
+	$stmt = $pdo->prepare("SELECT amount, paid_amount FROM electricity_bills WHERE id=?");
+	$stmt->execute([$id]);
+	$bill = $stmt->fetch(PDO::FETCH_ASSOC);
+
+	if ($bill) {
+		$bill['pending'] = $bill['amount'] - $bill['paid_amount'];
+		echo json_encode($bill);
+	}
+	exit;
+}
+
+// PAY ELECTRICITY BILL (POPUP SUBMIT)
 if (isset($_POST['action']) && $_POST['action'] === 'pay_electricity_bill') {
 
 	requireRole(['admin', 'cashier']);
@@ -1254,6 +1271,11 @@ if (isset($_POST['action']) && $_POST['action'] === 'pay_electricity_bill') {
         VALUES (?, ?, ?, NOW())
     ")->execute([$billId, $paidAmount, $mode]);
 
+	if ($newPaid > $bill['amount']) {
+		echo "Invalid payment";
+		exit;
+	}
+
 	// Update bill
 	$pdo->prepare("
         UPDATE electricity_bills
@@ -1265,42 +1287,41 @@ if (isset($_POST['action']) && $_POST['action'] === 'pay_electricity_bill') {
 	exit;
 }
 
-
-// 🔹 EXPORT ELECTRICITY BILLS TO EXCEL
+// EXPORT ELECTRICITY BILLS TO EXCEL
 if (isset($_GET['action']) && $_GET['action'] === 'electricity_bills_export_excel') {
 
-    requireRole(['admin', 'cashier']);
+	requireRole(['admin', 'cashier']);
 
-    header("Content-Type: application/vnd.ms-excel");
-    header("Content-Disposition: attachment; filename=electricity_bills_" . date('Ymd_His') . ".xls");
+	header("Content-Type: application/vnd.ms-excel");
+	header("Content-Disposition: attachment; filename=electricity_bills_" . date('Ymd_His') . ".xls");
 
-    // Get filters from GET
-    $month  = $_GET['month'] ?? '';
-    $year   = $_GET['year'] ?? '';
-    $status = $_GET['status'] ?? '';
+	// Get filters from GET
+	$month  = $_GET['month'] ?? '';
+	$year   = $_GET['year'] ?? '';
+	$status = $_GET['status'] ?? '';
 
-    $query = "SELECT month, year, amount, paid_amount, (amount - paid_amount) AS pending, status, last_paid_on FROM electricity_bills WHERE 1";
-    $params = [];
+	$query = "SELECT month, year, amount, paid_amount, (amount - paid_amount) AS pending, status, last_paid_on FROM electricity_bills WHERE 1";
+	$params = [];
 
-    if (!empty($month)) {
-        $query .= " AND month = :month";
-        $params[':month'] = $month;
-    }
-    if (!empty($year)) {
-        $query .= " AND year = :year";
-        $params[':year'] = $year;
-    }
-    if (!empty($status)) {
-        $query .= " AND status = :status";
-        $params[':status'] = $status;
-    }
+	if (!empty($month)) {
+		$query .= " AND month = :month";
+		$params[':month'] = $month;
+	}
+	if (!empty($year)) {
+		$query .= " AND year = :year";
+		$params[':year'] = $year;
+	}
+	if (!empty($status)) {
+		$query .= " AND status = :status";
+		$params[':status'] = $status;
+	}
 
-    $stmt = $pdo->prepare($query);
-    $stmt->execute($params);
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	$stmt = $pdo->prepare($query);
+	$stmt->execute($params);
+	$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    echo "<table border='1'>";
-    echo "<tr>
+	echo "<table border='1'>";
+	echo "<tr>
             <th>Month</th>
             <th>Year</th>
             <th>Total Amount</th>
@@ -1310,18 +1331,21 @@ if (isset($_GET['action']) && $_GET['action'] === 'electricity_bills_export_exce
             <th>Last Paid</th>
           </tr>";
 
-    foreach ($rows as $r) {
-        echo "<tr>";
-        echo "<td>" . date('F', mktime(0, 0, 0, $r['month'], 1)) . "</td>";
-        echo "<td>{$r['year']}</td>";
-        echo "<td>₹" . number_format($r['amount'], 2) . "</td>";
-        echo "<td>₹" . number_format($r['paid_amount'], 2) . "</td>";
-        echo "<td>₹" . number_format($r['pending'], 2) . "</td>";
-        echo "<td>" . ucfirst($r['status']) . "</td>";
-        echo "<td>" . ($r['last_paid_on'] ? date('d-M-Y', strtotime($r['last_paid_on'])) : '—') . "</td>";
-        echo "</tr>";
-    }
+	foreach ($rows as $r) {
+		echo "<tr>";
+		echo "<td>" . date('F', mktime(0, 0, 0, $r['month'], 1)) . "</td>";
+		echo "<td>{$r['year']}</td>";
+		echo "<td>₹" . number_format($r['amount'], 2) . "</td>";
+		echo "<td>₹" . number_format($r['paid_amount'], 2) . "</td>";
+		echo "<td>₹" . number_format($r['pending'], 2) . "</td>";
+		echo "<td>" . ucfirst($r['status']) . "</td>";
+		echo "<td>" . ($r['last_paid_on'] ? date('d-M-Y', strtotime($r['last_paid_on'])) : '—') . "</td>";
+		echo "</tr>";
+	}
 
-    echo "</table>";
-    exit;
+	echo "</table>";
+	exit;
 }
+
+
+

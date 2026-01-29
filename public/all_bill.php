@@ -197,7 +197,7 @@ $('#export-excel').on('click', function () {
     let year   = $('#filter-year').val();
     let status = $('#filter-status').val();
 
-    let url = '<?= BASE_URL ?>action.php?action=export_all_bills'
+    let url = '<?= BASE_URL ?>action.php?action=export_all_maintenance_bills'
         + '&month=' + month
         + '&year=' + year
         + '&status=' + status;
