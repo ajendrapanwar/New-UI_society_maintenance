@@ -16,6 +16,11 @@ $readingError = '';
 $amountError  = '';
 $fileError    = '';
 
+$month   = '';
+$year    = '';
+$reading = '';
+$amount  = '';
+
 
 if (isset($_POST['add_electricity_bill'])) {
 
