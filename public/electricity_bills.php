@@ -83,7 +83,7 @@ include __DIR__ . '/../resources/layout/header.php';
                         <option value="">All Status</option>
                         <option value="paid">Paid</option>
                         <option value="pending">Pending</option>
-                        <option value="overdue">Overdue</option>
+                        <option value="partial">Partial</option>
                     </select>
                 </div>
 

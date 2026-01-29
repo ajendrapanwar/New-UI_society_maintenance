@@ -73,8 +73,7 @@ include __DIR__ . '/../resources/layout/header.php';
                     <select id="filter-status" class="form-select form-select-sm">
                         <option value="">All Status</option>
                         <option value="paid">Paid</option>
-                        <option value="pending">Pending</option>
-                        <option value="overdue">Overdue</option>
+                        <option value="unpaid">Unpaid</option>
                     </select>
                 </div>
                 <div class="col-4 col-md-2 col-sm-3 d-grid">
@@ -95,26 +94,25 @@ include __DIR__ . '/../resources/layout/header.php';
 
 
 
-        <!-- <div class="card-body">
+        <div class="card-body">
             <div class="table-responsive">
-                <table id="bills-table" class="table table-bordered table-striped">
+                <table id="guard-salary-table" class="table table-bordered table-striped">
                     <thead class="table-dark">
                         <tr>
-                            <th>Flat</th>
-                            <th>Block</th>
                             <th>Month / Year</th>
-                            <th>Amount</th>
-                            <th>Fine</th>
-                            <th>Total</th>
+                            <th>Name</th>
+                            <th>Mobile</th>
+                            <th>DOB</th>
+                            <th>Salary</th>
                             <th>Status</th>
-                            <th>Payment Mode</th>
                             <th>Paid On</th>
-                            <th>Overdue</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                 </table>
             </div>
-        </div> -->
+        </div>
+
     </div>
 </div>
 
@@ -125,58 +123,46 @@ include __DIR__ . '/../resources/layout/header.php';
 <script src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
 
-<!-- <script>
+<script>
     $(function() {
 
-        let table = $('#bills-table').DataTable({
+        let table = $('#guard-salary-table').DataTable({
             processing: true,
             serverSide: true,
-            searching: false, // ✅ DISABLE SEARCH BOX
-            pageLength: 10,
-            order: [
-                [2, 'desc']
-            ],
-
+            searching: false,
             ajax: {
-                url: '<?= BASE_URL ?>action.php',
-                type: 'POST',
+                url: "<?= BASE_URL ?>action.php",
+                type: "POST",
                 data: function(d) {
-                    d.action = 'fetch_all_bills';
+                    d.action = "fetch_guard_salary";
                     d.month = $('#filter-month').val();
                     d.year = $('#filter-year').val();
                     d.status = $('#filter-status').val();
                 }
             },
-
             columns: [{
-                    data: 'flat_number'
+                    data: "month_year"
                 },
                 {
-                    data: 'block_number'
+                    data: "name"
                 },
                 {
-                    data: 'month_year'
+                    data: "mobile"
                 },
                 {
-                    data: 'amount'
+                    data: "dob"
                 },
                 {
-                    data: 'fine'
+                    data: "salary"
                 },
                 {
-                    data: 'total'
+                    data: "status"
                 },
                 {
-                    data: 'status'
+                    data: "paid_on"
                 },
                 {
-                    data: 'payment_mode'
-                },
-                {
-                    data: 'paid_on'
-                },
-                {
-                    data: 'overdue'
+                    data: "action"
                 }
             ]
         });
@@ -190,22 +176,33 @@ include __DIR__ . '/../resources/layout/header.php';
             table.ajax.reload();
         });
 
+        $(document).on('click', '.pay-salary', function() {
+            let id = $(this).data('id');
+            if (!confirm("Are you sure to Mark salary PAID?")) return;
+
+            $.post("<?= BASE_URL ?>action.php", {
+                action: "mark_guard_salary_paid",
+                id: id
+            }, function() {
+                alert("Salary Paid Successfully");
+                table.ajax.reload();
+            });
+        });
+
     });
-</script>
 
-
-<script>
+    // Export Excel
     $('#export-excel').on('click', function() {
 
         let month = $('#filter-month').val();
         let year = $('#filter-year').val();
         let status = $('#filter-status').val();
 
-        let url = '<?= BASE_URL ?>action.php?action=export_all_bills' +
+        let url = '<?= BASE_URL ?>action.php?action=export_guard_salary' +
             '&month=' + month +
             '&year=' + year +
             '&status=' + status;
 
-        window.location.href = url; // triggers download
+        window.location.href = url;
     });
-</script> -->
+</script>

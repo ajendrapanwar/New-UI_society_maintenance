@@ -4,6 +4,7 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+
 require_once __DIR__ . '/../core/config.php';
 
 header("Expires: Tue, 01 Jan 2000 00:00:00 GMT");
@@ -139,6 +140,21 @@ include('../resources/layout/header.php');
 				</button>
 			<?php endif; ?>
 		<?php endif; ?> -->
+
+		<!-- <?php if ($_SESSION['user_role'] === 'admin'): ?>
+			<?php if (date('j') >= 28): ?>
+				<a href="manualGeneratecronSalary.php"
+					class="btn btn-success"
+					onclick="return confirm('Are you sure you want to run the maintenance billing job?');">
+					<i class="fa fa-gears me-1"></i> Generate Salary
+				</a>
+			<?php else: ?>
+				<button class="btn btn-outline-secondary" disabled>
+					<i class="fa fa-lock me-1"></i> Generate Salary (After 28th)
+				</button>
+			<?php endif; ?>
+		<?php endif; ?> -->
+
 	</div>
 
 	<!-- Breadcrumb -->
@@ -147,6 +163,7 @@ include('../resources/layout/header.php');
 			<li class="breadcrumb-item active">Dashboard</li>
 		</ol>
 	</nav>
+	
 
 	<!-- Cards -->
 	<div class="row g-4">

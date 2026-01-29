@@ -1349,3 +1349,433 @@ if (isset($_GET['action']) && $_GET['action'] === 'electricity_bills_export_exce
 
 
 
+// FETCH GUARD SALARY BILLS
+if (isset($_POST['action']) && $_POST['action'] === 'fetch_guard_salary') {
+
+	header('Content-Type: application/json');
+
+	$draw   = $_POST['draw'];
+	$start  = $_POST['start'];
+	$length = $_POST['length'];
+
+	// FILTER VALUES
+	$month  = $_POST['month'] ?? '';
+	$year   = $_POST['year'] ?? '';
+	$status = $_POST['status'] ?? '';
+
+	// WHERE CONDITIONS
+	$where = " WHERE 1 ";
+	$params = [];
+
+	if ($month != '') {
+		$where .= " AND gs.salary_month = ? ";
+		$params[] = $month;
+	}
+
+	if ($year != '') {
+		$where .= " AND gs.salary_year = ? ";
+		$params[] = $year;
+	}
+
+	if ($status != '') {
+		$where .= " AND gs.status = ? ";
+		$params[] = $status;
+	}
+
+	// TOTAL RECORDS
+	$stmtTotal = $pdo->prepare("SELECT COUNT(*) FROM guard_salary gs $where");
+	$stmtTotal->execute($params);
+	$recordsFiltered = $stmtTotal->fetchColumn();
+
+	// FETCH DATA
+	$sql = "
+        SELECT 
+            gs.id,
+            gs.salary_month,
+            gs.salary_year,
+            gs.salary_amount,
+            gs.status,
+            gs.paid_on,
+            g.name,
+            g.mobile,
+            g.dob
+        FROM guard_salary gs
+        JOIN security_guards g ON g.id = gs.guard_id
+        $where
+        ORDER BY gs.salary_year DESC, gs.salary_month DESC
+        LIMIT $start, $length
+    ";
+
+	$stmt = $pdo->prepare($sql);
+	$stmt->execute($params);
+	$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+	$data = [];
+
+	foreach ($rows as $r) {
+
+		$monthYear = date('F', mktime(0, 0, 0, $r['salary_month'], 1)) . ' ' . $r['salary_year'];
+
+		$statusBadge = $r['status'] == 'paid'
+			? '<span class="badge bg-success">Paid</span>'
+			: '<span class="badge bg-warning">Unpaid</span>';
+
+		if ($r['status'] == 'unpaid') {
+			$action = '<button class="btn btn-sm btn-primary pay-salary" data-id="' . $r['id'] . '">Pay</button>';
+		} else {
+			$action = '<span class="text-muted">Paid</span>';
+		}
+
+
+		$data[] = [
+			'month_year' => $monthYear,
+			'name'       => $r['name'],
+			'mobile'     => $r['mobile'],
+			'dob'        => date('d-m-Y', strtotime($r['dob'])),
+			'salary'     => '₹' . number_format($r['salary_amount'], 2),
+			'status'     => $statusBadge,
+			'paid_on'    => $r['paid_on'] ? date('d-m-Y H:i', strtotime($r['paid_on'])) : '-',
+			'action'     => $action
+		];
+	}
+
+	echo json_encode([
+		"draw" => $draw,
+		"recordsTotal" => $recordsFiltered,
+		"recordsFiltered" => $recordsFiltered,
+		"data" => $data
+	]);
+	exit;
+}
+
+// MARK GUARD SALARY PAID
+if (isset($_POST['action']) && $_POST['action'] == 'mark_guard_salary_paid') {
+
+	requireRole(['admin', 'cashier']);
+
+	$id = (int) $_POST['id'];
+
+	$pdo->prepare("
+        UPDATE guard_salary 
+        SET status='paid', paid_on=NOW()
+        WHERE id=?
+    ")->execute([$id]);
+
+	echo "success";
+	exit;
+}
+
+// EXPORT GUARD SALARY
+if (isset($_GET['action']) && $_GET['action'] == 'export_guard_salary') {
+
+	requireRole(['admin', 'cashier']);
+
+	$month  = $_GET['month'] ?? '';
+	$year   = $_GET['year'] ?? '';
+	$status = $_GET['status'] ?? '';
+
+	$where = " WHERE 1 ";
+	$params = [];
+
+	if ($month != '') {
+		$where .= " AND gs.salary_month = ? ";
+		$params[] = $month;
+	}
+	if ($year != '') {
+		$where .= " AND gs.salary_year = ? ";
+		$params[] = $year;
+	}
+	if ($status != '') {
+		$where .= " AND gs.status = ? ";
+		$params[] = $status;
+	}
+
+	$stmt = $pdo->prepare("
+        SELECT g.name, g.mobile, gs.salary_month, gs.salary_year, gs.salary_amount, gs.status, gs.paid_on
+        FROM guard_salary gs
+        JOIN security_guards g ON g.id = gs.guard_id
+        $where
+        ORDER BY gs.salary_year DESC, gs.salary_month DESC
+    ");
+	$stmt->execute($params);
+	$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+	header("Content-Type: application/vnd.ms-excel");
+	header("Content-Disposition: attachment; filename=guard_salary.xls");
+
+	echo "Name\tMobile\tMonth\tYear\tSalary\tStatus\tPaid On\n";
+
+	foreach ($rows as $r) {
+		echo "{$r['name']}\t{$r['mobile']}\t{$r['salary_month']}\t{$r['salary_year']}\t{$r['salary_amount']}\t{$r['status']}\t{$r['paid_on']}\n";
+	}
+	exit;
+}
+
+
+
+// FETCH GARBAGE SALARY
+if (isset($_POST['action']) && $_POST['action'] == "fetch_garbage_salary") {
+
+	header('Content-Type: application/json');
+
+	$draw = $_POST['draw'];
+	$start = $_POST['start'];
+	$length = $_POST['length'];
+
+	$month = $_POST['month'] ?? '';
+	$year = $_POST['year'] ?? '';
+	$status = $_POST['status'] ?? '';
+
+	$where = " WHERE 1 ";
+	$params = [];
+
+	if ($month != '') {
+		$where .= " AND gs.salary_month=? ";
+		$params[] = $month;
+	}
+	if ($year != '') {
+		$where .= " AND gs.salary_year=? ";
+		$params[] = $year;
+	}
+	if ($status != '') {
+		$where .= " AND gs.status=? ";
+		$params[] = $status;
+	}
+
+	$stmtTotal = $pdo->prepare("SELECT COUNT(*) FROM garbage_salary gs $where");
+	$stmtTotal->execute($params);
+	$records = $stmtTotal->fetchColumn();
+
+	$sql = "
+	SELECT gs.*, gc.name, gc.mobile, gc.dob
+	FROM garbage_salary gs
+	JOIN garbage_collectors gc ON gc.id=gs.collector_id
+	$where
+	ORDER BY gs.salary_year DESC, gs.salary_month DESC
+	LIMIT $start,$length
+	";
+	$stmt = $pdo->prepare($sql);
+	$stmt->execute($params);
+	$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+	$data = [];
+
+	foreach ($rows as $r) {
+		$monthYear = date('F', mktime(0, 0, 0, $r['salary_month'], 1)) . " " . $r['salary_year'];
+
+		$badge = $r['status'] == 'paid'
+			? '<span class="badge bg-success">Paid</span>'
+			: '<span class="badge bg-warning">Unpaid</span>';
+
+		$action = $r['status'] == 'unpaid'
+			? '<button class="btn btn-sm btn-primary pay-salary" data-id="' . $r['id'] . '">Pay</button>'
+			: '<span class="text-muted">Paid</span>';
+
+		$data[] = [
+			'month_year' => $monthYear,
+			'name' => $r['name'],
+			'mobile' => $r['mobile'],
+			'dob' => date('d-m-Y', strtotime($r['dob'])),
+			'salary' => '₹' . number_format($r['salary_amount'], 2),
+			'status' => $badge,
+			'paid_on' => $r['paid_on'] ? date('d-m-Y H:i', strtotime($r['paid_on'])) : '-',
+			'action' => $action
+		];
+	}
+
+	echo json_encode([
+		"draw" => $draw,
+		"recordsTotal" => $records,
+		"recordsFiltered" => $records,
+		"data" => $data
+	]);
+	exit;
+}
+
+// MARK GARBAGE SALARY PAID
+if (isset($_POST['action']) && $_POST['action'] == "mark_garbage_salary_paid") {
+	requireRole(['admin', 'cashier']);
+	$id = (int)$_POST['id'];
+	$pdo->prepare("UPDATE garbage_salary SET status='paid', paid_on=NOW() WHERE id=?")->execute([$id]);
+	echo "success";
+	exit;
+}
+
+// EXPORT GARBAGE SALARY
+if (isset($_GET['action']) && $_GET['action'] == "export_garbage_salary") {
+
+	requireRole(['admin', 'cashier']);
+
+	$month = $_GET['month'] ?? '';
+	$year = $_GET['year'] ?? '';
+	$status = $_GET['status'] ?? '';
+
+	$where = " WHERE 1 ";
+	$params = [];
+
+	if ($month != '') {
+		$where .= " AND gs.salary_month=? ";
+		$params[] = $month;
+	}
+	if ($year != '') {
+		$where .= " AND gs.salary_year=? ";
+		$params[] = $year;
+	}
+	if ($status != '') {
+		$where .= " AND gs.status=? ";
+		$params[] = $status;
+	}
+
+	$stmt = $pdo->prepare("
+	SELECT gc.name,gc.mobile,gs.salary_month,gs.salary_year,gs.salary_amount,gs.status,gs.paid_on
+	FROM garbage_salary gs
+	JOIN garbage_collectors gc ON gc.id=gs.collector_id
+	$where
+	");
+	$stmt->execute($params);
+	$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+	header("Content-Type: application/vnd.ms-excel");
+	header("Content-Disposition: attachment; filename=garbage_salary.xls");
+
+	echo "Name\tMobile\tMonth\tYear\tSalary\tStatus\tPaid On\n";
+	foreach ($rows as $r) {
+		echo "{$r['name']}\t{$r['mobile']}\t{$r['salary_month']}\t{$r['salary_year']}\t{$r['salary_amount']}\t{$r['status']}\t{$r['paid_on']}\n";
+	}
+	exit;
+}
+
+
+
+
+// FETCH SWEEPER SALARY
+if (isset($_POST['action']) && $_POST['action'] == "fetch_sweeper_salary") {
+
+	header('Content-Type: application/json');
+
+	$draw = $_POST['draw'];
+	$start = $_POST['start'];
+	$length = $_POST['length'];
+
+	$month = $_POST['month'] ?? '';
+	$year = $_POST['year'] ?? '';
+	$status = $_POST['status'] ?? '';
+
+	$where = " WHERE 1 ";
+	$params = [];
+
+	if ($month != '') {
+		$where .= " AND ss.salary_month=? ";
+		$params[] = $month;
+	}
+	if ($year != '') {
+		$where .= " AND ss.salary_year=? ";
+		$params[] = $year;
+	}
+	if ($status != '') {
+		$where .= " AND ss.status=? ";
+		$params[] = $status;
+	}
+
+	$stmtTotal = $pdo->prepare("SELECT COUNT(*) FROM sweeper_salary ss $where");
+	$stmtTotal->execute($params);
+	$records = $stmtTotal->fetchColumn();
+
+	$sql = "
+	SELECT ss.*, s.name, s.mobile, s.dob
+	FROM sweeper_salary ss
+	JOIN sweepers s ON s.id=ss.sweeper_id
+	$where
+	ORDER BY ss.salary_year DESC, ss.salary_month DESC
+	LIMIT $start,$length
+	";
+	$stmt = $pdo->prepare($sql);
+	$stmt->execute($params);
+	$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+	$data = [];
+
+	foreach ($rows as $r) {
+		$monthYear = date('F', mktime(0, 0, 0, $r['salary_month'], 1)) . " " . $r['salary_year'];
+
+		$badge = $r['status'] == 'paid'
+			? '<span class="badge bg-success">Paid</span>'
+			: '<span class="badge bg-warning">Unpaid</span>';
+
+		$action = $r['status'] == 'unpaid'
+			? '<button class="btn btn-sm btn-primary pay-salary" data-id="' . $r['id'] . '">Pay</button>'
+			: '<span class="text-muted">Paid</span>';
+
+		$data[] = [
+			'month_year' => $monthYear,
+			'name' => $r['name'],
+			'mobile' => $r['mobile'],
+			'dob' => date('d-m-Y', strtotime($r['dob'])),
+			'salary' => '₹' . number_format($r['salary_amount'], 2),
+			'status' => $badge,
+			'paid_on' => $r['paid_on'] ? date('d-m-Y H:i', strtotime($r['paid_on'])) : '-',
+			'action' => $action
+		];
+	}
+
+	echo json_encode([
+		"draw" => $draw,
+		"recordsTotal" => $records,
+		"recordsFiltered" => $records,
+		"data" => $data
+	]);
+	exit;
+}
+
+// MARK SWEEPER SALARY PAID
+if (isset($_POST['action']) && $_POST['action'] == "mark_sweeper_salary_paid") {
+	requireRole(['admin', 'cashier']);
+	$id = (int)$_POST['id'];
+	$pdo->prepare("UPDATE sweeper_salary SET status='paid', paid_on=NOW() WHERE id=?")->execute([$id]);
+	echo "success";
+	exit;
+}
+
+// EXPORT SWEEPER SALARY
+if (isset($_GET['action']) && $_GET['action'] == "export_sweeper_salary") {
+
+	requireRole(['admin', 'cashier']);
+
+	$month = $_GET['month'] ?? '';
+	$year = $_GET['year'] ?? '';
+	$status = $_GET['status'] ?? '';
+
+	$where = " WHERE 1 ";
+	$params = [];
+
+	if ($month != '') {
+		$where .= " AND ss.salary_month=? ";
+		$params[] = $month;
+	}
+	if ($year != '') {
+		$where .= " AND ss.salary_year=? ";
+		$params[] = $year;
+	}
+	if ($status != '') {
+		$where .= " AND ss.status=? ";
+		$params[] = $status;
+	}
+
+	$stmt = $pdo->prepare("
+	SELECT s.name,s.mobile,ss.salary_month,ss.salary_year,ss.salary_amount,ss.status,ss.paid_on
+	FROM sweeper_salary ss
+	JOIN sweepers s ON s.id=ss.sweeper_id
+	$where
+	");
+	$stmt->execute($params);
+	$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+	header("Content-Type: application/vnd.ms-excel");
+	header("Content-Disposition: attachment; filename=sweeper_salary.xls");
+
+	echo "Name\tMobile\tMonth\tYear\tSalary\tStatus\tPaid On\n";
+	foreach ($rows as $r) {
+		echo "{$r['name']}\t{$r['mobile']}\t{$r['salary_month']}\t{$r['salary_year']}\t{$r['salary_amount']}\t{$r['status']}\t{$r['paid_on']}\n";
+	}
+	exit;
+}
