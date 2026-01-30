@@ -157,9 +157,12 @@ include(__DIR__ . '/../../resources/layout/header.php');
 
 							<div class="col-md-6 mb-3">
 								<label class="form-label">Date of Birth</label>
-								<input type="text" class="form-control" name="user_dob" autocomplete="off" required
-									placeholder="dd/mm/yyyy"
-									value="<?= htmlspecialchars($dob ? date('d/m/Y', strtotime($dob)) : '') ?>">
+								<input type="date"
+									class="form-control"
+									name="user_dob"
+									required
+									value="<?= htmlspecialchars($dob) ?>">
+
 								<?php if (isset($errors['dob'])): ?><small class="text-danger"><?= $errors['dob'] ?></small><?php endif; ?>
 							</div>
 

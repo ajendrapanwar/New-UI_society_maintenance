@@ -4,24 +4,20 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+
 require_once __DIR__ . '/../core/config.php';
 
 header("Expires: Tue, 01 Jan 2000 00:00:00 GMT");
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Pragma: no-cache");
 
-// if (!isset($_SESSION['user_id'])) {
-// 	header('Location: ' . BASE_URL . 'logout.php');
-// 	exit;
-// }
-
-/* ================= ACCESS CONTROL ================= */
+// ACCESS CONTROL
 if (
-    !isset($_SESSION['user_id']) ||
-    !in_array($_SESSION['user_role'], ['admin', 'user'])
+	!isset($_SESSION['user_id']) ||
+	!in_array($_SESSION['user_role'], ['admin', 'user'])
 ) {
-    header('Location: ' . BASE_URL . 'logout.php');
-    exit();
+	header('Location: ' . BASE_URL . 'logout.php');
+	exit();
 }
 
 
@@ -31,17 +27,6 @@ $stmt = $pdo->query($sql);
 $total_flats = $stmt->fetch(PDO::FETCH_ASSOC)['total_flats'];
 
 $flat_id = '';
-
-// Get total bills
-// $sql = "SELECT COUNT(*) AS total_bills FROM bills";
-// if ($_SESSION['user_role'] == 'user') {
-// 	$stmt = $pdo->prepare('SELECT flat_id FROM allotments WHERE user_id = ?');
-// 	$stmt->execute([$_SESSION['user_id']]);
-// 	$flat_id = $stmt->fetch(PDO::FETCH_ASSOC)['flat_id'];
-// 	$sql .= " WHERE flat_id = '" . $flat_id . "'";
-// }
-// $stmt = $pdo->query($sql);
-// $total_bills = $stmt->fetch(PDO::FETCH_ASSOC)['total_bills'];
 
 // Get total pending/overdue bills
 if ($_SESSION['user_role'] === 'admin') {
@@ -80,6 +65,44 @@ $sql = "SELECT COUNT(*) AS total_allotments FROM allotments";
 $stmt = $pdo->query($sql);
 $total_allotments = $stmt->fetch(PDO::FETCH_ASSOC)['total_allotments'];
 
+// ================= TOTAL COLLECTION (PAID TOTAL) =================
+
+// Admin = all flats paid total
+if ($_SESSION['user_role'] === 'admin') {
+
+	$stmt = $pdo->prepare("
+        SELECT SUM(total_amount) AS total_collection
+        FROM maintenance_bills
+        WHERE status = 'paid'
+    ");
+	$stmt->execute();
+	$total_collection = $stmt->fetch(PDO::FETCH_ASSOC)['total_collection'] ?? 0;
+}
+// User = only his flat paid total
+else {
+	$stmt = $pdo->prepare("SELECT flat_id FROM allotments WHERE user_id = ?");
+	$stmt->execute([$_SESSION['user_id']]);
+	$flat_id = $stmt->fetch(PDO::FETCH_ASSOC)['flat_id'] ?? null;
+
+	if ($flat_id) {
+		$stmt = $pdo->prepare("
+            SELECT SUM(total_amount) AS total_collection
+            FROM maintenance_bills
+            WHERE status = 'paid' AND flat_id = ?
+        ");
+		$stmt->execute([$flat_id]);
+		$total_collection = $stmt->fetch(PDO::FETCH_ASSOC)['total_collection'] ?? 0;
+	} else {
+		$total_collection = 0;
+	}
+}
+
+// Format currency
+$total_collection = number_format($total_collection, 2);
+
+
+
+// <>
 // // Get total visitors
 // $sql = "SELECT COUNT(*) AS total_visitors FROM visitors";
 // if ($_SESSION['user_role'] == 'user') {
@@ -119,7 +142,7 @@ $total_allotments = $stmt->fetch(PDO::FETCH_ASSOC)['total_allotments'];
 // }
 // $stmt = $pdo->query($sql);
 // $total_complaints = $stmt->fetch(PDO::FETCH_ASSOC)['total_complaints'];
-
+// </>
 
 include('../resources/layout/header.php');
 
@@ -130,28 +153,43 @@ include('../resources/layout/header.php');
 	<!-- Header -->
 	<div class="d-flex flex-wrap justify-content-between align-items-center mt-4 mb-3 gap-2">
 		<h1 class="mb-0 fw-semibold">Dashboard</h1>
-
-		<!-- <?php if ($_SESSION['user_role'] === 'admin'): ?>
-			<?php if (date('j') >= 28): ?>
-				<a href="manualGenerateMonthlyBills.php.php"
-					class="btn btn-success"
-					onclick="return confirm('Are you sure you want to run the maintenance billing job?');">
-					<i class="fa fa-gears me-1"></i> Generate Bill
-				</a>
-			<?php else: ?>
-				<button class="btn btn-outline-secondary" disabled>
-					<i class="fa fa-lock me-1"></i> Generate Bill (After 28th)
-				</button>
+		<!-- Generate Bill OR Salary -->
+		<div>
+			<?php if ($_SESSION['user_role'] === 'admin'): ?>
+				<?php if (date('j') >= 28): ?>
+					<a href="manualGenerateMonthlyBills.php"
+						class="btn btn-success"
+						onclick="return confirm('Are you sure you want to run the maintenance billing job?');">
+						<i class="fa fa-gears me-1"></i> Generate Bill
+					</a>
+				<?php else: ?>
+					<button class="btn btn-outline-secondary" disabled>
+						<i class="fa fa-lock me-1"></i> Generate Bill (After 28th)
+					</button>
+				<?php endif; ?>
 			<?php endif; ?>
-		<?php endif; ?> -->
-	</div>
 
-	<!-- Breadcrumb -->
+			<?php if ($_SESSION['user_role'] === 'admin'): ?>
+				<?php if (date('j') >= 28): ?>
+					<a href="manualGeneratecronSalary.php"
+						class="btn btn-success"
+						onclick="return confirm('Are you sure you want to run the Salary billing job?');">
+						<i class="fa fa-gears me-1"></i> Generate Salary
+					</a>
+				<?php else: ?>
+					<button class="btn btn-outline-secondary" disabled>
+						<i class="fa fa-lock me-1"></i> Generate Salary (After 28th)
+					</button>
+				<?php endif; ?>
+			<?php endif; ?>
+		</div>
+	</div>
 	<nav aria-label="breadcrumb">
 		<ol class="breadcrumb mb-4">
 			<li class="breadcrumb-item active">Dashboard</li>
 		</ol>
 	</nav>
+
 
 	<!-- Cards -->
 	<div class="row g-4">
@@ -170,7 +208,7 @@ include('../resources/layout/header.php');
 				</div>
 			</div>
 
-			<!-- Total Bills -->
+			<!-- Total Pending / Overdue Bills -->
 			<div class="col-xl-3 col-md-6">
 				<div class="card shadow-sm h-100">
 					<div class="card-body d-flex justify-content-between align-items-center">
@@ -196,109 +234,124 @@ include('../resources/layout/header.php');
 				</div>
 			</div>
 
+
+			<nav aria-label="breadcrumb">
+				<ol class="breadcrumb mb-1">
+					<li class="breadcrumb-item active">Collection/Expense</li>
+				</ol>
+			</nav>
+
+			<!-- Total Collection -->
+			<div class="col-xl-3 col-md-6">
+				<a class="text-decoration-none" href="<?= BASE_URL ?>all_bill.php">
+					<div class="card shadow-sm h-100">
+						<div class="card-body d-flex justify-content-between align-items-center">
+							<div>
+								<div class="text-muted small">Total Collection</div>
+								<div class="fw-bold text-break text-success" style="font-size: 2.2rem;">₹ <?= $total_collection ?></div>
+							</div>
+						</div>
+					</div>
+				</a>
+			</div>
+
+			<!-- Total Expense -->
+			<div class="col-xl-3 col-md-6">
+				<a class="text-decoration-none" href="#">
+					<div class="card shadow-sm h-100">
+						<div class="card-body d-flex justify-content-between align-items-center">
+							<div>
+								<div class="text-muted small">Total Expense</div>
+								<div class="display-6 fw-bold text-danger">₹100000</div>
+								<!-- <div class="fw-bold text-break text-danger" style="font-size: 2.2rem;">₹ <?= $total_expense ?></div> -->
+							</div>
+						</div>
+					</div>
+				</a>
+			</div>
+
+
+			<!-- <> -->
 			<!-- In Process -->
 			<!-- <div class="col-xl-3 col-md-6">
-				<div class="card shadow-sm h-100">
-					<div class="card-body d-flex justify-content-between align-items-center">
-						<div>
-							<div class="text-muted small">In-Process Complaints</div>
-							<div class="display-6 fw-bold"><?= $total_in_progress_complaints ?></div>
+					<div class="card shadow-sm h-100">
+						<div class="card-body d-flex justify-content-between align-items-center">
+							<div>
+								<div class="text-muted small">In-Process Complaints</div>
+								<div class="display-6 fw-bold"><?= $total_in_progress_complaints ?></div>
+							</div>
+							<i class="fa fa-spinner fa-2x text-info"></i>
 						</div>
-						<i class="fa fa-spinner fa-2x text-info"></i>
 					</div>
-				</div>
-			</div> -->
+				</div> -->
 
 			<!-- Visitors -->
 			<!-- <div class="col-xl-3 col-md-6">
-				<div class="card shadow-sm h-100">
-					<div class="card-body d-flex justify-content-between align-items-center">
-						<div>
-							<div class="text-muted small">Total Visitors</div>
-							<div class="display-6 fw-bold"><?= $total_visitors ?></div>
+					<div class="card shadow-sm h-100">
+						<div class="card-body d-flex justify-content-between align-items-center">
+							<div>
+								<div class="text-muted small">Total Visitors</div>
+								<div class="display-6 fw-bold"><?= $total_visitors ?></div>
+							</div>
+							<i class="fa fa-users fa-2x text-secondary"></i>
 						</div>
-						<i class="fa fa-users fa-2x text-secondary"></i>
 					</div>
-				</div>
-			</div> -->
+				</div> -->
 
 			<!-- Unresolved -->
 			<!-- <div class="col-xl-3 col-md-6">
-				<div class="card shadow-sm h-100">
-					<div class="card-body d-flex justify-content-between align-items-center">
-						<div>
-							<div class="text-muted small">Unresolved</div>
-							<div class="display-6 fw-bold"><?= $total_unresolved_complaints ?></div>
+					<div class="card shadow-sm h-100">
+						<div class="card-body d-flex justify-content-between align-items-center">
+							<div>
+								<div class="text-muted small">Unresolved</div>
+								<div class="display-6 fw-bold"><?= $total_unresolved_complaints ?></div>
+							</div>
+							<i class="fa fa-exclamation-triangle fa-2x text-danger"></i>
 						</div>
-						<i class="fa fa-exclamation-triangle fa-2x text-danger"></i>
 					</div>
-				</div>
-			</div> -->
+				</div> -->
 
 			<!-- Resolved -->
 			<!-- <div class="col-xl-3 col-md-6">
-				<div class="card shadow-sm h-100">
-					<div class="card-body d-flex justify-content-between align-items-center">
-						<div>
-							<div class="text-muted small">Resolved</div>
-							<div class="display-6 fw-bold"><?= $total_resolved_complaints ?></div>
+					<div class="card shadow-sm h-100">
+						<div class="card-body d-flex justify-content-between align-items-center">
+							<div>
+								<div class="text-muted small">Resolved</div>
+								<div class="display-6 fw-bold"><?= $total_resolved_complaints ?></div>
+							</div>
+							<i class="fa fa-check-circle fa-2x text-success"></i>
 						</div>
-						<i class="fa fa-check-circle fa-2x text-success"></i>
 					</div>
-				</div>
-			</div> -->
+				</div> -->
 
 			<!-- Total Complaints -->
 			<!-- <div class="col-xl-3 col-md-6">
-				<div class="card shadow-sm h-100">
-					<div class="card-body d-flex justify-content-between align-items-center">
-						<div>
-							<div class="text-muted small">Total Complaints</div>
-							<div class="display-6 fw-bold"><?= $total_complaints ?></div>
+					<div class="card shadow-sm h-100">
+						<div class="card-body d-flex justify-content-between align-items-center">
+							<div>
+								<div class="text-muted small">Total Complaints</div>
+								<div class="display-6 fw-bold"><?= $total_complaints ?></div>
+							</div>
+							<i class="fa fa-list fa-2x text-primary"></i>
 						</div>
-						<i class="fa fa-list fa-2x text-primary"></i>
 					</div>
-				</div>
-			</div> -->
+				</div> -->
+			<!-- </> -->
 
 			<!--------------------- USER VIEW ---------------------->
 		<?php else: ?>
-			<!-- <div class="col-xl-3 col-md-6">
-				<div class="card shadow-sm h-100">
-					<div class="card-body d-flex justify-content-between align-items-center">
-						<div>
-							<div class="text-muted small">In-Process Complaints</div>
-							<div class="display-6 fw-bold"><?= $total_in_progress_complaints ?></div>
-						</div>
-						<i class="fa fa-spinner fa-2x text-info"></i>
-					</div>
-				</div>
-			</div>
-
+			<!-- User Pending / Overdue Bills -->
 			<div class="col-xl-3 col-md-6">
 				<div class="card shadow-sm h-100">
 					<div class="card-body d-flex justify-content-between align-items-center">
 						<div>
-							<div class="text-muted small">Unresolved</div>
-							<div class="display-6 fw-bold"><?= $total_unresolved_complaints ?></div>
+							<div class="text-muted small">Pending / Overdue Bills</div>
+							<div class="display-6 fw-bold"><?= $total_bills ?></div>
 						</div>
-						<i class="fa fa-exclamation-triangle fa-2x text-danger"></i>
+						<i class="fa fa-file-invoice fa-2x text-warning"></i>
 					</div>
 				</div>
 			</div>
-
-			<div class="col-xl-3 col-md-6">
-				<div class="card shadow-sm h-100">
-					<div class="card-body d-flex justify-content-between align-items-center">
-						<div>
-							<div class="text-muted small">Resolved</div>
-							<div class="display-6 fw-bold"><?= $total_resolved_complaints ?></div>
-						</div>
-						<i class="fa fa-check-circle fa-2x text-success"></i>
-					</div>
-				</div>
-			</div> -->
-
 		<?php endif; ?>
 	</div>
 </div>

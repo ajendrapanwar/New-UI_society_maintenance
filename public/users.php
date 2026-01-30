@@ -1,5 +1,6 @@
 <?php
-require_once __DIR__ . '/../core/config.php';
+
+include('../core/config.php');
 
 // if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 //     header('Location: ' . BASE_URL . 'logout.php');
@@ -41,7 +42,7 @@ include('../resources/layout/header.php');
     <div class="card">
         <div class="card-header">
             <div class="row">
-                <div class="col-6"><h5 class="card-title">Users Management</h5></div>
+                <div class="col-6"><h5 class="card-title">Users List</h5></div>
                 <div class="col-6 text-end">
                     <a href="<?= BASE_URL ?>add/add_users.php" class="btn btn-success btn-sm">Add User</a>
                 </div>
@@ -75,7 +76,7 @@ include('../resources/layout/header.php');
 <script src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
 
-<?php include __DIR__ . '/../resources/layout/footer.php'; ?>
+<?php include('../resources/layout/footer.php'); ?>
 
 <script>
     $(document).ready(function () {
