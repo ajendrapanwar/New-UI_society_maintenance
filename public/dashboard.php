@@ -126,34 +126,36 @@ include('../resources/layout/header.php');
 	<!-- Header -->
 	<div class="d-flex flex-wrap justify-content-between align-items-center mt-4 mb-3 gap-2">
 		<h1 class="mb-0 fw-semibold">Dashboard</h1>
-
-		<!-- <?php if ($_SESSION['user_role'] === 'admin'): ?>
-			<?php if (date('j') >= 28): ?>
-				<a href="manualGenerateMonthlyBills.php.php"
-					class="btn btn-success"
-					onclick="return confirm('Are you sure you want to run the maintenance billing job?');">
-					<i class="fa fa-gears me-1"></i> Generate Bill
-				</a>
-			<?php else: ?>
-				<button class="btn btn-outline-secondary" disabled>
-					<i class="fa fa-lock me-1"></i> Generate Bill (After 28th)
-				</button>
+		
+		<div>
+			<?php if ($_SESSION['user_role'] === 'admin'): ?>
+				<?php if (date('j') >= 28): ?>
+					<a href="manualGenerateMonthlyBills.php"
+						class="btn btn-success"
+						onclick="return confirm('Are you sure you want to run the maintenance billing job?');">
+						<i class="fa fa-gears me-1"></i> Generate Bill
+					</a>
+				<?php else: ?>
+					<button class="btn btn-outline-secondary" disabled>
+						<i class="fa fa-lock me-1"></i> Generate Bill (After 28th)
+					</button>
+				<?php endif; ?>
 			<?php endif; ?>
-		<?php endif; ?> -->
 
-		<!-- <?php if ($_SESSION['user_role'] === 'admin'): ?>
-			<?php if (date('j') >= 28): ?>
-				<a href="manualGeneratecronSalary.php"
-					class="btn btn-success"
-					onclick="return confirm('Are you sure you want to run the maintenance billing job?');">
-					<i class="fa fa-gears me-1"></i> Generate Salary
-				</a>
-			<?php else: ?>
-				<button class="btn btn-outline-secondary" disabled>
-					<i class="fa fa-lock me-1"></i> Generate Salary (After 28th)
-				</button>
+			<?php if ($_SESSION['user_role'] === 'admin'): ?>
+				<?php if (date('j') >= 28): ?>
+					<a href="manualGeneratecronSalary.php"
+						class="btn btn-success"
+						onclick="return confirm('Are you sure you want to run the maintenance billing job?');">
+						<i class="fa fa-gears me-1"></i> Generate Salary
+					</a>
+				<?php else: ?>
+					<button class="btn btn-outline-secondary" disabled>
+						<i class="fa fa-lock me-1"></i> Generate Salary (After 28th)
+					</button>
+				<?php endif; ?>
 			<?php endif; ?>
-		<?php endif; ?> -->
+		</div>
 
 	</div>
 
@@ -163,7 +165,7 @@ include('../resources/layout/header.php');
 			<li class="breadcrumb-item active">Dashboard</li>
 		</ol>
 	</nav>
-	
+
 
 	<!-- Cards -->
 	<div class="row g-4">
