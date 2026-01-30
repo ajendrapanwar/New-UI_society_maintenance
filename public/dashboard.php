@@ -64,6 +64,44 @@ if ($_SESSION['user_role'] === 'admin') {
 $sql = "SELECT COUNT(*) AS total_allotments FROM allotments";
 $stmt = $pdo->query($sql);
 $total_allotments = $stmt->fetch(PDO::FETCH_ASSOC)['total_allotments'];
+
+// ================= TOTAL COLLECTION (PAID TOTAL) =================
+
+// Admin = all flats paid total
+if ($_SESSION['user_role'] === 'admin') {
+
+	$stmt = $pdo->prepare("
+        SELECT SUM(total_amount) AS total_collection
+        FROM maintenance_bills
+        WHERE status = 'paid'
+    ");
+	$stmt->execute();
+	$total_collection = $stmt->fetch(PDO::FETCH_ASSOC)['total_collection'] ?? 0;
+}
+// User = only his flat paid total
+else {
+	$stmt = $pdo->prepare("SELECT flat_id FROM allotments WHERE user_id = ?");
+	$stmt->execute([$_SESSION['user_id']]);
+	$flat_id = $stmt->fetch(PDO::FETCH_ASSOC)['flat_id'] ?? null;
+
+	if ($flat_id) {
+		$stmt = $pdo->prepare("
+            SELECT SUM(total_amount) AS total_collection
+            FROM maintenance_bills
+            WHERE status = 'paid' AND flat_id = ?
+        ");
+		$stmt->execute([$flat_id]);
+		$total_collection = $stmt->fetch(PDO::FETCH_ASSOC)['total_collection'] ?? 0;
+	} else {
+		$total_collection = 0;
+	}
+}
+
+// Format currency
+$total_collection = number_format($total_collection, 2);
+
+
+
 // <>
 // // Get total visitors
 // $sql = "SELECT COUNT(*) AS total_visitors FROM visitors";
@@ -210,8 +248,7 @@ include('../resources/layout/header.php');
 						<div class="card-body d-flex justify-content-between align-items-center">
 							<div>
 								<div class="text-muted small">Total Collection</div>
-								<div class="display-6 fw-bold">200000</div>
-								<!-- <div class="display-6 fw-bold"><?= $total_flats ?></div> -->
+								<div class="fw-bold text-break text-success" style="font-size: 2.2rem;">₹ <?= $total_collection ?></div>
 							</div>
 						</div>
 					</div>
@@ -225,8 +262,8 @@ include('../resources/layout/header.php');
 						<div class="card-body d-flex justify-content-between align-items-center">
 							<div>
 								<div class="text-muted small">Total Expense</div>
-								<div class="display-6 fw-bold">100000</div>
-								<!-- <div class="display-6 fw-bold"><?= $total_bills ?></div> -->
+								<div class="display-6 fw-bold text-danger">₹100000</div>
+								<!-- <div class="fw-bold text-break text-danger" style="font-size: 2.2rem;">₹ <?= $total_expense ?></div> -->
 							</div>
 						</div>
 					</div>

@@ -89,6 +89,25 @@ include __DIR__ . '/../resources/layout/header.php';
                     </button>
                 </div>
             </div>
+
+            <!-- Grand Total, Paid Total, Pending/Overdue Total -->
+            <div class="row mt-5 text-center text-md-start">
+                <div class="col-md-4 col-12 mb-2">
+                    <strong>Grand Total:</strong>
+                    <span id="grandTotal"></span>
+                </div>
+
+                <div class="col-md-4 col-12 mb-2 text-success">
+                    <strong>Paid Total:</strong>
+                    <span id="paidTotal"></span>
+                </div>
+
+                <div class="col-md-4 col-12 mb-2 text-danger">
+                    <strong>Pending/Overdue Total:</strong>
+                    <span id="pendingTotal"></span>
+                </div>
+            </div>
+
         </div>
 
 
@@ -182,14 +201,42 @@ include __DIR__ . '/../resources/layout/header.php';
 
         $('#filter-month, #filter-year, #filter-status').on('change', function() {
             table.ajax.reload();
+            loadTotals();
         });
 
         $('#reset-filters').on('click', function() {
             $('#filter-month, #filter-year, #filter-status').val('');
             table.ajax.reload();
+            loadTotals();
         });
 
+        // Load totals on page load
+        loadTotals();
+
+
     });
+
+
+    function loadTotals() {
+
+        $.ajax({
+            url: '<?= BASE_URL ?>action.php',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'fetch_bill_totals',
+                month: $('#filter-month').val(),
+                year: $('#filter-year').val(),
+                status: $('#filter-status').val()
+            },
+            success: function(res) {
+                $('#grandTotal').text('₹' + res.grandTotal);
+                $('#paidTotal').text('₹' + res.paidTotal);
+                $('#pendingTotal').text('₹' + res.pendingTotal);
+            }
+        });
+    }
+
 
 
     $('#export-excel').on('click', function() {

@@ -867,7 +867,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills_user') {
 	exit;
 }
 
-// FETCH ALL MAINTENANCE BILLS (NO SEARCH) Filters: Month | Year | Status
+// FETCH ALL MAINTENANCE BILLS 
 if (isset($_POST['action']) && $_POST['action'] === 'fetch_all_bills') {
 
 	header('Content-Type: application/json');
@@ -994,6 +994,56 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_all_bills') {
 		"recordsTotal"    => intval($recordsTotal),
 		"recordsFiltered" => intval($recordsFiltered),
 		"data"            => $data
+	]);
+	exit;
+}
+
+// FETCH TOTALS FOR ALL MAINTENANCE BILLS 
+if (isset($_POST['action']) && $_POST['action'] === 'fetch_bill_totals') {
+
+	header('Content-Type: application/json');
+
+	$month  = $_POST['month'] ?? '';
+	$year   = $_POST['year'] ?? '';
+	$status = $_POST['status'] ?? '';
+
+	$where = " WHERE 1=1 ";
+	$params = [];
+
+	if (ctype_digit($month)) {
+		$where .= " AND bill_month = :month ";
+		$params[':month'] = $month;
+	}
+
+	if (ctype_digit($year)) {
+		$where .= " AND bill_year = :year ";
+		$params[':year'] = $year;
+	}
+
+	if (in_array($status, ['paid', 'pending', 'overdue'])) {
+		$where .= " AND status = :status ";
+		$params[':status'] = $status;
+	}
+
+	// Grand Total
+	$stmt = $pdo->prepare("SELECT SUM(total_amount) FROM maintenance_bills $where");
+	$stmt->execute($params);
+	$grandTotal = $stmt->fetchColumn() ?: 0;
+
+	// Paid Total
+	$stmt = $pdo->prepare("SELECT SUM(total_amount) FROM maintenance_bills $where AND status='paid'");
+	$stmt->execute($params);
+	$paidTotal = $stmt->fetchColumn() ?: 0;
+
+	// Pending + Overdue Total
+	$stmt = $pdo->prepare("SELECT SUM(total_amount) FROM maintenance_bills $where AND status IN ('pending','overdue')");
+	$stmt->execute($params);
+	$pendingTotal = $stmt->fetchColumn() ?: 0;
+
+	echo json_encode([
+		'grandTotal'   => number_format($grandTotal, 2),
+		'paidTotal'    => number_format($paidTotal, 2),
+		'pendingTotal' => number_format($pendingTotal, 2)
 	]);
 	exit;
 }
