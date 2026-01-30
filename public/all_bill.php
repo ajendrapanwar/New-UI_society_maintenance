@@ -127,8 +127,9 @@ include __DIR__ . '/../resources/layout/header.php';
         let table = $('#bills-table').DataTable({
             processing: true,
             serverSide: true,
-            searching: false, // ✅ DISABLE SEARCH BOX
-            pageLength: 10,
+            searching: false,
+            pageLength: 5,    
+            lengthMenu: [5, 10, 25, 50],
             order: [
                 [2, 'desc']
             ],
