@@ -47,7 +47,7 @@ include('../resources/layout/header.php');
 		<div class="card-header">
 			<div class="row">
 				<div class="col col-6">
-					<h5 class="card-title">Flats Management</h5>
+					<h5 class="card-title">Flats List</h5>
 				</div>
 				<div class="col col-6">
 					<div class="float-end"><a href="add/add_flats.php" class="btn btn-success btn-sm">Add</a></div>

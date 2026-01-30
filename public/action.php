@@ -1779,3 +1779,81 @@ if (isset($_GET['action']) && $_GET['action'] == "export_sweeper_salary") {
 	}
 	exit;
 }
+
+
+
+
+
+// FETCH MISCELLANEOUS WORKS
+// FETCH MISCELLANEOUS WORKS (UPDATED: Separate Month & Year)
+if (isset($_POST['action']) && $_POST['action'] === 'fetch_misc_works') {
+
+	header('Content-Type: application/json');
+
+	$columns = ['id', 'work_title', 'worker_name', 'contact_number', 'amount', 'description', 'month', 'year', 'created_at'];
+
+	$limit  = (int) $_POST['length'];
+	$start  = (int) $_POST['start'];
+	$order  = $columns[$_POST['order'][0]['column']];
+	$dir    = $_POST['order'][0]['dir'];
+	$search = $_POST['search']['value'];
+
+	$where = '';
+	$params = [];
+
+	if (!empty($search)) {
+		$where = "WHERE work_title LIKE :search OR worker_name LIKE :search OR contact_number LIKE :search";
+		$params[':search'] = "%$search%";
+	}
+
+	/* ===== TOTAL ===== */
+	$total = $pdo->query("SELECT COUNT(*) FROM miscellaneous_works")->fetchColumn();
+
+	/* ===== FILTERED ===== */
+	if ($where) {
+		$stmt = $pdo->prepare("SELECT COUNT(*) FROM miscellaneous_works $where");
+		$stmt->execute($params);
+		$filtered = $stmt->fetchColumn();
+	} else {
+		$filtered = $total;
+	}
+
+	/* ===== DATA ===== */
+	$sql = "
+        SELECT id, work_title, worker_name, contact_number, amount, description, month, year, created_at
+        FROM miscellaneous_works
+        $where
+        ORDER BY $order $dir
+        LIMIT $start, $limit
+    ";
+
+	$stmt = $pdo->prepare($sql);
+	$stmt->execute($params);
+	$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+	$data = [];
+	foreach ($rows as $r) {
+		// Convert month number (e.g. 2) to Name (e.g. February) for display
+		$monthName = date('F', mktime(0, 0, 0, $r['month'], 1));
+
+		$data[] = [
+			'id'          => $r['id'],
+			'work_title'  => htmlspecialchars($r['work_title']),
+			'worker_name' => htmlspecialchars($r['worker_name']),
+			'contact_number' => htmlspecialchars($r['contact_number']),
+			'amount'      => '₹' . number_format($r['amount'], 2),
+			'description' => strlen($r['description']) > 50 ? substr(htmlspecialchars($r['description']), 0, 50) . '...' : htmlspecialchars($r['description']),
+			'month'       => $monthName, // Separate Column 1
+			'year'        => $r['year'], // Separate Column 2
+			'created_at'  => date('d-m-Y', strtotime($r['created_at']))
+		];
+	}
+
+	echo json_encode([
+		"draw" => intval($_POST['draw']),
+		"recordsTotal" => $total,
+		"recordsFiltered" => $filtered,
+		"data" => $data
+	]);
+	exit;
+}

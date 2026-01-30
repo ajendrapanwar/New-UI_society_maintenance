@@ -34,7 +34,7 @@ include __DIR__ . '/../resources/layout/header.php';
         <div class="card-header">
             <div class="row">
                 <div class="col-6">
-                    <h5 class="card-title">Garbage Collector</h5>
+                    <h5 class="card-title">Garbage Collector Salary List</h5>
                 </div>
                 <div class="col-6 text-end">
                     <a href="<?= BASE_URL ?>garbageCollector.php" class="btn btn-primary btn-sm">View Garbage Collector</a>

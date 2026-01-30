@@ -52,6 +52,13 @@ include __DIR__ . '/../resources/layout/header.php';
 	<?php endif; ?>
 
 	<div class="card">
+		<div class="card-header">
+			<div class="row">
+				<div class="col col-6">
+					<h5 class="card-title">Maintanence Records List</h5>
+				</div>
+			</div>
+		</div>
 		<div class="card-body">
 			<div class="table-responsive">
 				<table class="table table-bordered table-striped" id="allotment-table">

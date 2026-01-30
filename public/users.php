@@ -42,7 +42,7 @@ include('../resources/layout/header.php');
     <div class="card">
         <div class="card-header">
             <div class="row">
-                <div class="col-6"><h5 class="card-title">Users Management</h5></div>
+                <div class="col-6"><h5 class="card-title">Users List</h5></div>
                 <div class="col-6 text-end">
                     <a href="<?= BASE_URL ?>add/add_users.php" class="btn btn-success btn-sm">Add User</a>
                 </div>

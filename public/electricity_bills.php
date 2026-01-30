@@ -35,16 +35,20 @@ include __DIR__ . '/../resources/layout/header.php';
         <div class="card-header">
             <div class="row">
                 <div class="col-6">
-                    <h5 class="card-title">Electricity Bills Lists</h5>
+                    <h5 class="card-title">Electricity Bills List</h5>
                 </div>
                 <div class="col-6 text-end">
                     <button id="export-excel" class="btn btn-dark btn-sm">
                         <i class="bi bi-file-earmark-excel"></i> Export Excel
                     </button>
-                    <a href="<?= BASE_URL ?>add/add_electricity_bill.php" class="btn btn-success btn-sm">
-                        Add Electricity Bills
-                    </a>
+
+                    <?php if ($_SESSION['user_role'] == 'admin') : ?>
+                        <a href="<?= BASE_URL ?>add/add_electricity_bill.php" class="btn btn-success btn-sm">
+                            Add Electricity Bills
+                        </a>
+                    <?php endif; ?>
                 </div>
+
             </div>
         </div>
 

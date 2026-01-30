@@ -93,6 +93,10 @@ requireRole(['admin', 'cashier', 'user']);
                             </a>
 
                             <div class="collapse" id="expenseMenu" data-menu="expense">
+
+                                <!-- SINGLE LINK -->
+                                <a class="nav-link py-2 ms-2" data-menu="expense" href="<?= BASE_URL ?>miscellaneous_work.php"><i class="fa fa-file-invoice pe-1"></i>Miscellaneous Work</a>
+
                                 <nav class="nav flex-column ms-2">
 
                                     <!-- SALARY SUB-DROPDOWN -->
@@ -135,6 +139,10 @@ requireRole(['admin', 'cashier', 'user']);
                             </a>
 
                             <div class="collapse" id="expenseMenu" data-menu="expense">
+
+                                <!-- SINGLE LINK -->
+                                <a class="nav-link py-2 ms-2" data-menu="expense" href="<?= BASE_URL ?>miscellaneous_work.php"><i class="fa fa-file-invoice pe-1"></i>Miscellaneous Work</a>
+
                                 <nav class="nav flex-column ms-2">
 
                                     <!-- SALARY SUB-DROPDOWN -->
