@@ -28,17 +28,6 @@ $total_flats = $stmt->fetch(PDO::FETCH_ASSOC)['total_flats'];
 
 $flat_id = '';
 
-// Get total bills
-// $sql = "SELECT COUNT(*) AS total_bills FROM bills";
-// if ($_SESSION['user_role'] == 'user') {
-// 	$stmt = $pdo->prepare('SELECT flat_id FROM allotments WHERE user_id = ?');
-// 	$stmt->execute([$_SESSION['user_id']]);
-// 	$flat_id = $stmt->fetch(PDO::FETCH_ASSOC)['flat_id'];
-// 	$sql .= " WHERE flat_id = '" . $flat_id . "'";
-// }
-// $stmt = $pdo->query($sql);
-// $total_bills = $stmt->fetch(PDO::FETCH_ASSOC)['total_bills'];
-
 // Get total pending/overdue bills
 if ($_SESSION['user_role'] === 'admin') {
 	// Admin sees all pending/overdue bills
@@ -75,7 +64,7 @@ if ($_SESSION['user_role'] === 'admin') {
 $sql = "SELECT COUNT(*) AS total_allotments FROM allotments";
 $stmt = $pdo->query($sql);
 $total_allotments = $stmt->fetch(PDO::FETCH_ASSOC)['total_allotments'];
-
+// <>
 // // Get total visitors
 // $sql = "SELECT COUNT(*) AS total_visitors FROM visitors";
 // if ($_SESSION['user_role'] == 'user') {
@@ -115,7 +104,7 @@ $total_allotments = $stmt->fetch(PDO::FETCH_ASSOC)['total_allotments'];
 // }
 // $stmt = $pdo->query($sql);
 // $total_complaints = $stmt->fetch(PDO::FETCH_ASSOC)['total_complaints'];
-
+// </>
 
 include('../resources/layout/header.php');
 
@@ -126,7 +115,7 @@ include('../resources/layout/header.php');
 	<!-- Header -->
 	<div class="d-flex flex-wrap justify-content-between align-items-center mt-4 mb-3 gap-2">
 		<h1 class="mb-0 fw-semibold">Dashboard</h1>
-		
+
 		<div>
 			<?php if ($_SESSION['user_role'] === 'admin'): ?>
 				<?php if (date('j') >= 28): ?>
@@ -210,70 +199,74 @@ include('../resources/layout/header.php');
 				</div>
 			</div>
 
-			<!-- In Process -->
-			<!-- <div class="col-xl-3 col-md-6">
-				<div class="card shadow-sm h-100">
-					<div class="card-body d-flex justify-content-between align-items-center">
-						<div>
-							<div class="text-muted small">In-Process Complaints</div>
-							<div class="display-6 fw-bold"><?= $total_in_progress_complaints ?></div>
-						</div>
-						<i class="fa fa-spinner fa-2x text-info"></i>
-					</div>
-				</div>
-			</div> -->
 
-			<!-- Visitors -->
-			<!-- <div class="col-xl-3 col-md-6">
-				<div class="card shadow-sm h-100">
-					<div class="card-body d-flex justify-content-between align-items-center">
-						<div>
-							<div class="text-muted small">Total Visitors</div>
-							<div class="display-6 fw-bold"><?= $total_visitors ?></div>
-						</div>
-						<i class="fa fa-users fa-2x text-secondary"></i>
-					</div>
-				</div>
-			</div> -->
 
-			<!-- Unresolved -->
-			<!-- <div class="col-xl-3 col-md-6">
-				<div class="card shadow-sm h-100">
-					<div class="card-body d-flex justify-content-between align-items-center">
-						<div>
-							<div class="text-muted small">Unresolved</div>
-							<div class="display-6 fw-bold"><?= $total_unresolved_complaints ?></div>
+			<>
+				<!-- In Process -->
+				<!-- <div class="col-xl-3 col-md-6">
+					<div class="card shadow-sm h-100">
+						<div class="card-body d-flex justify-content-between align-items-center">
+							<div>
+								<div class="text-muted small">In-Process Complaints</div>
+								<div class="display-6 fw-bold"><?= $total_in_progress_complaints ?></div>
+							</div>
+							<i class="fa fa-spinner fa-2x text-info"></i>
 						</div>
-						<i class="fa fa-exclamation-triangle fa-2x text-danger"></i>
 					</div>
-				</div>
-			</div> -->
+				</div> -->
 
-			<!-- Resolved -->
-			<!-- <div class="col-xl-3 col-md-6">
-				<div class="card shadow-sm h-100">
-					<div class="card-body d-flex justify-content-between align-items-center">
-						<div>
-							<div class="text-muted small">Resolved</div>
-							<div class="display-6 fw-bold"><?= $total_resolved_complaints ?></div>
+				<!-- Visitors -->
+				<!-- <div class="col-xl-3 col-md-6">
+					<div class="card shadow-sm h-100">
+						<div class="card-body d-flex justify-content-between align-items-center">
+							<div>
+								<div class="text-muted small">Total Visitors</div>
+								<div class="display-6 fw-bold"><?= $total_visitors ?></div>
+							</div>
+							<i class="fa fa-users fa-2x text-secondary"></i>
 						</div>
-						<i class="fa fa-check-circle fa-2x text-success"></i>
 					</div>
-				</div>
-			</div> -->
+				</div> -->
 
-			<!-- Total Complaints -->
-			<!-- <div class="col-xl-3 col-md-6">
-				<div class="card shadow-sm h-100">
-					<div class="card-body d-flex justify-content-between align-items-center">
-						<div>
-							<div class="text-muted small">Total Complaints</div>
-							<div class="display-6 fw-bold"><?= $total_complaints ?></div>
+				<!-- Unresolved -->
+				<!-- <div class="col-xl-3 col-md-6">
+					<div class="card shadow-sm h-100">
+						<div class="card-body d-flex justify-content-between align-items-center">
+							<div>
+								<div class="text-muted small">Unresolved</div>
+								<div class="display-6 fw-bold"><?= $total_unresolved_complaints ?></div>
+							</div>
+							<i class="fa fa-exclamation-triangle fa-2x text-danger"></i>
 						</div>
-						<i class="fa fa-list fa-2x text-primary"></i>
 					</div>
-				</div>
-			</div> -->
+				</div> -->
+
+				<!-- Resolved -->
+				<!-- <div class="col-xl-3 col-md-6">
+					<div class="card shadow-sm h-100">
+						<div class="card-body d-flex justify-content-between align-items-center">
+							<div>
+								<div class="text-muted small">Resolved</div>
+								<div class="display-6 fw-bold"><?= $total_resolved_complaints ?></div>
+							</div>
+							<i class="fa fa-check-circle fa-2x text-success"></i>
+						</div>
+					</div>
+				</div> -->
+
+				<!-- Total Complaints -->
+				<!-- <div class="col-xl-3 col-md-6">
+					<div class="card shadow-sm h-100">
+						<div class="card-body d-flex justify-content-between align-items-center">
+							<div>
+								<div class="text-muted small">Total Complaints</div>
+								<div class="display-6 fw-bold"><?= $total_complaints ?></div>
+							</div>
+							<i class="fa fa-list fa-2x text-primary"></i>
+						</div>
+					</div>
+				</div> -->
+			</>
 
 			<!--------------------- USER VIEW ---------------------->
 		<?php else: ?>
