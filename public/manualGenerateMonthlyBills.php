@@ -172,7 +172,8 @@ if ($currentDay >= 8) {
 
 <body class="bg-light">
     <div class="container mt-5">
-        <div class="card shadow-sm">
+        <!-- mx-auto centers the card, max-width: 550px makes it small -->
+        <div class="card shadow-sm mx-auto" style="max-width: 550px; margin-top:4rem">
             <div class="card-header bg-primary text-white">
                 <h4 class="mb-0"><i class="fa fa-clipboard-list me-2"></i>Maintenance Job Result</h4>
             </div>
@@ -210,7 +211,7 @@ if ($currentDay >= 8) {
                 </div>
 
                 <div class="text-center mt-4">
-                    <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
+                    <a href="dashboard.php" class="btn btn-dark">Back to Dashboard</a>
                 </div>
             </div>
             <div class="card-footer text-muted text-center">

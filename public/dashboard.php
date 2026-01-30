@@ -146,7 +146,7 @@ include('../resources/layout/header.php');
 				<?php if (date('j') >= 28): ?>
 					<a href="manualGeneratecronSalary.php"
 						class="btn btn-success"
-						onclick="return confirm('Are you sure you want to run the maintenance billing job?');">
+						onclick="return confirm('Are you sure you want to run the Salary billing job?');">
 						<i class="fa fa-gears me-1"></i> Generate Salary
 					</a>
 				<?php else: ?>
