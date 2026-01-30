@@ -115,7 +115,7 @@ include('../resources/layout/header.php');
 	<!-- Header -->
 	<div class="d-flex flex-wrap justify-content-between align-items-center mt-4 mb-3 gap-2">
 		<h1 class="mb-0 fw-semibold">Dashboard</h1>
-
+		<!-- Generate Bill OR Salary -->
 		<div>
 			<?php if ($_SESSION['user_role'] === 'admin'): ?>
 				<?php if (date('j') >= 28): ?>
@@ -145,10 +145,7 @@ include('../resources/layout/header.php');
 				<?php endif; ?>
 			<?php endif; ?>
 		</div>
-
 	</div>
-
-	<!-- Breadcrumb -->
 	<nav aria-label="breadcrumb">
 		<ol class="breadcrumb mb-4">
 			<li class="breadcrumb-item active">Dashboard</li>
@@ -200,10 +197,46 @@ include('../resources/layout/header.php');
 			</div>
 
 
+			<nav aria-label="breadcrumb">
+				<ol class="breadcrumb mb-1">
+					<li class="breadcrumb-item active">Collection/Expense</li>
+				</ol>
+			</nav>
 
-			<>
-				<!-- In Process -->
-				<!-- <div class="col-xl-3 col-md-6">
+			<!-- Total Collection -->
+			<div class="col-xl-3 col-md-6">
+				<a class="text-decoration-none" href="<?= BASE_URL ?>all_bill.php">
+					<div class="card shadow-sm h-100">
+						<div class="card-body d-flex justify-content-between align-items-center">
+							<div>
+								<div class="text-muted small">Total Collection</div>
+								<div class="display-6 fw-bold">200000</div>
+								<!-- <div class="display-6 fw-bold"><?= $total_flats ?></div> -->
+							</div>
+						</div>
+					</div>
+				</a>
+			</div>
+
+			<!-- Total Expense -->
+			<div class="col-xl-3 col-md-6">
+				<a class="text-decoration-none" href="#">
+					<div class="card shadow-sm h-100">
+						<div class="card-body d-flex justify-content-between align-items-center">
+							<div>
+								<div class="text-muted small">Total Expense</div>
+								<div class="display-6 fw-bold">100000</div>
+								<!-- <div class="display-6 fw-bold"><?= $total_bills ?></div> -->
+							</div>
+						</div>
+					</div>
+				</a>
+			</div>
+
+
+			<!-- <> -->
+			<!-- In Process -->
+			<!-- <div class="col-xl-3 col-md-6">
 					<div class="card shadow-sm h-100">
 						<div class="card-body d-flex justify-content-between align-items-center">
 							<div>
@@ -215,8 +248,8 @@ include('../resources/layout/header.php');
 					</div>
 				</div> -->
 
-				<!-- Visitors -->
-				<!-- <div class="col-xl-3 col-md-6">
+			<!-- Visitors -->
+			<!-- <div class="col-xl-3 col-md-6">
 					<div class="card shadow-sm h-100">
 						<div class="card-body d-flex justify-content-between align-items-center">
 							<div>
@@ -228,8 +261,8 @@ include('../resources/layout/header.php');
 					</div>
 				</div> -->
 
-				<!-- Unresolved -->
-				<!-- <div class="col-xl-3 col-md-6">
+			<!-- Unresolved -->
+			<!-- <div class="col-xl-3 col-md-6">
 					<div class="card shadow-sm h-100">
 						<div class="card-body d-flex justify-content-between align-items-center">
 							<div>
@@ -241,8 +274,8 @@ include('../resources/layout/header.php');
 					</div>
 				</div> -->
 
-				<!-- Resolved -->
-				<!-- <div class="col-xl-3 col-md-6">
+			<!-- Resolved -->
+			<!-- <div class="col-xl-3 col-md-6">
 					<div class="card shadow-sm h-100">
 						<div class="card-body d-flex justify-content-between align-items-center">
 							<div>
@@ -254,8 +287,8 @@ include('../resources/layout/header.php');
 					</div>
 				</div> -->
 
-				<!-- Total Complaints -->
-				<!-- <div class="col-xl-3 col-md-6">
+			<!-- Total Complaints -->
+			<!-- <div class="col-xl-3 col-md-6">
 					<div class="card shadow-sm h-100">
 						<div class="card-body d-flex justify-content-between align-items-center">
 							<div>
@@ -266,7 +299,7 @@ include('../resources/layout/header.php');
 						</div>
 					</div>
 				</div> -->
-			</>
+			<!-- </> -->
 
 			<!--------------------- USER VIEW ---------------------->
 		<?php else: ?>

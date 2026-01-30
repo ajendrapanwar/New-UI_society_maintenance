@@ -30,9 +30,11 @@ include __DIR__ . '/../resources/layout/header.php';
     <!-- TABLE -->
     <div class="card">
 
-         <div class="card-header">
+        <div class="card-header">
             <div class="row">
-                <div class="col-6"><h5 class="card-title">Maintenance Bills List</h5></div>
+                <div class="col-6">
+                    <h5 class="card-title">Maintenance Bills List</h5>
+                </div>
                 <div class="col-6 text-end">
                     <!-- <a href="<?= BASE_URL ?>guards.php" class="btn btn-primary btn-sm">View Guard</a> -->
                     <button id="export-excel" class="btn btn-dark btn-sm">
@@ -128,7 +130,7 @@ include __DIR__ . '/../resources/layout/header.php';
             processing: true,
             serverSide: true,
             searching: false,
-            pageLength: 5,    
+            pageLength: 5,
             lengthMenu: [5, 10, 25, 50],
             order: [
                 [2, 'desc']
@@ -188,21 +190,19 @@ include __DIR__ . '/../resources/layout/header.php';
         });
 
     });
-</script>
 
 
-<script>
-$('#export-excel').on('click', function () {
+    $('#export-excel').on('click', function() {
 
-    let month  = $('#filter-month').val();
-    let year   = $('#filter-year').val();
-    let status = $('#filter-status').val();
+        let month = $('#filter-month').val();
+        let year = $('#filter-year').val();
+        let status = $('#filter-status').val();
 
-    let url = '<?= BASE_URL ?>action.php?action=export_all_maintenance_bills'
-        + '&month=' + month
-        + '&year=' + year
-        + '&status=' + status;
+        let url = '<?= BASE_URL ?>action.php?action=export_all_maintenance_bills' +
+            '&month=' + month +
+            '&year=' + year +
+            '&status=' + status;
 
-    window.location.href = url; // triggers download
-});
+        window.location.href = url;
+    });
 </script>

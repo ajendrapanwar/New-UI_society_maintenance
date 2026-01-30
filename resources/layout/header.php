@@ -82,7 +82,7 @@ requireRole(['admin', 'cashier', 'user']);
                                     <a class="nav-link py-2" data-menu="collection" href="<?= BASE_URL ?>allotments.php"><i class="fa fa-house-user pe-1"></i> Allotments</a>
                                     <a class="nav-link py-2" data-menu="collection" href="<?= BASE_URL ?>maintanenceRate.php"><i class="fa fa-indian-rupee-sign pe-1"></i> Maintenance Rate</a>
                                     <a class="nav-link py-2" data-menu="collection" href="<?= BASE_URL ?>maintanenceRecords.php"><i class="fa fa-file-invoice pe-1"></i> Maintenance Records</a>
-                                    <a class="nav-link py-2" data-menu="collection" href="<?= BASE_URL ?>all_bill.php"><i class="fa fa-file-invoice pe-1"></i> Maintenance Bills</a>
+                                    <!-- <a class="nav-link py-2" data-menu="collection" href="<?= BASE_URL ?>all_bill.php"><i class="fa fa-file-invoice pe-1"></i> Maintenance Bills</a> -->
                                 </nav>
                             </div>
 
