@@ -115,7 +115,7 @@ requireRole(['admin', 'cashier', 'user']);
                                 </nav>
 
                                 <!-- SINGLE LINK -->
-                                <a class="nav-link py-2 ms-2" data-menu="expense" href="<?= BASE_URL ?>electricity_bills.php"><i class="fa fa-file-invoice pe-1"></i> Electricity Bill</a>
+                                <a class="nav-link py-2 ms-2" data-menu="expense" href="<?= BASE_URL ?>electricity_bills.php"><i class="fa fa-file-invoice pe-1"></i> Electricity Bills</a>
                             </div>
 
 
@@ -161,7 +161,7 @@ requireRole(['admin', 'cashier', 'user']);
                                 </nav>
 
                                 <!-- SINGLE LINK -->
-                                <a class="nav-link py-2 ms-2" data-menu="expense" href="<?= BASE_URL ?>electricity_bills.php"><i class="fa fa-file-invoice pe-1"></i> Electricity Bill</a>
+                                <a class="nav-link py-2 ms-2" data-menu="expense" href="<?= BASE_URL ?>electricity_bills.php"><i class="fa fa-file-invoice pe-1"></i> Electricity Bills</a>
                             </div>
 
                             <!---------------------------- User Sidebar ---------------------------->

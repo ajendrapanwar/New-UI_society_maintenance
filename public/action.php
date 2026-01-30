@@ -1784,68 +1784,71 @@ if (isset($_GET['action']) && $_GET['action'] == "export_sweeper_salary") {
 
 
 
-// FETCH MISCELLANEOUS WORKS
-// FETCH MISCELLANEOUS WORKS (UPDATED: Separate Month & Year)
-if (isset($_POST['action']) && $_POST['action'] === 'fetch_misc_works') {
+// FETCH Miscellaneous Work
+if (isset($_POST['action']) && $_POST['action'] == 'fetch_misc_works') {
 
 	header('Content-Type: application/json');
 
-	$columns = ['id', 'work_title', 'worker_name', 'contact_number', 'amount', 'description', 'month', 'year', 'created_at'];
+	$columns = ['id', 'work_title', 'description', 'worker_name', 'contact_number', 'amount', 'month', 'year', 'created_at'];
 
-	$limit  = (int) $_POST['length'];
-	$start  = (int) $_POST['start'];
+	$limit  = $_POST['length'];
+	$start  = $_POST['start'];
 	$order  = $columns[$_POST['order'][0]['column']];
 	$dir    = $_POST['order'][0]['dir'];
-	$search = $_POST['search']['value'];
 
-	$where = '';
+	$search = $_POST['search']['value'];
+	$month  = $_POST['month'] ?? '';
+	$year   = $_POST['year'] ?? '';
+
+	$where = " WHERE 1 ";
 	$params = [];
 
-	if (!empty($search)) {
-		$where = "WHERE work_title LIKE :search OR worker_name LIKE :search OR contact_number LIKE :search";
-		$params[':search'] = "%$search%";
+	// Search
+	if ($search != '') {
+		$where .= " AND (work_title LIKE ? OR worker_name LIKE ? OR contact_number LIKE ?) ";
+		$params[] = "%$search%";
+		$params[] = "%$search%";
+		$params[] = "%$search%";
 	}
 
-	/* ===== TOTAL ===== */
+	// Month Filter
+	if ($month != '') {
+		$where .= " AND month = ? ";
+		$params[] = $month;
+	}
+
+	// Year Filter
+	if ($year != '') {
+		$where .= " AND year = ? ";
+		$params[] = $year;
+	}
+
+	// TOTAL
 	$total = $pdo->query("SELECT COUNT(*) FROM miscellaneous_works")->fetchColumn();
 
-	/* ===== FILTERED ===== */
-	if ($where) {
-		$stmt = $pdo->prepare("SELECT COUNT(*) FROM miscellaneous_works $where");
-		$stmt->execute($params);
-		$filtered = $stmt->fetchColumn();
-	} else {
-		$filtered = $total;
-	}
+	// FILTERED COUNT
+	$stmt = $pdo->prepare("SELECT COUNT(*) FROM miscellaneous_works $where");
+	$stmt->execute($params);
+	$filtered = $stmt->fetchColumn();
 
-	/* ===== DATA ===== */
-	$sql = "
-        SELECT id, work_title, worker_name, contact_number, amount, description, month, year, created_at
-        FROM miscellaneous_works
-        $where
-        ORDER BY $order $dir
-        LIMIT $start, $limit
-    ";
-
+	// DATA
+	$sql = "SELECT * FROM miscellaneous_works $where ORDER BY $order $dir LIMIT $start,$limit";
 	$stmt = $pdo->prepare($sql);
 	$stmt->execute($params);
 	$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 	$data = [];
 	foreach ($rows as $r) {
-		// Convert month number (e.g. 2) to Name (e.g. February) for display
-		$monthName = date('F', mktime(0, 0, 0, $r['month'], 1));
-
 		$data[] = [
-			'id'          => $r['id'],
-			'work_title'  => htmlspecialchars($r['work_title']),
-			'worker_name' => htmlspecialchars($r['worker_name']),
-			'contact_number' => htmlspecialchars($r['contact_number']),
-			'amount'      => '₹' . number_format($r['amount'], 2),
-			'description' => strlen($r['description']) > 50 ? substr(htmlspecialchars($r['description']), 0, 50) . '...' : htmlspecialchars($r['description']),
-			'month'       => $monthName, // Separate Column 1
-			'year'        => $r['year'], // Separate Column 2
-			'created_at'  => date('d-m-Y', strtotime($r['created_at']))
+			'id' => $r['id'],
+			'work_title' => $r['work_title'],
+			'description' => $r['description'],
+			'worker_name' => $r['worker_name'],
+			'contact_number' => $r['contact_number'],
+			'amount' => '₹' . number_format($r['amount'], 2),
+			'month' => date('F', mktime(0, 0, 0, $r['month'], 1)),
+			'year' => $r['year'],
+			'created_at' => date('d-m-Y', strtotime($r['created_at']))
 		];
 	}
 
@@ -1855,5 +1858,41 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_misc_works') {
 		"recordsFiltered" => $filtered,
 		"data" => $data
 	]);
+	exit;
+}
+
+// EXPORT Miscellaneous Work
+if (isset($_GET['action']) && $_GET['action'] == 'export_misc_work') {
+
+	requireRole(['admin', 'cashier']);
+
+	$month = $_GET['month'] ?? '';
+	$year = $_GET['year'] ?? '';
+
+	$where = " WHERE 1 ";
+	$params = [];
+
+	if ($month != '') {
+		$where .= " AND month=? ";
+		$params[] = $month;
+	}
+	if ($year != '') {
+		$where .= " AND year=? ";
+		$params[] = $year;
+	}
+
+	$stmt = $pdo->prepare("SELECT * FROM miscellaneous_works $where ORDER BY year DESC, month DESC");
+	$stmt->execute($params);
+	$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+	header("Content-Type: application/vnd.ms-excel");
+	header("Content-Disposition: attachment; filename=misc_work.xls");
+
+	echo "Title\tWorker\tContact\tAmount\tMonth\tYear\tDate\n";
+
+	foreach ($rows as $r) {
+		$m = date('F', mktime(0, 0, 0, $r['month'], 1));
+		echo "{$r['work_title']}\t{$r['worker_name']}\t{$r['contact_number']}\t{$r['amount']}\t$m\t{$r['year']}\t" . date('d-m-Y', strtotime($r['created_at'])) . "\n";
+	}
 	exit;
 }

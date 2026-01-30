@@ -92,8 +92,6 @@ include __DIR__ . '/../resources/layout/header.php';
             </div>
         </div>
 
-
-
         <div class="card-body">
             <div class="table-responsive">
                 <table id="guard-salary-table" class="table table-bordered table-striped">
