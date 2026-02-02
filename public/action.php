@@ -1952,3 +1952,215 @@ if (isset($_GET['action']) && $_GET['action'] == 'export_misc_work') {
 	}
 	exit;
 }
+
+
+
+
+// FETCH ALL EXPENSES
+if (isset($_POST['action']) && $_POST['action'] === 'fetch_all_expenses') {
+
+    header('Content-Type: application/json');
+
+    $draw   = intval($_POST['draw'] ?? 0);
+    $start  = intval($_POST['start'] ?? 0);
+    $length = intval($_POST['length'] ?? 10);
+
+    $month  = $_POST['month'] ?? '';
+    $year   = $_POST['year'] ?? '';
+    $status = $_POST['status'] ?? '';
+
+    /* ================= FILTER CONDITIONS ================= */
+    $where = " WHERE 1=1 ";
+    $params = [];
+
+    if (ctype_digit($month)) {
+        $where .= " AND month = :month ";
+        $params[':month'] = $month;
+    }
+
+    if (ctype_digit($year)) {
+        $where .= " AND year = :year ";
+        $params[':year'] = $year;
+    }
+
+    if (in_array($status, ['paid','unpaid'])) {
+        $where .= " AND status = :status ";
+        $params[':status'] = $status;
+    }
+
+    /* ================= FETCH ALL EXPENSES ================= */
+    $sql = "
+    SELECT id, month, year, reading AS name, amount, status, 'electricity_bills' AS source_table
+    FROM electricity_bills
+    WHERE 1=1
+    " . ($month ? " AND MONTH(created_at) = :month " : "") . ($year ? " AND YEAR(created_at) = :year " : "") . ($status ? " AND status = :status " : "") . "
+
+    UNION ALL
+
+    SELECT id, month, year, worker_name AS name, amount, status, 'miscellaneous_works' AS source_table
+    FROM miscellaneous_works
+    WHERE 1=1
+    " . ($month ? " AND month = :month " : "") . ($year ? " AND year = :year " : "") . ($status ? " AND status = :status " : "") . "
+
+    UNION ALL
+
+    SELECT ss.id, ss.salary_month AS month, ss.salary_year AS year,
+           sw.name AS name, ss.salary_amount AS amount, ss.status, 'sweeper_salary' AS source_table
+    FROM sweeper_salary ss
+    JOIN sweepers sw ON sw.id = ss.sweeper_id
+    WHERE 1=1
+    " . ($month ? " AND ss.salary_month = :month " : "") . ($year ? " AND ss.salary_year = :year " : "") . ($status ? " AND ss.status = :status " : "") . "
+
+    UNION ALL
+
+    SELECT gs.id, gs.salary_month AS month, gs.salary_year AS year,
+           sg.name AS name, gs.salary_amount AS amount, gs.status, 'guard_salary' AS source_table
+    FROM guard_salary gs
+    JOIN security_guards sg ON sg.id = gs.guard_id
+    WHERE 1=1
+    " . ($month ? " AND gs.salary_month = :month " : "") . ($year ? " AND gs.salary_year = :year " : "") . ($status ? " AND gs.status = :status " : "") . "
+
+    UNION ALL
+
+    SELECT gc.id, gc.salary_month AS month, gc.salary_year AS year,
+           gcol.name AS name, gc.salary_amount AS amount, gc.status, 'garbage_salary' AS source_table
+    FROM garbage_salary gc
+    JOIN garbage_collectors gcol ON gcol.id = gc.collector_id
+    WHERE 1=1
+    " . ($month ? " AND gc.salary_month = :month " : "") . ($year ? " AND gc.salary_year = :year " : "") . ($status ? " AND gc.status = :status " : "") . "
+
+    ORDER BY year DESC, month DESC
+    LIMIT :start, :length
+    ";
+
+    $stmt = $pdo->prepare($sql);
+    foreach ($params as $k => $v) {
+        $stmt->bindValue($k, $v);
+    }
+    $stmt->bindValue(':start', $start, PDO::PARAM_INT);
+    $stmt->bindValue(':length', $length, PDO::PARAM_INT);
+    $stmt->execute();
+
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $data = [];
+    $grandTotal = $paidTotal = $unpaidTotal = 0;
+
+    foreach ($rows as $r) {
+        $monthName = date('F', mktime(0,0,0,$r['month'],1));
+        $monthYear = $monthName . ' ' . $r['year'];
+        $amount = $r['amount'];
+        $statusSimple = ($r['status'] === 'paid') ? 'paid' : 'unpaid';
+
+        $grandTotal += $amount;
+        if ($statusSimple === 'paid') $paidTotal += $amount;
+        else $unpaidTotal += $amount;
+
+        $data[] = [
+            'id' => $r['id'],
+            'month_year' => $monthYear,
+            'name' => $r['name'],
+            'amount' => $amount,
+            'status' => "<span class='badge bg-".($statusSimple==='paid'?'success':'danger')."'>".ucfirst($statusSimple)."</span>",
+            'source' => $r['source_table']
+        ];
+    }
+
+    echo json_encode([
+        'draw' => $draw,
+        'recordsTotal' => count($data),
+        'recordsFiltered' => count($data),
+        'data' => $data,
+        'grandTotal' => $grandTotal,
+        'paidTotal' => $paidTotal,
+        'unpaidTotal' => $unpaidTotal
+    ]);
+    exit;
+}
+
+// EXPORT EXPENSES
+if (isset($_GET['action']) && $_GET['action'] === 'export_expense_bills') {
+
+    requireRole(['admin','cashier']);
+
+    $month  = $_GET['month'] ?? '';
+    $year   = $_GET['year'] ?? '';
+    $status = $_GET['status'] ?? '';
+
+    $where = " WHERE 1=1 ";
+    $params = [];
+
+    if (ctype_digit($month)) { $where .= " AND month = :month "; $params[':month'] = $month; }
+    if (ctype_digit($year))  { $where .= " AND year = :year "; $params[':year'] = $year; }
+    if (in_array($status,['paid','unpaid'])) { $where .= " AND status = :status "; $params[':status'] = $status; }
+
+    $sql = "
+    SELECT id, month, year, reading AS name, amount, status, 'electricity_bills' AS source_table
+    FROM electricity_bills
+    WHERE 1=1
+    " . ($month ? " AND MONTH(created_at) = :month " : "") . ($year ? " AND YEAR(created_at) = :year " : "") . ($status ? " AND status = :status " : "") . "
+
+    UNION ALL
+
+    SELECT id, month, year, worker_name AS name, amount, status, 'miscellaneous_works' AS source_table
+    FROM miscellaneous_works
+    WHERE 1=1
+    " . ($month ? " AND month = :month " : "") . ($year ? " AND year = :year " : "") . ($status ? " AND status = :status " : "") . "
+
+    UNION ALL
+
+    SELECT ss.id, ss.salary_month AS month, ss.salary_year AS year,
+           sw.name AS name, ss.salary_amount AS amount, ss.status, 'sweeper_salary' AS source_table
+    FROM sweeper_salary ss
+    JOIN sweepers sw ON sw.id = ss.sweeper_id
+    WHERE 1=1
+    " . ($month ? " AND ss.salary_month = :month " : "") . ($year ? " AND ss.salary_year = :year " : "") . ($status ? " AND ss.status = :status " : "") . "
+
+    UNION ALL
+
+    SELECT gs.id, gs.salary_month AS month, gs.salary_year AS year,
+           sg.name AS name, gs.salary_amount AS amount, gs.status, 'guard_salary' AS source_table
+    FROM guard_salary gs
+    JOIN security_guards sg ON sg.id = gs.guard_id
+    WHERE 1=1
+    " . ($month ? " AND gs.salary_month = :month " : "") . ($year ? " AND gs.salary_year = :year " : "") . ($status ? " AND gs.status = :status " : "") . "
+
+    UNION ALL
+
+    SELECT gc.id, gc.salary_month AS month, gc.salary_year AS year,
+           gcol.name AS name, gc.salary_amount AS amount, gc.status, 'garbage_salary' AS source_table
+    FROM garbage_salary gc
+    JOIN garbage_collectors gcol ON gcol.id = gc.collector_id
+    WHERE 1=1
+    " . ($month ? " AND gc.salary_month = :month " : "") . ($year ? " AND gc.salary_year = :year " : "") . ($status ? " AND gc.status = :status " : "") . "
+
+    ORDER BY year DESC, month DESC
+    ";
+
+    $stmt = $pdo->prepare($sql);
+    foreach ($params as $k => $v) { $stmt->bindValue($k,$v); }
+    $stmt->execute();
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // ===== Excel Headers =====
+    header("Content-Type: application/vnd.ms-excel");
+    header("Content-Disposition: attachment; filename=expense_bills.xls");
+    header("Pragma: no-cache");
+    header("Expires: 0");
+
+    echo "ID\tMonth/Year\tName/File\tAmount\tStatus\tSource Table\n";
+
+    foreach ($rows as $row) {
+        $monthName = date('F', mktime(0,0,0,$row['month'],1));
+        echo implode("\t", [
+            $row['id'],
+            $monthName.' '.$row['year'],
+            $row['name'],
+            $row['amount'],
+            ucfirst($row['status']),
+            $row['source_table']
+        ]) . "\n";
+    }
+
+    exit;
+}

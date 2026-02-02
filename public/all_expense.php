@@ -12,6 +12,12 @@ include __DIR__ . '/../resources/layout/header.php';
         vertical-align: middle !important;
         white-space: nowrap;
     }
+
+    .badge {
+        font-size: 12px;
+        font-weight: bold;
+        padding: 6px 12px;
+    }
 </style>
 
 <div class="container-fluid px-4">
@@ -36,7 +42,6 @@ include __DIR__ . '/../resources/layout/header.php';
                     <h5 class="card-title">Expense Bills List</h5>
                 </div>
                 <div class="col-6 text-end">
-                    <!-- <a href="<?= BASE_URL ?>guards.php" class="btn btn-primary btn-sm">View Guard</a> -->
                     <button id="export-excel" class="btn btn-dark btn-sm">
                         <i class="bi bi-file-earmark-excel"></i> Export Excel
                     </button>
@@ -52,11 +57,9 @@ include __DIR__ . '/../resources/layout/header.php';
                     <label class="filter-label">Month</label>
                     <select id="filter-month" class="form-select form-select-sm">
                         <option value="">All Months</option>
-                        <?php
-                        for ($m = 1; $m <= 12; $m++) {
-                            echo "<option value='$m'>" . date('F', mktime(0, 0, 0, $m, 1)) . "</option>";
-                        }
-                        ?>
+                        <?php for ($m = 1; $m <= 12; $m++): ?>
+                            <option value="<?= $m ?>"><?= date('F', mktime(0,0,0,$m,1)) ?></option>
+                        <?php endfor; ?>
                     </select>
                 </div>
 
@@ -64,12 +67,10 @@ include __DIR__ . '/../resources/layout/header.php';
                     <label class="filter-label">Year</label>
                     <select id="filter-year" class="form-select form-select-sm">
                         <option value="">All Years</option>
-                        <?php
-                        $currentYear = date('Y');
-                        for ($y = $currentYear; $y >= $currentYear - 5; $y--) {
-                            echo "<option value='$y'>$y</option>";
-                        }
-                        ?>
+                        <?php $currentYear = date('Y'); ?>
+                        <?php for ($y = $currentYear; $y >= $currentYear - 5; $y--): ?>
+                            <option value="<?= $y ?>"><?= $y ?></option>
+                        <?php endfor; ?>
                     </select>
                 </div>
 
@@ -78,8 +79,7 @@ include __DIR__ . '/../resources/layout/header.php';
                     <select id="filter-status" class="form-select form-select-sm">
                         <option value="">All Status</option>
                         <option value="paid">Paid</option>
-                        <option value="pending">Pending</option>
-                        <option value="overdue">Overdue</option>
+                        <option value="unpaid">Unpaid</option>
                     </select>
                 </div>
 
@@ -90,166 +90,101 @@ include __DIR__ . '/../resources/layout/header.php';
                 </div>
             </div>
 
-            <!-- Grand Total, Paid Total, Pending/Overdue Total -->
+            <!-- Totals -->
             <div class="row mt-5 text-center text-md-start">
                 <div class="col-md-4 col-12 mb-2">
-                    <strong>Grand Total:</strong>
-                    <span id="grandTotal"></span>
+                    <strong>Grand Total:</strong> <span id="grandTotal"></span>
                 </div>
-
                 <div class="col-md-4 col-12 mb-2 text-success">
-                    <strong>Paid Total:</strong>
-                    <span id="paidTotal"></span>
+                    <strong>Total Paid Expense:</strong> <span id="paidTotal"></span>
                 </div>
-
                 <div class="col-md-4 col-12 mb-2 text-danger">
-                    <strong>Pending/Overdue Total:</strong>
-                    <span id="pendingTotal"></span>
+                    <strong>Total Unpaid Expense:</strong> <span id="pendingTotal"></span>
                 </div>
             </div>
 
         </div>
 
-
-
-        <!-- <div class="card-body">
+        <div class="card-body">
             <div class="table-responsive">
-                <table id="bills-table" class="table table-bordered table-striped">
+                <table id="expense-table" class="table table-bordered table-striped">
                     <thead class="table-dark">
                         <tr>
-                            <th>Flat</th>
-                            <th>Block</th>
-                            <th>Month / Year</th>
+                            <th>ID</th>
+                            <th>Month/Year</th>
+                            <th>Name/Reading</th>
                             <th>Amount</th>
-                            <th>Fine</th>
-                            <th>Total</th>
                             <th>Status</th>
-                            <th>Payment Mode</th>
-                            <th>Paid On</th>
-                            <th>Overdue</th>
+                            <th>Source Table</th>
                         </tr>
                     </thead>
                 </table>
             </div>
-        </div> -->
+        </div>
+
     </div>
 </div>
 
 <?php include __DIR__ . '/../resources/layout/footer.php'; ?>
 
-<!-- DataTables -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.2/css/dataTables.bootstrap5.min.css">
 <script src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
 
-<!-- <script>
-    $(function() {
+<script>
+$(function() {
 
-        let table = $('#bills-table').DataTable({
-            processing: true,
-            serverSide: true,
-            searching: false,
-            pageLength: 5,
-            lengthMenu: [5, 10, 25, 50],
-            order: [
-                [2, 'desc']
-            ],
-
-            ajax: {
-                url: '<?= BASE_URL ?>action.php',
-                type: 'POST',
-                data: function(d) {
-                    d.action = 'fetch_all_bills';
-                    d.month = $('#filter-month').val();
-                    d.year = $('#filter-year').val();
-                    d.status = $('#filter-status').val();
-                }
-            },
-
-            columns: [{
-                    data: 'flat_number'
-                },
-                {
-                    data: 'block_number'
-                },
-                {
-                    data: 'month_year'
-                },
-                {
-                    data: 'amount'
-                },
-                {
-                    data: 'fine'
-                },
-                {
-                    data: 'total'
-                },
-                {
-                    data: 'status'
-                },
-                {
-                    data: 'payment_mode'
-                },
-                {
-                    data: 'paid_on'
-                },
-                {
-                    data: 'overdue'
-                }
-            ]
-        });
-
-        $('#filter-month, #filter-year, #filter-status').on('change', function() {
-            table.ajax.reload();
-            loadTotals();
-        });
-
-        $('#reset-filters').on('click', function() {
-            $('#filter-month, #filter-year, #filter-status').val('');
-            table.ajax.reload();
-            loadTotals();
-        });
-
-        // Load totals on page load
-        loadTotals();
-
-
-    });
-
-
-    function loadTotals() {
-
-        $.ajax({
+    let table = $('#expense-table').DataTable({
+        processing: true,
+        serverSide: true,
+        searching: false,
+        pageLength: 10,
+        order: [[1,'desc']],
+        ajax: {
             url: '<?= BASE_URL ?>action.php',
             type: 'POST',
-            dataType: 'json',
-            data: {
-                action: 'fetch_bill_totals',
-                month: $('#filter-month').val(),
-                year: $('#filter-year').val(),
-                status: $('#filter-status').val()
+            data: function(d) {
+                d.action = 'fetch_all_expenses';
+                d.month = $('#filter-month').val();
+                d.year = $('#filter-year').val();
+                d.status = $('#filter-status').val();
             },
-            success: function(res) {
-                $('#grandTotal').text('₹' + res.grandTotal);
-                $('#paidTotal').text('₹' + res.paidTotal);
-                $('#pendingTotal').text('₹' + res.pendingTotal);
+            dataSrc: function(json) {
+                // Update totals
+                $('#grandTotal').text('₹' + Number(json.grandTotal).toLocaleString('en-IN', {minimumFractionDigits:2}));
+                $('#paidTotal').text('₹' + Number(json.paidTotal).toLocaleString('en-IN', {minimumFractionDigits:2}));
+                $('#pendingTotal').text('₹' + Number(json.unpaidTotal).toLocaleString('en-IN', {minimumFractionDigits:2}));
+                return json.data;
             }
-        });
-    }
+        },
+        columns: [
+            { data: 'id' },
+            { data: 'month_year' },
+            { data: 'name' },
+            { data: 'amount', render: $.fn.dataTable.render.number(',', '.', 2, '₹') },
+            { data: 'status' },
+            { data: 'source' }
+        ]
+    });
 
+    $('#filter-month, #filter-year, #filter-status').on('change', function() {
+        table.ajax.reload();
+    });
 
+    $('#reset-filters').on('click', function() {
+        $('#filter-month,#filter-year,#filter-status').val('');
+        table.ajax.reload();
+    });
 
     $('#export-excel').on('click', function() {
-
         let month = $('#filter-month').val();
         let year = $('#filter-year').val();
         let status = $('#filter-status').val();
 
-        let url = '<?= BASE_URL ?>action.php?action=export_all_maintenance_bills' +
-            '&month=' + month +
-            '&year=' + year +
-            '&status=' + status;
-
+        let url = '<?= BASE_URL ?>action.php?action=export_expense_bills' +
+                  '&month=' + month + '&year=' + year + '&status=' + status;
         window.location.href = url;
     });
-</script> -->
+
+});
+</script>

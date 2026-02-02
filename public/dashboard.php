@@ -2,6 +2,7 @@
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
+ini_set('opcache.enable', 0);
 error_reporting(E_ALL);
 
 
@@ -100,6 +101,36 @@ else {
 // Format currency
 $total_collection = number_format($total_collection, 2);
 
+
+
+
+
+// ================= TOTAL PAID EXPENSE (ADMIN ONLY) =================
+$total_paid_expense = 0;
+
+if ($_SESSION['user_role'] === 'admin') {
+
+	$sql = "
+        SELECT SUM(amount) AS total_paid FROM electricity_bills WHERE status='paid'
+        UNION ALL
+        SELECT SUM(amount) FROM miscellaneous_works WHERE status='paid'
+        UNION ALL
+        SELECT SUM(salary_amount) FROM sweeper_salary WHERE status='paid'
+        UNION ALL
+        SELECT SUM(salary_amount) FROM guard_salary WHERE status='paid'
+        UNION ALL
+        SELECT SUM(salary_amount) FROM garbage_salary WHERE status='paid'
+    ";
+
+	$stmt = $pdo->query($sql);
+	$sum = 0;
+
+	while ($row = $stmt->fetch(PDO::FETCH_NUM)) {
+		$sum += $row[0];
+	}
+
+	$total_paid_expense = number_format($sum, 2);
+}
 
 
 // <>
@@ -240,7 +271,6 @@ include('../resources/layout/header.php');
 					<li class="breadcrumb-item active">Collection/Expense</li>
 				</ol>
 			</nav>
-
 			<!-- Total Collection -->
 			<div class="col-xl-3 col-md-6">
 				<a class="text-decoration-none" href="<?= BASE_URL ?>all_bill.php">
@@ -261,15 +291,13 @@ include('../resources/layout/header.php');
 					<div class="card shadow-sm h-100">
 						<div class="card-body d-flex justify-content-between align-items-center">
 							<div>
-								<div class="text-muted small">Total Expense</div>
-								<div class="display-6 fw-bold text-danger">₹100000</div>
-								<!-- <div class="fw-bold text-break text-danger" style="font-size: 2.2rem;">₹ <?= $total_expense ?></div> -->
+								<div class="text-muted small">Total Paid Expense</div>
+								<div class="fw-bold text-break text-danger" style="font-size: 2.2rem;">₹ <?= $total_paid_expense ?></div>
 							</div>
 						</div>
 					</div>
 				</a>
 			</div>
-
 
 			<!-- <> -->
 			<!-- In Process -->
