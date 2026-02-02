@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../core/config.php';
 
 /* ================= ACCESS CONTROL ================= */
-requireRole(['admin', 'cashier']);
+requireRole(['admin']);
 
 include __DIR__ . '/../resources/layout/header.php';
 ?>
