@@ -98,12 +98,12 @@ include __DIR__ . '/../resources/layout/header.php';
                 </div>
 
                 <div class="col-md-4 col-12 mb-2 text-success">
-                    <strong>Paid Total:</strong>
+                    <strong>Total Paid:</strong>
                     <span id="paidTotal"></span>
                 </div>
 
                 <div class="col-md-4 col-12 mb-2 text-danger">
-                    <strong>Pending/Overdue Total:</strong>
+                    <strong>Total Pending/Overdue:</strong>
                     <span id="pendingTotal"></span>
                 </div>
             </div>
