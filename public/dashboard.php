@@ -257,7 +257,7 @@ include('../resources/layout/header.php');
 
 			<!-- Total Expense -->
 			<div class="col-xl-3 col-md-6">
-				<a class="text-decoration-none" href="#">
+				<a class="text-decoration-none" href="<?= BASE_URL ?>all_expense.php">
 					<div class="card shadow-sm h-100">
 						<div class="card-body d-flex justify-content-between align-items-center">
 							<div>

@@ -89,13 +89,13 @@ include('../resources/layout/header.php');
                     <thead>
                         <tr>
                             <th>ID</th>
+                            <th>Month/Year</th>
                             <th>Work Title</th>
                             <th>Description</th>
                             <th>Worker Name</th>
                             <th>Contact</th>
                             <th>Amount</th>
-                            <th>Month</th>
-                            <th>Year</th>
+                            <th>Status</th>
                             <th>Date</th>
                             <!-- ACTION COLUMN: Only show if Admin -->
                             <?php if ($_SESSION['user_role'] === 'admin'): ?>
@@ -124,6 +124,9 @@ include('../resources/layout/header.php');
                 data: 'id'
             },
             {
+                data: 'month_year'
+            },
+            {
                 data: 'work_title'
             },
             {
@@ -139,10 +142,7 @@ include('../resources/layout/header.php');
                 data: 'amount'
             },
             {
-                data: 'month'
-            },
-            {
-                data: 'year'
+                data: 'status'
             },
             {
                 data: 'created_at'
@@ -162,7 +162,6 @@ include('../resources/layout/header.php');
         let table = $('#misc-table').DataTable({
             processing: true,
             serverSide: true,
-            searching: true,
             searching: false,
             ajax: {
                 url: '<?= BASE_URL ?>action.php',

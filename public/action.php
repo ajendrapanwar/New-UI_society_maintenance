@@ -1834,26 +1834,36 @@ if (isset($_GET['action']) && $_GET['action'] == "export_sweeper_salary") {
 
 
 
+
 // FETCH Miscellaneous Work
 if (isset($_POST['action']) && $_POST['action'] == 'fetch_misc_works') {
 
 	header('Content-Type: application/json');
 
-	$columns = ['id', 'work_title', 'description', 'worker_name', 'contact_number', 'amount', 'month', 'year', 'created_at'];
-
-	$limit  = $_POST['length'];
+	$draw   = $_POST['draw'];
 	$start  = $_POST['start'];
-	$order  = $columns[$_POST['order'][0]['column']];
-	$dir    = $_POST['order'][0]['dir'];
+	$length = $_POST['length'];
 
-	$search = $_POST['search']['value'];
 	$month  = $_POST['month'] ?? '';
 	$year   = $_POST['year'] ?? '';
+	$search = $_POST['search']['value'] ?? '';
 
 	$where = " WHERE 1 ";
 	$params = [];
 
-	// Search
+	// Month Filter
+	if ($month != '') {
+		$where .= " AND month=? ";
+		$params[] = $month;
+	}
+
+	// Year Filter
+	if ($year != '') {
+		$where .= " AND year=? ";
+		$params[] = $year;
+	}
+
+	// Search Filter
 	if ($search != '') {
 		$where .= " AND (work_title LIKE ? OR worker_name LIKE ? OR contact_number LIKE ?) ";
 		$params[] = "%$search%";
@@ -1861,51 +1871,47 @@ if (isset($_POST['action']) && $_POST['action'] == 'fetch_misc_works') {
 		$params[] = "%$search%";
 	}
 
-	// Month Filter
-	if ($month != '') {
-		$where .= " AND month = ? ";
-		$params[] = $month;
-	}
+	// Total Records
+	$stmtTotal = $pdo->prepare("SELECT COUNT(*) FROM miscellaneous_works $where");
+	$stmtTotal->execute($params);
+	$records = $stmtTotal->fetchColumn();
 
-	// Year Filter
-	if ($year != '') {
-		$where .= " AND year = ? ";
-		$params[] = $year;
-	}
+	// Data Query
+	$sql = "SELECT * FROM miscellaneous_works 
+	        $where 
+	        ORDER BY year DESC, month DESC 
+	        LIMIT $start,$length";
 
-	// TOTAL
-	$total = $pdo->query("SELECT COUNT(*) FROM miscellaneous_works")->fetchColumn();
-
-	// FILTERED COUNT
-	$stmt = $pdo->prepare("SELECT COUNT(*) FROM miscellaneous_works $where");
-	$stmt->execute($params);
-	$filtered = $stmt->fetchColumn();
-
-	// DATA
-	$sql = "SELECT * FROM miscellaneous_works $where ORDER BY $order $dir LIMIT $start,$limit";
 	$stmt = $pdo->prepare($sql);
 	$stmt->execute($params);
 	$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 	$data = [];
+
 	foreach ($rows as $r) {
+
+		// Month Year Format Like Sweeper Salary
+		$monthYear = date('F', mktime(0, 0, 0, $r['month'], 1)) . " " . $r['year'];
+
+		$badge = '<span class="badge bg-success">Paid</span>';
+
 		$data[] = [
 			'id' => $r['id'],
+			'month_year' => $monthYear,
 			'work_title' => $r['work_title'],
 			'description' => $r['description'],
 			'worker_name' => $r['worker_name'],
 			'contact_number' => $r['contact_number'],
 			'amount' => '₹' . number_format($r['amount'], 2),
-			'month' => date('F', mktime(0, 0, 0, $r['month'], 1)),
-			'year' => $r['year'],
+			'status' => $badge,
 			'created_at' => date('d-m-Y', strtotime($r['created_at']))
 		];
 	}
 
 	echo json_encode([
-		"draw" => intval($_POST['draw']),
-		"recordsTotal" => $total,
-		"recordsFiltered" => $filtered,
+		"draw" => $draw,
+		"recordsTotal" => $records,
+		"recordsFiltered" => $records,
 		"data" => $data
 	]);
 	exit;

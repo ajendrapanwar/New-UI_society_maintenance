@@ -86,16 +86,34 @@ $flatTypes = [
 
 function requireRole(array $roles)
 {
-    if (
-        !isset($_SESSION['user_id']) ||
-        !in_array($_SESSION['user_role'], $roles)
-    )
-     {
+    if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'], $roles)) {
+
         http_response_code(403);
-        exit('Unauthorized access');
+        ?>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>Session Expired</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        </head>
+        <body class="bg-light d-flex align-items-center justify-content-center vh-100">
+
+            <div class="text-center p-5 bg-white shadow rounded">
+                <h2 class="text-danger fw-bold">⚠️ Session Expired</h2>
+                <p class="text-muted mt-2">
+                    Your session is out, please login again !!
+                </p>
+
+                <a href="<?= BASE_URL ?>index.php" class="btn btn-primary mt-3">
+                    Login
+                </a>
+            </div>
+
+        </body>
+        </html>
+        <?php
+        exit;
     }
-// {
-//     header('Location: ' . BASE_URL . 'logout.php');
-//     exit();
-// }
 }
+

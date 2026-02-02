@@ -1,8 +1,8 @@
 <?php
 require_once __DIR__ . '/../../core/config.php';
 
- $errors = [];
- $work_title = $worker_name = $contact_number = $amount = $description = '';
+$errors = [];
+$work_title = $worker_name = $contact_number = $amount = $description = '';
 
 // Admin access check
 requireRole(['admin', 'cashier']);
@@ -43,12 +43,24 @@ if (isset($_POST['add_misc_work'])) {
 
     /* ===== INSERT WORK ===== */
     if (empty($errors)) {
+        $status = 'paid';
+
         $stmt = $pdo->prepare("
-            INSERT INTO miscellaneous_works (work_title, worker_name, contact_number, amount, description, month, year)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO miscellaneous_works 
+            (work_title, worker_name, contact_number, amount, description, month, year, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ");
-        // Insert the auto-generated month and year
-        $stmt->execute([$work_title, $worker_name, $contact_number, $amount, $description, $targetMonth, $targetYear]);
+
+        $stmt->execute([
+            $work_title,
+            $worker_name,
+            $contact_number,
+            $amount,
+            $description,
+            $targetMonth,
+            $targetYear,
+            $status
+        ]);
 
         $_SESSION['success'] = 'Miscellaneous work added successfully';
 
