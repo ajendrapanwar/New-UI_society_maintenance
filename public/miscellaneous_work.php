@@ -163,6 +163,8 @@ include('../resources/layout/header.php');
             processing: true,
             serverSide: true,
             searching: false,
+            pageLength: 5,    
+            lengthMenu: [5, 10, 25, 50],
             ajax: {
                 url: '<?= BASE_URL ?>action.php',
                 type: 'POST',
