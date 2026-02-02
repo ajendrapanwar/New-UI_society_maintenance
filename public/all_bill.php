@@ -15,7 +15,7 @@ include __DIR__ . '/../resources/layout/header.php';
 </style>
 
 <div class="container-fluid px-4">
-    <h1 class="mt-4">All Maintenance Bills</h1>
+    <h1 class="mt-4">All Collection Bills</h1>
 
     <ol class="breadcrumb mb-4">
         <li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
