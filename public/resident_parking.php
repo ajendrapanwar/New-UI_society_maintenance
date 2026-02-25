@@ -88,79 +88,22 @@ include '../resources/layout/header.php';
                             <th>Action</th>
                         </tr>
                     </thead>
+                    <tbody>
+                        <tr>
+                            <td>A-402</td>
+                            <td>Rajesh Kumar</td>
+                            <td>4 Wheeler</td>
+                            <td>CH-01-AX-1234</td>
+                            <td>P-102</td>
+                            <td><button class="btn btn-sm btn-light border"><i class="fa fa-edit"></i></button></td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
         </main>
 
     </div>
 
-
-    <!-- <div class="container-fluid px-4">
-    <h1 class="mt-4">Resident Parking</h1>
-
-    <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
-        <li class="breadcrumb-item active">Resident Parking</li>
-    </ol>
-
-    <div class="card shadow-sm">
-        <div class="card-header d-flex justify-content-between">
-            <h5 class="card-title mb-0">Resident Parking List</h5>
-            <a href="add/add_resident_parking.php" class="btn btn-success btn-sm">+ Add Parking</a>
-        </div>
-
-        <div class="card-body table-responsive">
-            <table class="table table-bordered table-striped" id="parking-table">
-                <thead class="table-dark">
-                    <tr>
-                        <th>ID</th>
-                        <th>Flat No</th>
-                        <th>Block</th>
-                        <th>Resident Name</th>
-                        <th>Mobile</th>
-                        <th>No of Vehicles</th>
-                        <th>Vehicle 1</th>
-                        <th>Vehicle 2</th>
-                        <th>Created At</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    <?php foreach ($parkings as $p): ?>
-                        <tr>
-                            <td><?= $p['id'] ?></td>
-                            <td><?= $p['flat_number'] ?></td>
-                            <td><?= $p['block_number'] ?></td>
-                            <td><?= $p['user_name'] ?></td>
-                            <td><?= $p['mobile'] ?></td>
-                            <td><?= $p['vehicle_count'] ?></td>
-                            <td><?= $p['vehicle1'] ?></td>
-                            <td><?= $p['vehicle2'] ?: '-' ?></td>
-                            <td><?= $p['created_at'] ?></td>
-                            <td>
-                                <div class="action-btns">
-                                    <a href="edit/edit_resident_parking.php?id=<?= $p['id'] ?>"
-                                        class="btn btn-sm btn-primary">
-                                        Edit
-                                    </a>
-
-                                    <a href="resident_parking.php?action=delete&id=<?= $p['id'] ?>"
-                                        onclick="return confirm('Delete this parking record?')"
-                                        class="btn btn-sm btn-danger">
-                                        Delete
-                                    </a>
-                                </div>
-                            </td>
-
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-
-        </div>
-    </div>
-    </div> -->
 
     <!-- DATATABLES -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.2/css/dataTables.bootstrap5.min.css">
