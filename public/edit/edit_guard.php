@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/helpers.php';
 
 requireRole(['admin']); // Only admin can access/edit
 
@@ -28,7 +29,6 @@ if (isset($_GET['id']) && ctype_digit($_GET['id'])) {
     $joiningDate = $guard['joining_date'];
     $address     = $guard['address'];
     $salary      = $guard['salary'] ?? '';
-
 } else {
     header('Location: ../guards.php');
     exit;
@@ -79,26 +79,27 @@ if (isset($_POST['edit_guard'])) {
                 salary = ?
             WHERE id = ?
         ");
-        $stmt->execute([
-            $name,
-            $mobile,
-            $dob,
-            $gender,
-            $shift,
-            $joiningDate,
-            $address,
-            $salary,
-            $id
-        ]);
 
-        $_SESSION['success'] = 'Guard updated successfully';
-        header('Location: ../guards.php');
-        exit;
+
+
+
+        if ($stmt->execute([$name, $mobile, $dob, $gender, $shift, $joiningDate, $address, $salary, $id])) {
+            // $_SESSION['success'] = 'Guard updated successfully';
+            flash_set('success', 'Guard updated successfully');
+            header("Location: " . BASE_URL . "guards.php");
+            exit();
+        } else {
+            flash_set('err', 'Database error! Guard not updated.');
+            header('Location: ' . BASE_URL . 'edit/edit_guard.php');
+            exit();
+        }
     }
 }
 
 include(__DIR__ . '/../../resources/layout/header.php');
 ?>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
 
 <div class="container-fluid px-4 mb-4">
     <h1 class="mt-4">Edit Guard</h1>

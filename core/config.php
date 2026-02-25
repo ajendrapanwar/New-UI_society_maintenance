@@ -47,13 +47,6 @@ try {
 
     if (!$tableExists) {
 
-        // Import schema
-        $sql = file_get_contents(__DIR__ . '/../database.sql');
-        $pdo->exec($sql);
-
-        // Create default admin
-        $adminEmail = 'admin@sms.com';
-
         $checkAdmin = $pdo->prepare("SELECT id FROM users WHERE email = ?");
         $checkAdmin->execute([$adminEmail]);
 

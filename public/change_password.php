@@ -1,14 +1,7 @@
 <?php
-
 require_once __DIR__ . '/../core/config.php';
 
-// ✅ Allow BOTH admin & user
-// if (!isset($_SESSION['user_id'])) {
-// 	header('Location: ' . BASE_URL . 'index.php');
-// 	exit();
-// }
-
-requireRole(['admin','cashier','user']);
+requireRole(['admin', 'cashier', 'user']);
 
 $errors = [];
 $success = '';
@@ -20,26 +13,29 @@ if (isset($_POST['btn_change_password'])) {
 	$new_password     = $_POST['new_password'] ?? '';
 	$confirm_password = $_POST['confirm_password'] ?? '';
 
+	// Current password validation
 	if ($current_password === '') {
-		$errors[] = 'Current password is required';
+		$errors['current_password'] = 'Current password is required';
 	}
 
+	// New password validation
 	if ($new_password === '') {
-		$errors[] = 'New password is required';
+		$errors['new_password'] = 'New password is required';
 	} elseif (strlen($new_password) < 6) {
-		$errors[] = 'New password must be at least 6 characters';
+		$errors['new_password'] = 'New password must be at least 6 characters';
 	}
 
+	// Confirm password validation
 	if ($confirm_password === '') {
-		$errors[] = 'Confirm password is required';
+		$errors['confirm_password'] = 'Confirm password is required';
 	} elseif ($new_password !== $confirm_password) {
-		$errors[] = 'Passwords do not match';
+		$errors['confirm_password'] = 'Passwords do not match';
 	}
 
+	// Check current password from DB
 	if (empty($errors)) {
 		$user_id = $_SESSION['user_id'];
 
-		// Get current password hash
 		$stmt = $pdo->prepare("SELECT password FROM users WHERE id = ?");
 		$stmt->execute([$user_id]);
 		$user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -53,7 +49,7 @@ if (isset($_POST['btn_change_password'])) {
 
 			$success = 'Password changed successfully';
 		} else {
-			$errors[] = 'Current password is incorrect';
+			$errors['current_password'] = 'Current password is incorrect';
 		}
 	}
 }
@@ -62,46 +58,115 @@ if (isset($_POST['btn_change_password'])) {
 include(__DIR__ . '/../resources/layout/header.php');
 ?>
 
-<div class="container-fluid px-4">
-	<h1 class="mt-4">Change Password</h1>
+<!DOCTYPE html>
+<html lang="en">
 
-	<?php if ($success): ?>
-		<div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
-	<?php endif; ?>
+<head>
 
-	<?php foreach ($errors as $error): ?>
-		<div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
-	<?php endforeach; ?>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Change Password</title>
 
-	<div class="col-md-4">
-		<div class="card">
-			<div class="card-header">
-				<h5>Change Password</h5>
+	<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+	<link rel="stylesheet" href="../assets/css/styles.css">
+
+</head>
+
+<body>
+
+	<div class="main-wrapper">
+
+		<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+		<main id="main-content">
+			<div class="d-flex justify-content-between align-items-center mb-4">
+				<h1 class="page-title m-0">Change Password</h1>
 			</div>
-			<div class="card-body">
-				<form method="post">
-					<div class="mb-3">
-						<label>Current Password</label>
-						<input type="password" name="current_password" class="form-control">
+
+			<?php if ($success): ?>
+				<div class="alert alert-success"><?= $success ?></div>
+			<?php endif; ?>
+
+			<div class="col-md-5">
+				<div class="card border-0 shadow-lg">
+					<div class="card-header border-0 p-4 pb-0 bg-white">
+						<h5 class="fw-800 m-0">Change Password</h5>
 					</div>
 
-					<div class="mb-3">
-						<label>New Password</label>
-						<input type="password" name="new_password" class="form-control">
-					</div>
+					<div class="card-body p-4">
+						<form method="POST" class="row g-3" autocomplete="off">
 
-					<div class="mb-3">
-						<label>Confirm New Password</label>
-						<input type="password" name="confirm_password" class="form-control">
-					</div>
+							<!-- CURRENT PASSWORD -->
+							<div class="col-12">
+								<label class="form-label small fw-bold text-muted">
+									CURRENT PASSWORD <span class="text-danger">*</span>
+								</label>
+								<input type="password"
+									name="current_password"
+									class="form-control bg-light border-0 shadow-sm <?= isset($errors['current_password']) ? 'is-invalid' : '' ?>"
+									placeholder="Enter current password">
 
-					<button type="submit" name="btn_change_password" class="btn btn-primary">
-						Change Password
-					</button>
-				</form>
+								<?php if (isset($errors['current_password'])): ?>
+									<small class="text-danger"><?= $errors['current_password'] ?></small>
+								<?php endif; ?>
+							</div>
+
+							<!-- NEW PASSWORD -->
+							<div class="col-12">
+								<label class="form-label small fw-bold text-muted">
+									NEW PASSWORD <span class="text-danger">*</span>
+								</label>
+								<input type="password"
+									name="new_password"
+									class="form-control bg-light border-0 shadow-sm <?= isset($errors['new_password']) ? 'is-invalid' : '' ?>"
+									placeholder="Enter new password">
+
+								<?php if (isset($errors['new_password'])): ?>
+									<small class="text-danger"><?= $errors['new_password'] ?></small>
+								<?php endif; ?>
+							</div>
+
+							<!-- CONFIRM PASSWORD -->
+							<div class="col-12">
+								<label class="form-label small fw-bold text-muted">
+									CONFIRM NEW PASSWORD <span class="text-danger">*</span>
+								</label>
+								<input type="password"
+									name="confirm_password"
+									class="form-control bg-light border-0 shadow-sm <?= isset($errors['confirm_password']) ? 'is-invalid' : '' ?>"
+									placeholder="Confirm new password">
+
+								<?php if (isset($errors['confirm_password'])): ?>
+									<small class="text-danger"><?= $errors['confirm_password'] ?></small>
+								<?php endif; ?>
+							</div>
+
+							<!-- BUTTONS -->
+							<div class="col-12 mt-4">
+								<button type="submit" name="btn_change_password" class="btn btn-brand w-100 ">
+									Change Password
+								</button>
+
+								<a href="<?= BASE_URL ?>dashboard.php" class="btn btn-light w-100 mt-2 py-2 shadow-sm">
+									Back to Dashboard
+								</a>
+							</div>
+
+						</form>
+					</div>
+				</div>
 			</div>
-		</div>
+
+		</main>
+
 	</div>
-</div>
+
+
+</body>
+
+</html>
 
 <?php include(__DIR__ . '/../resources/layout/footer.php'); ?>

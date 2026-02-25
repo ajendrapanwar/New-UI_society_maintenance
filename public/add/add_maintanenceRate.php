@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/helpers.php';
 
 /* ===== ACCESS CONTROL ===== */
 // if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
@@ -61,39 +62,35 @@ if (isset($_POST['add_rate'])) {
             "INSERT INTO maintenance_rates (flat_type, rate, overdue_fine)
      VALUES (?, ?, ?)"
         );
-        $stmt->execute([$flat_type, $rate, $overdue_fine]);
 
-
-        $_SESSION['success'] = 'Maintenance rate added successfully';
-        header('Location: ' . BASE_URL . 'maintanenceRate.php');
-        exit();
+        if ($stmt->execute([$flat_type, $rate, $overdue_fine])) {
+            // $_SESSION['success'] = 'Maintenance rate added successfully';
+            flash_set('success', 'Maintenance rate added successfully');
+            header('Location: ' . BASE_URL . 'maintanenceRate.php');
+            exit();
+        } else {
+            flash_set('err', 'Database error! Maintenance rate not added.');
+            header('Location: ' . BASE_URL . 'add/add_maintanenceRate.php');
+            exit();
+        }
     }
 }
 
 include(__DIR__ . '/../../resources/layout/header.php');
 ?>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
 
 <div class="container-fluid px-4 mb-4">
     <h1 class="mt-4">Add Maintenance Rate</h1>
 
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item">
-            <a href="<?= BASE_URL ?>dashboard.php">Dashboard</a>
-        </li>
-        <li class="breadcrumb-item">
-            <a href="<?= BASE_URL ?>maintanenceRate.php">Maintenance Rate</a>
-        </li>
+        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>maintanenceRate.php">Maintenance Rate</a></li>
         <li class="breadcrumb-item active">Add Maintenance Rate</li>
     </ol>
 
     <div class="col-md-6">
-
-        <?php if (!empty($_SESSION['success'])): ?>
-            <div class="alert alert-success">
-                <?= htmlspecialchars($_SESSION['success']);
-                unset($_SESSION['success']); ?>
-            </div>
-        <?php endif; ?>
 
         <div class="card">
             <div class="card-header">
@@ -105,7 +102,7 @@ include(__DIR__ . '/../../resources/layout/header.php');
 
                     <!-- Flat Type -->
                     <div class="mb-2">
-                        <label class="form-label">Flat Type</label>
+                        <label class="form-label">Flat Type <span class="text-danger">*</span></label>
                         <select name="flat_type"
                             class="form-select <?= isset($errors['flat_type']) ? 'is-invalid' : '' ?>">
                             <option value="" disabled <?= $flat_type === '' ? 'selected' : '' ?>>
@@ -128,7 +125,7 @@ include(__DIR__ . '/../../resources/layout/header.php');
 
                     <!-- Rate -->
                     <div class="mb-2">
-                        <label class="form-label">Rate (₹)</label>
+                        <label class="form-label">Rate (₹) <span class="text-danger">*</span></label>
                         <input type="text"
                             name="rate"
                             class="form-control <?= isset($errors['rate']) ? 'is-invalid' : '' ?>"
@@ -143,7 +140,7 @@ include(__DIR__ . '/../../resources/layout/header.php');
 
                     <!-- Overdue Fine -->
                     <div class="mb-3">
-                        <label class="form-label">Overdue Fine (₹)</label>
+                        <label class="form-label">Overdue Fine (₹) <span class="text-danger">*</span></label>
                         <input type="text"
                             name="overdue_fine"
                             class="form-control <?= isset($errors['overdue_fine']) ? 'is-invalid' : '' ?>"
@@ -157,10 +154,9 @@ include(__DIR__ . '/../../resources/layout/header.php');
                     </div>
 
 
-                    <button type="submit" name="add_rate" class="btn btn-primary">
-                        Add Rate
-                    </button>
+                    <button type="submit" name="add_rate" class="btn btn-primary">Add Rate</button>
 
+                    <a href="<?= BASE_URL ?>maintanenceRate.php" class="btn btn-secondary mx-2">Back</a>
                 </form>
             </div>
         </div>

@@ -1,14 +1,6 @@
 <?php
 require_once __DIR__ . '/../core/config.php';
-
-// ACCESS CONTROL
-// if (
-//     !isset($_SESSION['user_id']) ||
-//     !in_array($_SESSION['user_role'], ['admin', 'cashier'])
-// ) {
-//     header('Location: ' . BASE_URL . 'logout.php');
-//     exit();
-// }
+require_once __DIR__ . '/../core/helpers.php';
 
 // Admin access check
 requireRole(['admin', 'cashier']);
@@ -23,7 +15,8 @@ if (
 	$stmt = $pdo->prepare("DELETE FROM allotments WHERE id = ?");
 	$stmt->execute([$_GET['id']]);
 
-	$_SESSION['success'] = 'Allotment removed successfully';
+	// $_SESSION['success'] = 'Allotment removed successfully';
+	flash_set('success', 'Allotment removed successfully');
 	header('Location: ' . BASE_URL . 'allotments.php');
 	exit();
 }
@@ -31,108 +24,132 @@ if (
 include __DIR__ . '/../resources/layout/header.php';
 ?>
 
-<div class="container-fluid px-4">
-	<h1 class="mt-4">Maintenance Records</h1>
+<!DOCTYPE html>
+<html lang="en">
 
-	<ol class="breadcrumb mb-4">
-		<?php if ($_SESSION['user_role'] !== 'cashier'): ?>
-			<li class="breadcrumb-item">
-				<a href="<?= BASE_URL ?>dashboard.php">Dashboard</a>
-			</li>
-		<?php endif; ?>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Maintenance Records</title>
 
-		<li class="breadcrumb-item active">Maintanence Records</li>
-	</ol>
+	<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+	<link rel="stylesheet" href="../assets/css/styles.css">
+</head>
 
-	<?php if (!empty($_SESSION['success'])): ?>
-		<div class="alert alert-success">
-			<?= htmlspecialchars($_SESSION['success']) ?>
-		</div>
-		<?php unset($_SESSION['success']); ?>
-	<?php endif; ?>
+<body>
 
-	<div class="card">
-		<div class="card-header">
-			<div class="row">
-				<div class="col col-6">
-					<h5 class="card-title">Maintanence Records List</h5>
+	<div class="main-wrapper">
+
+		<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+		<main id="main-content">
+			<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+				<h1 class="fw-800 m-0">Maintenance Ledger</h1>
+			</div>
+
+			<div class="data-card shadow-sm border-0">
+				<div class="table-responsive">
+					<table id="allotment-table" class="table table-hover align-middle w-100">
+						<thead>
+							<tr>
+								<th>ID</th>
+								<th>Flat Number</th>
+								<th>Block Number</th>
+								<th>Allotted To</th>
+								<th>Type</th>
+								<th class="text-end">Action</th>
+							</tr>
+						</thead>
+						<tbody>
+							<!-- NO DUMMY DATA (DataTables will load dynamically) -->
+						</tbody>
+					</table>
 				</div>
 			</div>
-		</div>
-		<div class="card-body">
-			<div class="table-responsive">
-				<table class="table table-bordered table-striped" id="allotment-table">
-					<thead>
-						<tr>
-							<th>ID</th>
-							<th>Flat Number</th>
-							<th>Block Number</th>
-							<th>Allotted To</th>
-							<th>Type</th>
-							<th width="120">Action</th>
-						</tr>
-					</thead>
-					<tbody></tbody>
-				</table>
-			</div>
-		</div>
+		</main>
+
 	</div>
-</div>
+
+
+	<!-- DataTables -->
+	<script src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
+	<script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
+
+
+
+	<script>
+		$(document).ready(function() {
+
+			$('#allotment-table').DataTable({
+				dom: '<"d-flex justify-content-between mb-4"lf>rt<"d-flex justify-content-between mt-4"ip>',
+				processing: true,
+				serverSide: true,
+				responsive: true,
+				pageLength: 5,
+				lengthMenu: [5, 10, 25, 50],
+
+				language: {
+					search: "",
+					searchPlaceholder: "Search records..."
+				},
+
+
+				autoWidth: false,
+
+				ajax: {
+					url: 'action.php',
+					type: 'POST',
+					data: {
+						action: 'maintenanceBillRecords'
+					}
+				},
+
+				order: [
+					[0, 'desc']
+				],
+
+				columns: [{
+						data: 'id'
+					},
+					{
+						data: 'flat_number'
+					},
+					{
+						data: 'block_number'
+					},
+					{
+						data: 'name'
+					},
+					{
+						data: 'flat_type'
+					},
+					{
+						data: null,
+						orderable: false,
+						searchable: false,
+						className: "text-end",
+						render: function(data, type, row) {
+							return `
+                        <a href="view/view_maintanenceBillRecords.php?id=${row.id}"
+                           class="btn btn-sm btn-brand"
+						    style="font-size: 10px;">
+                           <i class="fa fa-eye me-1"></i> View
+                        </a>
+                    `;
+						}
+					}
+				]
+			});
+
+		});
+	</script>
+
+
+</body>
+
+</html>
 
 <?php include __DIR__ . '/../resources/layout/footer.php'; ?>
-
-<!-- DataTables -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.2/css/dataTables.bootstrap5.min.css">
-<script src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
-
-<script>
-	$(function() {
-		$('#allotment-table').DataTable({
-			processing: true,
-			serverSide: true,
-
-			pageLength: 5,
-			lengthMenu: [5, 10, 25, 50],
-
-			ajax: {
-				url: 'action.php',
-				type: 'POST',
-				data: {
-					action: 'maintenanceBillRecords'
-				}
-			},
-
-			order: [
-				[0, 'desc']
-			],
-			columns: [{
-					data: 'id'
-				},
-				{
-					data: 'flat_number'
-				},
-				{
-					data: 'block_number'
-				},
-				{
-					data: 'name'
-				},
-				{
-					data: 'flat_type'
-				},
-				{
-					data: null,
-					orderable: false,
-					searchable: false,
-					render: function(data, type, row) {
-						return `
-						<a href="view/view_maintanenceBillRecords.php?id=${row.id}"
-						   class="btn btn-sm btn-warning">View</a>
-					`;
-					}
-				}
-			]
-		});
-	});
-</script>

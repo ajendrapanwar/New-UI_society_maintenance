@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/helpers.php';
 
 $errors = [];
 $work_title = $worker_name = $contact_number = $amount = $description = '';
@@ -51,27 +52,24 @@ if (isset($_POST['add_misc_work'])) {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ");
 
-        $stmt->execute([
-            $work_title,
-            $worker_name,
-            $contact_number,
-            $amount,
-            $description,
-            $targetMonth,
-            $targetYear,
-            $status
-        ]);
 
-        $_SESSION['success'] = 'Miscellaneous work added successfully';
-
-        // Redirect to the list page
-        header('Location: ' . BASE_URL . 'miscellaneous_work.php');
-        exit();
+        if ($stmt->execute([$work_title, $worker_name, $contact_number, $amount, $description, $targetMonth, $targetYear, $status])) {
+            // $_SESSION['success'] = 'Miscellaneous work added successfully';
+            flash_set('success', 'Miscellaneous work added successfully');
+            header('Location: ' . BASE_URL . 'miscellaneous_work.php');
+            exit();
+        } else {
+            flash_set('err', 'Database error! Miscellaneous work not added.');
+            header('Location: ' . BASE_URL . 'add/add_miscellaneous_work.php');
+            exit();
+        }
     }
 }
 
 include(__DIR__ . '/../../resources/layout/header.php');
 ?>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
 
 <div class="container-fluid px-4 mb-4">
     <h1 class="mt-4">Add Miscellaneous Work</h1>
@@ -135,6 +133,8 @@ include(__DIR__ . '/../../resources/layout/header.php');
                         </div>
 
                         <button type="submit" name="add_misc_work" class="btn btn-primary">Submit</button>
+
+                        <a href="<?= BASE_URL ?>miscellaneous_work.php" class="btn btn-secondary mx-2">Back</a>
                     </form>
 
                 </div>

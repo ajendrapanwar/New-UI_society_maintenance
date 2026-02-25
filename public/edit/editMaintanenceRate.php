@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/helpers.php';
 
 /* ===== ACCESS CONTROL ===== */
 // if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
@@ -77,28 +78,31 @@ if (isset($_POST['update_rate'])) {
      SET flat_type = ?, rate = ?, overdue_fine = ?
      WHERE id = ?"
         );
-        $stmt->execute([$flat_type, $rate, $overdue_fine, $id]);
 
-
-        $_SESSION['success'] = 'Maintenance rate updated successfully';
-        header('Location: ' . BASE_URL . 'maintanenceRate.php');
-        exit();
+        if ($stmt->execute([$flat_type, $rate, $overdue_fine, $id])) {
+            // $_SESSION['success'] = 'Maintenance rate updated successfully';
+            flash_set('success', 'Maintenance rate updated successfully');
+            header('Location: ' . BASE_URL . 'maintanenceRate.php');
+            exit();
+        } else {
+            flash_set('err', 'Database error! Maintenance rate not updated.');
+            header('Location: ' . BASE_URL . 'edit/editMaintanenceRate.php');
+            exit();
+        }
     }
 }
 
 include(__DIR__ . '/../../resources/layout/header.php');
 ?>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
 
 <div class="container-fluid px-4 mb-4">
     <h1 class="mt-4">Edit Maintenance Rate</h1>
 
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item">
-            <a href="<?= BASE_URL ?>dashboard.php">Dashboard</a>
-        </li>
-        <li class="breadcrumb-item">
-            <a href="<?= BASE_URL ?>maintanenceRate.php">Maintenance Rate</a>
-        </li>
+        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>maintanenceRate.php">Maintenance Rate</a></li>
         <li class="breadcrumb-item active">Edit Maintenance Rate</li>
     </ol>
 
@@ -164,13 +168,8 @@ include(__DIR__ . '/../../resources/layout/header.php');
                     </div>
 
 
-                    <button type="submit" name="update_rate" class="btn btn-primary">
-                        Update Rate
-                    </button>
-
-                    <a href="<?= BASE_URL ?>maintanenceRate.php" class="btn btn-secondary">
-                        Back
-                    </a>
+                    <button type="submit" name="update_rate" class="btn btn-primary">Update Rate</button>
+                    <a href="<?= BASE_URL ?>maintanenceRate.php" class="btn btn-secondary">Back</a>
 
                 </form>
             </div>

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/helpers.php';
 requireRole(['admin']);
 
 $errors = [];
@@ -72,31 +73,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             (name, mobile, dob, gender, shift, joining_date, address, salary, created_at)
             VALUES (?,?,?,?,?,?,?,?,NOW())
         ");
-        $stmt->execute([
-            $name,
-            $mobile,
-            $dob,
-            $gender,
-            $shift,
-            $joiningDate,
-            $address,
-            $salary
-        ]);
 
-        $_SESSION['success'] = 'Security guard added successfully';
-        header('Location: ../guards.php');
-        exit;
+        if ($stmt->execute([$name, $mobile, $dob, $gender, $shift, $joiningDate, $address, $salary])) {
+            // $_SESSION['success'] = 'Security guard added successfully';
+            flash_set('success', 'Security guard added successfully');
+            header('Location: ' . BASE_URL . 'guards.php');
+            exit;
+        } else {
+            flash_set('err', 'Database error! Security guard not added.');
+            header('Location: ' . BASE_URL . 'add/add_security_guard.php');
+            exit();
+        }
     }
 }
 
 include(__DIR__ . '/../../resources/layout/header.php');
 ?>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
 
 <div class="container-fluid px-4 mb-4">
     <h1 class="mt-4">Add Guard</h1>
 
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="../dashboard.php">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
         <li class="breadcrumb-item"><a href="<?= BASE_URL ?>guards.php">Guards List</a></li>
         <li class="breadcrumb-item active">Add Guard</li>
     </ol>
@@ -115,7 +115,7 @@ include(__DIR__ . '/../../resources/layout/header.php');
 
                             <!-- NAME -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Guard Name</label>
+                                <label class="form-label">Guard Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" name="name" value="<?= htmlspecialchars($name) ?>">
                                 <?php if (isset($errors['name'])): ?>
                                     <small class="text-danger"><?= $errors['name'] ?></small>
@@ -124,7 +124,7 @@ include(__DIR__ . '/../../resources/layout/header.php');
 
                             <!-- MOBILE -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Mobile</label>
+                                <label class="form-label">Mobile <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" name="mobile" value="<?= htmlspecialchars($mobile) ?>">
                                 <?php if (isset($errors['mobile'])): ?>
                                     <small class="text-danger"><?= $errors['mobile'] ?></small>
@@ -133,7 +133,7 @@ include(__DIR__ . '/../../resources/layout/header.php');
 
                             <!-- DOB -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Date of Birth</label>
+                                <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control" name="user_dob" value="<?= htmlspecialchars($dob) ?>">
                                 <?php if (isset($errors['dob'])): ?>
                                     <small class="text-danger"><?= $errors['dob'] ?></small>
@@ -142,7 +142,7 @@ include(__DIR__ . '/../../resources/layout/header.php');
 
                             <!-- GENDER -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Gender</label>
+                                <label class="form-label">Gender <span class="text-danger">*</span></label>
                                 <select class="form-select" name="gender">
                                     <option value="">Select</option>
                                     <option value="Male" <?= $gender === 'Male' ? 'selected' : '' ?>>Male</option>
@@ -156,7 +156,7 @@ include(__DIR__ . '/../../resources/layout/header.php');
 
                             <!-- SHIFT -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Shift</label>
+                                <label class="form-label">Shift <span class="text-danger">*</span></label>
                                 <select class="form-select" name="shift">
                                     <option value="">Select</option>
                                     <option value="day" <?= $shift === 'day' ? 'selected' : '' ?>>Day</option>
@@ -170,7 +170,7 @@ include(__DIR__ . '/../../resources/layout/header.php');
 
                             <!-- JOINING DATE -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Joining Date</label>
+                                <label class="form-label">Joining Date <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control" name="joining_date" value="<?= htmlspecialchars($joiningDate) ?>">
                                 <?php if (isset($errors['joining_date'])): ?>
                                     <small class="text-danger"><?= $errors['joining_date'] ?></small>
@@ -179,7 +179,7 @@ include(__DIR__ . '/../../resources/layout/header.php');
 
                             <!-- SALARY -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Salary</label>
+                                <label class="form-label">Salary <span class="text-danger">*</span></label>
                                 <input type="number" step="0.01" class="form-control" name="salary" value="<?= htmlspecialchars($salary) ?>">
                                 <?php if (isset($errors['salary'])): ?>
                                     <small class="text-danger"><?= $errors['salary'] ?></small>
@@ -188,7 +188,7 @@ include(__DIR__ . '/../../resources/layout/header.php');
 
                             <!-- ADDRESS -->
                             <div class="col-12 mb-3">
-                                <label class="form-label">Address</label>
+                                <label class="form-label">Address <span class="text-danger">*</span></label>
                                 <textarea class="form-control" name="address" rows="2"><?= htmlspecialchars($address) ?></textarea>
                                 <?php if (isset($errors['address'])): ?>
                                     <small class="text-danger"><?= $errors['address'] ?></small>
@@ -197,9 +197,9 @@ include(__DIR__ . '/../../resources/layout/header.php');
 
                         </div>
 
-                        <button type="submit" name="add_guard" class="btn btn-primary">
-                            Add Guard
-                        </button>
+                        <button type="submit" name="add_guard" class="btn btn-primary">Add Guard</button>
+
+                        <a href="<?= BASE_URL ?>guards.php" class="btn btn-secondary mx-2">Back</a>
 
                     </form>
                 </div>

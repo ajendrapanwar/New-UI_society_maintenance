@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../core/config.php';
+require_once __DIR__ . '/../core/helpers.php';
 
 $userRole = $_SESSION['user_role'] ?? '';
 
@@ -13,14 +14,15 @@ if (
     $stmt = $pdo->prepare("DELETE FROM garbage_collectors WHERE id = ?");
     $stmt->execute([$_GET['id']]);
 
-    $_SESSION['success'] = 'Garbage collector removed successfully';
+    // $_SESSION['success'] = 'Garbage collector removed successfully';
+    flash_set('success', 'Garbage collector removed successfully');
     header('Location: ' . BASE_URL . 'garbageCollector.php');
     exit;
 }
 
 include('../resources/layout/header.php');
 ?>
-
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
 <div class="container-fluid px-4">
     <h1 class="mt-4">Garbage Collector</h1>
@@ -31,21 +33,12 @@ include('../resources/layout/header.php');
         <li class="breadcrumb-item active">View Garbage Collector</li>
     </ol>
 
-    <?php if (!empty($_SESSION['success'])): ?>
-        <div class="alert alert-success">
-            <?= htmlspecialchars($_SESSION['success']) ?>
-        </div>
-        <?php unset($_SESSION['success']); ?>
-    <?php endif; ?>
-
     <div class="card">
         <div class="card-header d-flex justify-content-between">
             <h5 class="mb-0">Garbage Collector List</h5>
 
             <?php if ($userRole === 'admin'): ?>
-                <a href="<?= BASE_URL ?>add/add_garbageCollector.php" class="btn btn-success btn-sm">
-                    Add Garbage Collector
-                </a>
+                <a href="<?= BASE_URL ?>add/add_garbageCollector.php" class="btn btn-success btn-sm">+ Add Garbage Collector</a>
             <?php endif; ?>
         </div>
 
@@ -110,7 +103,7 @@ include('../resources/layout/header.php');
 <script src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
 
-<?php include('../resources/layout/footer.php'); ?>
+
 
 <script>
     $(document).ready(function() {
@@ -123,3 +116,5 @@ include('../resources/layout/header.php');
         });
     });
 </script>
+
+<?php include('../resources/layout/footer.php'); ?>

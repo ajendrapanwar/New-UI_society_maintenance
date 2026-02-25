@@ -1,309 +1,238 @@
 <?php
 require_once __DIR__ . '/../core/config.php';
+require_once __DIR__ . '/../core/helpers.php';
 
 /* ================= ACCESS CONTROL ================= */
-requireRole(['admin']);
+requireRole(['admin', 'cashier']);
 
 include __DIR__ . '/../resources/layout/header.php';
 ?>
 
-<style>
-    table.dataTable td {
-        vertical-align: middle !important;
-        white-space: nowrap;
-    }
 
-    .badge {
-        font-size: 12px;
-        font-weight: bold;
-        padding: 6px 12px;
-    }
-</style>
 
-<div class="container-fluid px-4">
-    <h1 class="mt-4">All Expense Bills</h1>
+<!DOCTYPE html>
+<html lang="en">
 
-    <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
-        <li class="breadcrumb-item active">All Expense Bills</li>
-    </ol>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Report | SocietyOS</title>
 
-    <?php if (isset($_SESSION['success'])): ?>
-        <div class="alert alert-success"><?= htmlspecialchars($_SESSION['success']) ?></div>
-        <?php unset($_SESSION['success']); ?>
-    <?php endif; ?>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/styles.css">
 
-    <!-- TABLE -->
-    <div class="card">
 
-        <div class="card-header">
-            <div class="row">
-                <div class="col-6">
-                    <h5 class="card-title">Expense Bills List</h5>
-                </div>
-                <div class="col-6 text-end">
-                    <button id="export-excel" class="btn btn-dark btn-sm">
-                        <i class="bi bi-file-earmark-excel"></i> Export Excel
-                    </button>
-                </div>
-            </div>
-        </div>
+    <style>
+        table.dataTable td {
+            vertical-align: middle !important;
+            white-space: nowrap;
+        }
 
-        <!-- FILTERS -->
-        <div class="card-body py-3">
-            <div class="row align-items-end g-3">
+        .badge {
+            font-size: 12px;
+            font-weight: bold;
+            padding: 6px 12px;
+        }
+    </style>
 
-                <div class="col-md-2 col-sm-6">
-                    <label class="filter-label">Month</label>
-                    <select id="filter-month" class="form-select form-select-sm">
-                        <option value="">All Months</option>
-                        <?php for ($m = 1; $m <= 12; $m++): ?>
-                            <option value="<?= $m ?>"><?= date('F', mktime(0, 0, 0, $m, 1)) ?></option>
-                        <?php endfor; ?>
-                    </select>
-                </div>
+</head>
 
-                <div class="col-md-2 col-sm-6">
-                    <label class="filter-label">Year</label>
-                    <select id="filter-year" class="form-select form-select-sm">
-                        <option value="">All Years</option>
-                        <?php $currentYear = date('Y'); ?>
-                        <?php for ($y = $currentYear; $y >= $currentYear - 5; $y--): ?>
-                            <option value="<?= $y ?>"><?= $y ?></option>
-                        <?php endfor; ?>
-                    </select>
-                </div>
+<body>
 
-                <div class="col-md-2 col-sm-6">
-                    <label class="filter-label">Status</label>
-                    <select id="filter-status" class="form-select form-select-sm">
-                        <option value="">All Status</option>
-                        <option value="paid">Paid</option>
-                        <option value="unpaid">Unpaid</option>
-                    </select>
-                </div>
 
-                <div class="col-4 col-md-2 col-sm-3 d-grid">
-                    <button id="reset-filters" class="btn btn-outline-dark btn-sm">
-                        <i class="bi bi-arrow-counterclockwise"></i> Reset
-                    </button>
-                </div>
+    <div class="main-wrapper">
+
+        <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <main id="main-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="fw-800 m-0">Expense Report</h1>
+                <button class="btn btn-outline-dark fw-bold px-4" style="border-radius:10px;">
+                    <i class="fa-solid fa-file-excel me-2"></i> Export CSV
+                </button>
             </div>
 
-            <!-- Totals -->
-            <div class="row mt-5 text-center text-md-start">
-                <div class="col-md-4 col-12 mb-2">
-                    <strong>Grand Total:</strong> <span id="grandTotal"></span>
-                </div>
-                <div class="col-md-4 col-12 mb-2 text-success">
-                    <strong>Total Paid Expense:</strong> <span id="paidTotal"></span>
-                </div>
-                <div class="col-md-4 col-12 mb-2 text-danger">
-                    <strong>Total Unpaid Expense:</strong> <span id="pendingTotal"></span>
-                </div>
+            <div class="filter-box shadow-sm">
+                <form class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="small fw-bold text-muted">CATEGORY</label>
+                        <select class="form-select border-0 bg-light py-2">
+                            <option>All Expenses</option>
+                            <option>Staff Salary</option>
+                            <option>Utility Bills</option>
+                            <option>Misc Repairs</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small fw-bold text-muted">PAYMENT STATUS</label>
+                        <select class="form-select border-0 bg-light py-2">
+                            <option>All Status</option>
+                            <option>Paid / Cleared</option>
+                            <option>Unpaid / Pending</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small fw-bold text-muted">MONTH/YEAR</label>
+                        <input type="month" class="form-control border-0 bg-light py-2" value="2026-02">
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" style="background:var(--brand); border-radius:10px; border:none;">Update Report</button>
+                    </div>
+                </form>
             </div>
 
-        </div>
-
-        <div class="card-body">
-            <div class="table-responsive">
-                <table id="expense-table" class="table table-bordered table-striped">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>ID</th>
-                            <th>Month/Year</th>
-                            <th>Name/Reading</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Source Table</th>
-                        </tr>
-                    </thead>
-                </table>
+            <div class="data-card border-0 shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="text-muted small uppercase">
+                            <tr>
+                                <th>Date</th>
+                                <th>Expense Details</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th class="text-end">Ref. No</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>18 Feb 2026</td>
+                                <td><span class="fw-bold">Electrician - Block B Wiring</span></td>
+                                <td><span class="badge bg-light text-dark">Misc Work</span></td>
+                                <td class="fw-bold">₹4,200</td>
+                                <td><span class="status-badge status-paid">Paid</span></td>
+                                <td class="text-end text-muted">#EXP-101</td>
+                            </tr>
+                            <tr>
+                                <td>20 Feb 2026</td>
+                                <td><span class="fw-bold">Monthly Garbage Collection</span></td>
+                                <td><span class="badge bg-light text-dark">Staff Salary</span></td>
+                                <td class="fw-bold">₹8,000</td>
+                                <td><span class="status-badge status-unpaid">Unpaid</span></td>
+                                <td class="text-end text-muted">#EXP-102</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
-
+        </main>
     </div>
-</div>
 
-<?php include __DIR__ . '/../resources/layout/footer.php'; ?>
 
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.2/css/dataTables.bootstrap5.min.css">
-<script src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
 
-<!-- <script>
-    $(function() {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.2/css/dataTables.bootstrap5.min.css">
+    <script src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
 
-        let table = $('#expense-table').DataTable({
-            processing: true,
-            serverSide: true,
-            searching: false,
-            pageLength: 10,
-            order: [
-                [1, 'desc']
-            ],
-            ajax: {
+
+    <script>
+        $(function() {
+
+            let table = $('#expense-table').DataTable({
+                processing: true,
+                serverSide: true,
+                searching: false,
+                pageLength: 5,
+                lengthMenu: [5, 10, 25, 50],
+                order: [
+                    [2, 'desc']
+                ],
+
+                ajax: {
+                    url: '<?= BASE_URL ?>action.php',
+                    type: 'POST',
+                    data: function(d) {
+                        d.action = 'fetch_all_expenses';
+                        d.month = $('#filter-month').val();
+                        d.year = $('#filter-year').val();
+                        d.status = $('#filter-status').val();
+                    }
+                },
+
+                columns: [{
+                        data: 'id'
+                    },
+                    {
+                        data: 'month_year'
+                    },
+                    {
+                        data: 'name'
+                    },
+                    {
+                        data: 'source'
+                    },
+                    {
+                        data: 'amount'
+                    },
+                    {
+                        data: 'status'
+                    },
+                    {
+                        data: 'paid_on'
+                    }
+                ]
+            });
+
+            $('#filter-month, #filter-year, #filter-status').on('change', function() {
+                table.ajax.reload();
+                loadExpenseTotals();
+            });
+
+            $('#reset-filters').on('click', function() {
+                $('#filter-month,#filter-year,#filter-status').val('');
+                table.ajax.reload();
+                loadExpenseTotals();
+            });
+
+            // Load totals on page load
+            loadExpenseTotals();
+        });
+
+
+        // ===== LOAD TOTALS LIKE MAINTENANCE =====
+        function loadExpenseTotals() {
+
+            $.ajax({
                 url: '<?= BASE_URL ?>action.php',
                 type: 'POST',
-                data: function(d) {
-                    d.action = 'fetch_all_expenses';
-                    d.month = $('#filter-month').val();
-                    d.year = $('#filter-year').val();
-                    d.status = $('#filter-status').val();
+                dataType: 'json',
+                data: {
+                    action: 'fetch_expense_totals',
+                    month: $('#filter-month').val(),
+                    year: $('#filter-year').val(),
+                    status: $('#filter-status').val()
                 },
-                dataSrc: function(json) {
-                    // Update totals
-                    $('#grandTotal').text('₹' + Number(json.grandTotal).toLocaleString('en-IN', {
-                        minimumFractionDigits: 2
-                    }));
-                    $('#paidTotal').text('₹' + Number(json.paidTotal).toLocaleString('en-IN', {
-                        minimumFractionDigits: 2
-                    }));
-                    $('#pendingTotal').text('₹' + Number(json.unpaidTotal).toLocaleString('en-IN', {
-                        minimumFractionDigits: 2
-                    }));
-                    return json.data;
+                success: function(res) {
+                    $('#grandTotal').text('₹' + res.grandTotal);
+                    $('#paidTotal').text('₹' + res.paidTotal);
+                    $('#pendingTotal').text('₹' + res.unpaidTotal);
                 }
-            },
-            columns: [{
-                    data: 'id'
-                },
-                {
-                    data: 'month_year'
-                },
-                {
-                    data: 'name'
-                },
-                {
-                    data: 'amount',
-                    render: $.fn.dataTable.render.number(',', '.', 2, '₹')
-                },
-                {
-                    data: 'status'
-                },
-                {
-                    data: 'source'
-                }
-            ]
-        });
+            });
+        }
 
-        $('#filter-month, #filter-year, #filter-status').on('change', function() {
-            table.ajax.reload();
-        });
 
-        $('#reset-filters').on('click', function() {
-            $('#filter-month,#filter-year,#filter-status').val('');
-            table.ajax.reload();
-        });
-
+        // EXPORT
         $('#export-excel').on('click', function() {
+
             let month = $('#filter-month').val();
             let year = $('#filter-year').val();
             let status = $('#filter-status').val();
 
             let url = '<?= BASE_URL ?>action.php?action=export_expense_bills' +
-                '&month=' + month + '&year=' + year + '&status=' + status;
+                '&month=' + month +
+                '&year=' + year +
+                '&status=' + status;
+
             window.location.href = url;
         });
-
-    });
-</script> -->
-
-<script>
-    $(function() {
-
-        let table = $('#expense-table').DataTable({
-            processing: true,
-            serverSide: true,
-            searching: false,
-            pageLength: 5,
-            lengthMenu: [5, 10, 25, 50],
-            order: [
-                [2, 'desc']
-            ],
-
-            ajax: {
-                url: '<?= BASE_URL ?>action.php',
-                type: 'POST',
-                data: function(d) {
-                    d.action = 'fetch_all_expenses';
-                    d.month = $('#filter-month').val();
-                    d.year = $('#filter-year').val();
-                    d.status = $('#filter-status').val();
-                }
-            },
-
-            columns: [{
-                    data: 'id'
-                },
-                {
-                    data: 'month_year'
-                },
-                {
-                    data: 'name'
-                },
-                {
-                    data: 'amount'
-                },
-                {
-                    data: 'status'
-                },
-                {
-                    data: 'source'
-                }
-            ]
-        });
-
-        $('#filter-month, #filter-year, #filter-status').on('change', function() {
-            table.ajax.reload();
-            loadExpenseTotals();
-        });
-
-        $('#reset-filters').on('click', function() {
-            $('#filter-month,#filter-year,#filter-status').val('');
-            table.ajax.reload();
-            loadExpenseTotals();
-        });
-
-        // Load totals on page load
-        loadExpenseTotals();
-    });
+    </script>
 
 
-    // ===== LOAD TOTALS LIKE MAINTENANCE =====
-    function loadExpenseTotals() {
 
-        $.ajax({
-            url: '<?= BASE_URL ?>action.php',
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                action: 'fetch_expense_totals',
-                month: $('#filter-month').val(),
-                year: $('#filter-year').val(),
-                status: $('#filter-status').val()
-            },
-            success: function(res) {
-                $('#grandTotal').text('₹' + res.grandTotal);
-                $('#paidTotal').text('₹' + res.paidTotal);
-                $('#pendingTotal').text('₹' + res.unpaidTotal);
-            }
-        });
-    }
+</body>
 
+</html>
 
-    // EXPORT
-    $('#export-excel').on('click', function() {
-
-        let month = $('#filter-month').val();
-        let year = $('#filter-year').val();
-        let status = $('#filter-status').val();
-
-        let url = '<?= BASE_URL ?>action.php?action=export_expense_bills' +
-            '&month=' + month +
-            '&year=' + year +
-            '&status=' + status;
-
-        window.location.href = url;
-    });
-</script>
+<?php include __DIR__ . '/../resources/layout/footer.php'; ?>

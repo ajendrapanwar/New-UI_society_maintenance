@@ -1,255 +1,244 @@
 <?php
 require_once __DIR__ . '/../core/config.php';
+require_once __DIR__ . '/../core/helpers.php';
 
 /* ================= ACCESS CONTROL ================= */
-requireRole(['admin']);
+requireRole(['admin', 'cashier']);
 
 include __DIR__ . '/../resources/layout/header.php';
 ?>
 
-<style>
-    table.dataTable td {
-        vertical-align: middle !important;
-        white-space: nowrap;
-    }
-</style>
 
-<div class="container-fluid px-4">
-    <h1 class="mt-4">All Collection Bills</h1>
+<!DOCTYPE html>
+<html lang="en">
 
-    <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
-        <li class="breadcrumb-item active">All Bills</li>
-    </ol>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collection Report | SocietyOS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="../assets/css/styles.css">
 
-    <?php if (isset($_SESSION['success'])): ?>
-        <div class="alert alert-success"><?= htmlspecialchars($_SESSION['success']) ?></div>
-        <?php unset($_SESSION['success']); ?>
-    <?php endif; ?>
+    <style>
+        table.dataTable td {
+            vertical-align: middle !important;
+            white-space: nowrap;
+        }
+    </style>
 
-    <!-- TABLE -->
-    <div class="card">
+</head>
 
-        <div class="card-header">
-            <div class="row">
-                <div class="col-6">
-                    <h5 class="card-title">Maintenance Bills List</h5>
-                </div>
-                <div class="col-6 text-end">
-                    <!-- <a href="<?= BASE_URL ?>guards.php" class="btn btn-primary btn-sm">View Guard</a> -->
-                    <button id="export-excel" class="btn btn-dark btn-sm">
-                        <i class="bi bi-file-earmark-excel"></i> Export Excel
-                    </button>
-                </div>
-            </div>
-        </div>
+<body>
 
-        <!-- FILTERS -->
-        <div class="card-body py-3">
-            <div class="row align-items-end g-3">
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-                <div class="col-md-2 col-sm-6">
-                    <label class="filter-label">Month</label>
-                    <select id="filter-month" class="form-select form-select-sm">
-                        <option value="">All Months</option>
-                        <?php
-                        for ($m = 1; $m <= 12; $m++) {
-                            echo "<option value='$m'>" . date('F', mktime(0, 0, 0, $m, 1)) . "</option>";
-                        }
-                        ?>
-                    </select>
-                </div>
+    <div class="main-wrapper">
 
-                <div class="col-md-2 col-sm-6">
-                    <label class="filter-label">Year</label>
-                    <select id="filter-year" class="form-select form-select-sm">
-                        <option value="">All Years</option>
-                        <?php
-                        $currentYear = date('Y');
-                        for ($y = $currentYear; $y >= $currentYear - 5; $y--) {
-                            echo "<option value='$y'>$y</option>";
-                        }
-                        ?>
-                    </select>
-                </div>
 
-                <div class="col-md-2 col-sm-6">
-                    <label class="filter-label">Status</label>
-                    <select id="filter-status" class="form-select form-select-sm">
-                        <option value="">All Status</option>
-                        <option value="paid">Paid</option>
-                        <option value="pending">Pending</option>
-                        <option value="overdue">Overdue</option>
-                    </select>
-                </div>
+        <main id="main-content">
+            <h1 class="fw-800 mb-4">Collection Analysis</h1>
 
-                <div class="col-4 col-md-2 col-sm-3 d-grid">
-                    <button id="reset-filters" class="btn btn-outline-dark btn-sm">
-                        <i class="bi bi-arrow-counterclockwise"></i> Reset
-                    </button>
-                </div>
+            <div class="filter-box shadow-sm">
+                <form class="row g-3 align-items-end">
+                    <div class="col-md-2">
+                        <label class="small fw-bold text-muted">YEAR</label>
+                        <select class="form-select border-0 bg-light">
+                            <option>2026</option>
+                            <option>2025</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="small fw-bold text-muted">MONTH</label>
+                        <select class="form-select border-0 bg-light">
+                            <option>February</option>
+                            <option>January</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small fw-bold text-muted">STATUS</label>
+                        <select class="form-select border-0 bg-light">
+                            <option>All Status</option>
+                            <option class="text-success">Paid</option>
+                            <option class="text-danger">Pending</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small fw-bold text-muted">FLAT TYPE</label>
+                        <select class="form-select border-0 bg-light">
+                            <option>All Types</option>
+                            <option>1 BHK</option>
+                            <option>2 BHK</option>
+                            <option>3 BHK</option>
+                            <option>Villa</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100 py-2 fw-bold" style="border-radius:10px;">Apply Filters</button>
+                    </div>
+                </form>
             </div>
 
-            <!-- Grand Total, Paid Total, Pending/Overdue Total -->
-            <div class="row mt-5 text-center text-md-start">
-                <div class="col-md-4 col-12 mb-2">
-                    <strong>Grand Total:</strong>
-                    <span id="grandTotal"></span>
-                </div>
-
-                <div class="col-md-4 col-12 mb-2 text-success">
-                    <strong>Total Paid:</strong>
-                    <span id="paidTotal"></span>
-                </div>
-
-                <div class="col-md-4 col-12 mb-2 text-danger">
-                    <strong>Total Pending/Overdue:</strong>
-                    <span id="pendingTotal"></span>
-                </div>
-            </div>
-
-        </div>
-
-
-
-        <div class="card-body">
-            <div class="table-responsive">
-                <table id="bills-table" class="table table-bordered table-striped">
-                    <thead class="table-dark">
+            <div class="data-card border-0 shadow-sm">
+                <table class="table table-hover datatable w-100">
+                    <thead>
                         <tr>
+                            <th>Receipt No</th>
                             <th>Flat</th>
-                            <th>Block</th>
-                            <th>Month / Year</th>
+                            <th>Resident</th>
+                            <th>Month</th>
                             <th>Amount</th>
-                            <th>Fine</th>
-                            <th>Total</th>
                             <th>Status</th>
-                            <th>Payment Mode</th>
-                            <th>Paid On</th>
-                            <th>Overdue</th>
                         </tr>
                     </thead>
+                    <tbody>
+                        <tr>
+                            <td>#REC-992</td>
+                            <td>A-402</td>
+                            <td>Rajesh Kumar</td>
+                            <td>Feb 2026</td>
+                            <td>₹3,500</td>
+                            <td><span class="badge bg-success">Paid</span></td>
+                        </tr>
+                        <tr>
+                            <td>#REC-993</td>
+                            <td>B-101</td>
+                            <td>Sanjeev Sharma</td>
+                            <td>Feb 2026</td>
+                            <td>₹2,500</td>
+                            <td><span class="badge bg-warning">Pending</span></td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
-        </div>
+        </main>
     </div>
-</div>
 
-<?php include __DIR__ . '/../resources/layout/footer.php'; ?>
 
-<!-- DataTables -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.2/css/dataTables.bootstrap5.min.css">
-<script src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.2/css/dataTables.bootstrap5.min.css">
+    <script src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
 
-<script>
-    $(function() {
+    <script>
+        $(function() {
 
-        let table = $('#bills-table').DataTable({
-            processing: true,
-            serverSide: true,
-            searching: false,
-            pageLength: 5,
-            lengthMenu: [5, 10, 25, 50],
-            order: [
-                [2, 'desc']
-            ],
+            let table = $('#bills-table').DataTable({
+                processing: true,
+                serverSide: true,
+                searching: false,
+                pageLength: 5,
+                lengthMenu: [5, 10, 25, 50],
+                order: [
+                    [2, 'desc']
+                ],
 
-            ajax: {
+                ajax: {
+                    url: '<?= BASE_URL ?>action.php',
+                    type: 'POST',
+                    data: function(d) {
+                        d.action = 'fetch_all_bills';
+                        d.month = $('#filter-month').val();
+                        d.year = $('#filter-year').val();
+                        d.status = $('#filter-status').val();
+                    }
+                },
+
+                columns: [{
+                        data: 'flat_number'
+                    },
+                    {
+                        data: 'block_number'
+                    },
+                    {
+                        data: 'month_year'
+                    },
+                    {
+                        data: 'amount'
+                    },
+                    {
+                        data: 'fine'
+                    },
+                    {
+                        data: 'total'
+                    },
+                    {
+                        data: 'status'
+                    },
+                    {
+                        data: 'payment_mode'
+                    },
+                    {
+                        data: 'paid_on'
+                    },
+                    {
+                        data: 'overdue'
+                    }
+                ]
+            });
+
+            $('#filter-month, #filter-year, #filter-status').on('change', function() {
+                table.ajax.reload();
+                loadTotals();
+            });
+
+            $('#reset-filters').on('click', function() {
+                $('#filter-month, #filter-year, #filter-status').val('');
+                table.ajax.reload();
+                loadTotals();
+            });
+
+            // Load totals on page load
+            loadTotals();
+
+
+        });
+
+
+        function loadTotals() {
+
+            $.ajax({
                 url: '<?= BASE_URL ?>action.php',
                 type: 'POST',
-                data: function(d) {
-                    d.action = 'fetch_all_bills';
-                    d.month = $('#filter-month').val();
-                    d.year = $('#filter-year').val();
-                    d.status = $('#filter-status').val();
+                dataType: 'json',
+                data: {
+                    action: 'fetch_bill_totals',
+                    month: $('#filter-month').val(),
+                    year: $('#filter-year').val(),
+                    status: $('#filter-status').val()
+                },
+                success: function(res) {
+                    $('#grandTotal').text('₹' + res.grandTotal);
+                    $('#paidTotal').text('₹' + res.paidTotal);
+                    $('#pendingTotal').text('₹' + res.pendingTotal);
                 }
-            },
+            });
+        }
 
-            columns: [{
-                    data: 'flat_number'
-                },
-                {
-                    data: 'block_number'
-                },
-                {
-                    data: 'month_year'
-                },
-                {
-                    data: 'amount'
-                },
-                {
-                    data: 'fine'
-                },
-                {
-                    data: 'total'
-                },
-                {
-                    data: 'status'
-                },
-                {
-                    data: 'payment_mode'
-                },
-                {
-                    data: 'paid_on'
-                },
-                {
-                    data: 'overdue'
-                }
-            ]
+
+
+        $('#export-excel').on('click', function() {
+
+            let month = $('#filter-month').val();
+            let year = $('#filter-year').val();
+            let status = $('#filter-status').val();
+
+            let url = '<?= BASE_URL ?>action.php?action=export_all_maintenance_bills' +
+                '&month=' + month +
+                '&year=' + year +
+                '&status=' + status;
+
+            window.location.href = url;
         });
-
-        $('#filter-month, #filter-year, #filter-status').on('change', function() {
-            table.ajax.reload();
-            loadTotals();
-        });
-
-        $('#reset-filters').on('click', function() {
-            $('#filter-month, #filter-year, #filter-status').val('');
-            table.ajax.reload();
-            loadTotals();
-        });
-
-        // Load totals on page load
-        loadTotals();
-
-
-    });
-
-
-    function loadTotals() {
-
-        $.ajax({
-            url: '<?= BASE_URL ?>action.php',
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                action: 'fetch_bill_totals',
-                month: $('#filter-month').val(),
-                year: $('#filter-year').val(),
-                status: $('#filter-status').val()
-            },
-            success: function(res) {
-                $('#grandTotal').text('₹' + res.grandTotal);
-                $('#paidTotal').text('₹' + res.paidTotal);
-                $('#pendingTotal').text('₹' + res.pendingTotal);
-            }
-        });
-    }
+    </script>
 
 
 
-    $('#export-excel').on('click', function() {
 
-        let month = $('#filter-month').val();
-        let year = $('#filter-year').val();
-        let status = $('#filter-status').val();
+</body>
 
-        let url = '<?= BASE_URL ?>action.php?action=export_all_maintenance_bills' +
-            '&month=' + month +
-            '&year=' + year +
-            '&status=' + status;
+</html>
 
-        window.location.href = url;
-    });
-</script>
+<?php include __DIR__ . '/../resources/layout/footer.php'; ?>

@@ -7,202 +7,187 @@ requireRole(['admin', 'cashier']);
 include __DIR__ . '/../resources/layout/header.php';
 ?>
 
-<style>
-    table.dataTable td {
-        vertical-align: middle !important;
-        white-space: nowrap;
-    }
-</style>
 
-<div class="container-fluid px-4">
-    <h1 class="mt-4">Security Guard Bills</h1>
+<!DOCTYPE html>
+<html lang="en">
 
-    <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
-        <li class="breadcrumb-item active">Security Guard Bills</li>
-    </ol>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Salary</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="../assets/css/styles.css">
+
+    <style>
+        table.dataTable td {
+            vertical-align: middle !important;
+            white-space: nowrap;
+        }
+    </style>
+
+</head>
+
+<body>
 
 
-    <?php if (isset($_SESSION['success'])): ?>
-        <div class="alert alert-success"><?= htmlspecialchars($_SESSION['success']) ?></div>
-        <?php unset($_SESSION['success']); ?>
-    <?php endif; ?>
 
-    <!-- TABLE -->
-    <div class="card">
+    <div class="main-wrapper">
 
-        <div class="card-header">
-            <div class="row">
-                <div class="col-6">
-                    <h5 class="card-title">Guard Salary List</h5>
-                </div>
-                <div class="col-6 text-end">
-                    <a href="<?= BASE_URL ?>guards.php" class="btn btn-primary btn-sm">View Guard</a>
+        <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <main id="main-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="fw-800 m-0">Security Payroll</h1>
+                <button class="btn btn-brand shadow-sm" data-bs-toggle="modal" data-bs-target="#paySalaryModal">
+                    <i class="fa-solid fa-wallet me-2"></i> Pay Salary
+                </button>
+            </div>
+
+            <div class="data-card shadow-sm border-0">
+                <div class="table-responsive">
+                    <table class="table table-hover datatable w-100">
+                        <thead>
+                            <tr>
+                                <th>Staff Name</th>
+                                <th>Month</th>
+                                <th>Base Salary</th>
+                                <th>Overtime</th>
+                                <th>Total Paid</th>
+                                <th>Status</th>
+                                <th class="text-end">Voucher</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="fw-bold">Ram Singh (Gate 1)</td>
+                                <td>Feb 2026</td>
+                                <td>₹15,000</td>
+                                <td>₹1,200</td>
+                                <td class="fw-bold text-primary">₹16,200</td>
+                                <td><span class="status-paid">Paid</span></td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-light border"><i class="fa fa-print"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Laxman Kumar (Gate 2)</td>
+                                <td>Feb 2026</td>
+                                <td>₹15,000</td>
+                                <td>₹0</td>
+                                <td class="fw-bold text-primary">₹15,000</td>
+                                <td><span class="status-unpaid">Pending</span></td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-brand">Pay Now</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
-
-        <!-- FILTERS -->
-        <div class="card-body py-3">
-            <div class="row align-items-end g-3">
-                <div class="col-md-2 col-sm-6">
-                    <label class="filter-label">Month</label>
-                    <select id="filter-month" class="form-select form-select-sm">
-                        <option value="">All Months</option>
-                        <?php
-                        for ($m = 1; $m <= 12; $m++) {
-                            echo "<option value='$m'>" . date('F', mktime(0, 0, 0, $m, 1)) . "</option>";
-                        }
-                        ?>
-                    </select>
-                </div>
-                <div class="col-md-2 col-sm-6">
-                    <label class="filter-label">Year</label>
-                    <select id="filter-year" class="form-select form-select-sm">
-                        <option value="">All Years</option>
-                        <?php
-                        $currentYear = date('Y');
-                        for ($y = $currentYear; $y >= $currentYear - 5; $y--) {
-                            echo "<option value='$y'>$y</option>";
-                        }
-                        ?>
-                    </select>
-                </div>
-                <div class="col-md-2 col-sm-6">
-                    <label class="filter-label">Status</label>
-                    <select id="filter-status" class="form-select form-select-sm">
-                        <option value="">All Status</option>
-                        <option value="paid">Paid</option>
-                        <option value="unpaid">Unpaid</option>
-                    </select>
-                </div>
-                <div class="col-4 col-md-2 col-sm-3 d-grid">
-                    <button id="reset-filters" class="btn btn-outline-dark btn-sm">
-                        <i class="bi bi-arrow-counterclockwise"></i> Reset
-                    </button>
-                </div>
-
-                <!-- EXPORT BUTTON (RIGHT SIDE) -->
-                <div class="col-4 col-md-2 col-sm-3 d-grid ms-auto">
-                    <button id="export-excel" class="btn btn-dark btn-sm">
-                        <i class="bi bi-file-earmark-excel"></i> Export Excel
-                    </button>
-                </div>
-
-            </div>
-        </div>
-
-        <div class="card-body">
-            <div class="table-responsive">
-                <table id="guard-salary-table" class="table table-bordered table-striped">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Month / Year</th>
-                            <th>Name</th>
-                            <th>Mobile</th>
-                            <th>DOB</th>
-                            <th>Salary</th>
-                            <th>Status</th>
-                            <th>Paid On</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                </table>
-            </div>
-        </div>
+        </main>
 
     </div>
-</div>
 
-<?php include __DIR__ . '/../resources/layout/footer.php'; ?>
 
-<!-- DataTables -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.2/css/dataTables.bootstrap5.min.css">
-<script src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
 
-<script>
-    $(function() {
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.2/css/dataTables.bootstrap5.min.css">
+    <script src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
 
-        let table = $('#guard-salary-table').DataTable({
-            processing: true,
-            serverSide: true,
-            searching: false,
-            pageLength: 5,    
-            lengthMenu: [5, 10, 25, 50],
-            ajax: {
-                url: "<?= BASE_URL ?>action.php",
-                type: "POST",
-                data: function(d) {
-                    d.action = "fetch_guard_salary";
-                    d.month = $('#filter-month').val();
-                    d.year = $('#filter-year').val();
-                    d.status = $('#filter-status').val();
-                }
-            },
-            columns: [{
-                    data: "month_year"
+    <script>
+        $(function() {
+
+            let table = $('#guard-salary-table').DataTable({
+                processing: true,
+                serverSide: true,
+                searching: false,
+                pageLength: 5,
+                lengthMenu: [5, 10, 25, 50],
+                ajax: {
+                    url: "<?= BASE_URL ?>action.php",
+                    type: "POST",
+                    data: function(d) {
+                        d.action = "fetch_guard_salary";
+                        d.month = $('#filter-month').val();
+                        d.year = $('#filter-year').val();
+                        d.status = $('#filter-status').val();
+                    }
                 },
-                {
-                    data: "name"
-                },
-                {
-                    data: "mobile"
-                },
-                {
-                    data: "dob"
-                },
-                {
-                    data: "salary"
-                },
-                {
-                    data: "status"
-                },
-                {
-                    data: "paid_on"
-                },
-                {
-                    data: "action"
-                }
-            ]
-        });
+                columns: [{
+                        data: "month_year"
+                    },
+                    {
+                        data: "name"
+                    },
+                    {
+                        data: "mobile"
+                    },
+                    {
+                        data: "dob"
+                    },
+                    {
+                        data: "salary"
+                    },
+                    {
+                        data: "status"
+                    },
+                    {
+                        data: "paid_on"
+                    },
+                    {
+                        data: "action"
+                    }
+                ]
+            });
 
-        $('#filter-month, #filter-year, #filter-status').on('change', function() {
-            table.ajax.reload();
-        });
-
-        $('#reset-filters').on('click', function() {
-            $('#filter-month, #filter-year, #filter-status').val('');
-            table.ajax.reload();
-        });
-
-        $(document).on('click', '.pay-salary', function() {
-            let id = $(this).data('id');
-            if (!confirm("Are you sure to Mark salary PAID?")) return;
-
-            $.post("<?= BASE_URL ?>action.php", {
-                action: "mark_guard_salary_paid",
-                id: id
-            }, function() {
-                alert("Salary Paid Successfully");
+            $('#filter-month, #filter-year, #filter-status').on('change', function() {
                 table.ajax.reload();
             });
+
+            $('#reset-filters').on('click', function() {
+                $('#filter-month, #filter-year, #filter-status').val('');
+                table.ajax.reload();
+            });
+
+            $(document).on('click', '.pay-salary', function() {
+                let id = $(this).data('id');
+                if (!confirm("Are you sure to Mark salary PAID?")) return;
+
+                $.post("<?= BASE_URL ?>action.php", {
+                    action: "mark_guard_salary_paid",
+                    id: id
+                }, function() {
+                    alert("Salary Paid Successfully");
+                    table.ajax.reload();
+                });
+            });
+
         });
 
-    });
+        // Export Excel
+        $('#export-excel').on('click', function() {
 
-    // Export Excel
-    $('#export-excel').on('click', function() {
+            let month = $('#filter-month').val();
+            let year = $('#filter-year').val();
+            let status = $('#filter-status').val();
 
-        let month = $('#filter-month').val();
-        let year = $('#filter-year').val();
-        let status = $('#filter-status').val();
+            let url = '<?= BASE_URL ?>action.php?action=export_guard_salary' +
+                '&month=' + month +
+                '&year=' + year +
+                '&status=' + status;
 
-        let url = '<?= BASE_URL ?>action.php?action=export_guard_salary' +
-            '&month=' + month +
-            '&year=' + year +
-            '&status=' + status;
+            window.location.href = url;
+        });
+    </script>
 
-        window.location.href = url;
-    });
-</script>
+
+</body>
+
+</html>
+
+<?php include __DIR__ . '/../resources/layout/footer.php'; ?>

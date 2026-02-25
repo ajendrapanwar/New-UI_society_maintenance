@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/helpers.php';
 
 requireRole(['admin']); // Only admin
 
@@ -99,25 +100,23 @@ if (isset($_POST['edit_sweeper'])) {
             WHERE id = ?
         ");
 
-        $stmt->execute([
-            $name,
-            $mobile,
-            $dob,
-            $gender,
-            $joiningDate,
-            $address,
-            $salary,
-            $id
-        ]);
-
-        $_SESSION['success'] = 'Sweeper updated successfully';
-        header('Location: ../sweeper.php');
-        exit;
+        if ($stmt->execute([$name, $mobile, $dob, $gender, $joiningDate, $address, $salary, $id])) {
+            // $_SESSION['success'] = 'Sweeper updated successfully';
+            flash_set('success', 'Sweeper updated successfully');
+            header("Location: " . BASE_URL . "sweeper.php");
+            exit();
+        } else {
+            flash_set('err', 'Database error! Sweeper not updated.');
+            header('Location: ' . BASE_URL . 'edit/edit_sweeper.php');
+            exit();
+        }
     }
 }
 
 include(__DIR__ . '/../../resources/layout/header.php');
 ?>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
 
 <div class="container-fluid px-4 mb-4">
     <h1 class="mt-4">Edit Sweeper</h1>
@@ -191,9 +190,7 @@ include(__DIR__ . '/../../resources/layout/header.php');
 
                         <input type="hidden" name="id" value="<?= $sweeper['id'] ?>">
 
-                        <button type="submit" name="edit_sweeper" class="btn btn-primary">
-                            Update Sweeper
-                        </button>
+                        <button type="submit" name="edit_sweeper" class="btn btn-primary">Update Sweeper</button>
                         <a href="<?= BASE_URL ?>sweeper.php" class="btn btn-secondary">Back</a>
 
                     </form>

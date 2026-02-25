@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../core/config.php';
+require_once __DIR__ . '/../core/helpers.php';
 
 $userRole = $_SESSION['user_role'] ?? '';
 
@@ -13,13 +14,16 @@ if (
     $stmt = $pdo->prepare("DELETE FROM sweepers WHERE id = ?");
     $stmt->execute([$_GET['id']]);
 
-    $_SESSION['success'] = 'Sweeper removed successfully';
+    // $_SESSION['success'] = 'Sweeper removed successfully';
+    flash_set('success', 'Sweeper removed successfully');
     header('Location: ' . BASE_URL . 'sweepers.php');
     exit;
 }
 
 include('../resources/layout/header.php');
 ?>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
 
 <div class="container-fluid px-4">
     <h1 class="mt-4">Sweeper</h1>
@@ -30,21 +34,12 @@ include('../resources/layout/header.php');
         <li class="breadcrumb-item active">View Sweeper</li>
     </ol>
 
-    <?php if (!empty($_SESSION['success'])): ?>
-        <div class="alert alert-success">
-            <?= htmlspecialchars($_SESSION['success']) ?>
-        </div>
-        <?php unset($_SESSION['success']); ?>
-    <?php endif; ?>
-
     <div class="card">
         <div class="card-header d-flex justify-content-between">
             <h5 class="mb-0">Sweeper List</h5>
 
             <?php if ($userRole === 'admin'): ?>
-                <a href="<?= BASE_URL ?>add/add_sweeper.php" class="btn btn-success btn-sm">
-                    Add Sweeper
-                </a>
+                <a href="<?= BASE_URL ?>add/add_sweeper.php" class="btn btn-success btn-sm">+ Add Sweeper</a>
             <?php endif; ?>
         </div>
 
