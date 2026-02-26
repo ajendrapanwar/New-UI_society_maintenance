@@ -1545,72 +1545,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'export_all_maintenance_bills'
 
 
 
-
-// Guards Fetch
-if (isset($_POST['action']) && $_POST['action'] === 'fetch_guards') {
-
-	$columns = [
-		'id',
-		'name',
-		'mobile',
-		'dob',
-		'gender',
-		'shift',
-		'joining_date',
-		'salary'
-	];
-
-	$limit  = $_POST['length'];
-	$start  = $_POST['start'];
-	$order  = $columns[$_POST['order'][0]['column']];
-	$dir    = $_POST['order'][0]['dir'];
-	$search = $_POST['search']['value'];
-
-	$where = '';
-	$params = [];
-
-	if (!empty($search)) {
-		$where = "WHERE name LIKE ? OR mobile LIKE ?";
-		$params[] = "%$search%";
-		$params[] = "%$search%";
-	}
-
-	/* ===== TOTAL ===== */
-	$total = $pdo->query("SELECT COUNT(*) FROM security_guards")->fetchColumn();
-
-	/* ===== FILTERED ===== */
-	if ($where) {
-		$stmt = $pdo->prepare("SELECT COUNT(*) FROM security_guards $where");
-		$stmt->execute($params);
-		$filtered = $stmt->fetchColumn();
-	} else {
-		$filtered = $total;
-	}
-
-	/* ===== DATA ===== */
-	$sql = "
-        SELECT id, name, mobile, dob, gender, shift, joining_date, salary
-        FROM security_guards
-        $where
-        ORDER BY $order $dir
-        LIMIT $start, $limit
-    ";
-
-	$stmt = $pdo->prepare($sql);
-	$stmt->execute($params);
-
-	echo json_encode([
-		"draw" => intval($_POST['draw']),
-		"recordsTotal" => $total,
-		"recordsFiltered" => $filtered,
-		"data" => $stmt->fetchAll(PDO::FETCH_ASSOC)
-	]);
-	exit;
-}
-
-
-
-
 // FETCH ELECTRICITY BILLS
 if (isset($_POST['action']) && $_POST['action'] === 'fetch_electricity_bills') {
 
@@ -1929,7 +1863,67 @@ if (isset($_GET['action']) && $_GET['action'] === 'electricity_bills_export_exce
 
 
 
+// Fetch Guards
+if (isset($_POST['action']) && $_POST['action'] === 'fetch_guards') {
 
+	$columns = [
+		'id',
+		'name',
+		'mobile',
+		'dob',
+		'gender',
+		'shift',
+		'joining_date',
+		'salary'
+	];
+
+	$limit  = $_POST['length'];
+	$start  = $_POST['start'];
+	$order  = $columns[$_POST['order'][0]['column']];
+	$dir    = $_POST['order'][0]['dir'];
+	$search = $_POST['search']['value'];
+
+	$where = '';
+	$params = [];
+
+	if (!empty($search)) {
+		$where = "WHERE name LIKE ? OR mobile LIKE ?";
+		$params[] = "%$search%";
+		$params[] = "%$search%";
+	}
+
+	/* ===== TOTAL ===== */
+	$total = $pdo->query("SELECT COUNT(*) FROM security_guards")->fetchColumn();
+
+	/* ===== FILTERED ===== */
+	if ($where) {
+		$stmt = $pdo->prepare("SELECT COUNT(*) FROM security_guards $where");
+		$stmt->execute($params);
+		$filtered = $stmt->fetchColumn();
+	} else {
+		$filtered = $total;
+	}
+
+	/* ===== DATA ===== */
+	$sql = "
+        SELECT id, name, mobile, dob, gender, shift, joining_date, salary
+        FROM security_guards
+        $where
+        ORDER BY $order $dir
+        LIMIT $start, $limit
+    ";
+
+	$stmt = $pdo->prepare($sql);
+	$stmt->execute($params);
+
+	echo json_encode([
+		"draw" => intval($_POST['draw']),
+		"recordsTotal" => $total,
+		"recordsFiltered" => $filtered,
+		"data" => $stmt->fetchAll(PDO::FETCH_ASSOC)
+	]);
+	exit;
+}
 
 // FETCH GUARD SALARY BILLS
 if (isset($_POST['action']) && $_POST['action'] === 'fetch_guard_salary') {
@@ -2704,7 +2698,6 @@ if (isset($_GET['action']) && $_GET['action'] == "export_sweeper_salary") {
 
 
 
-
 // FETCH Miscellaneous Work
 if (isset($_POST['action']) && $_POST['action'] == 'fetch_misc_works') {
 
@@ -2814,19 +2807,18 @@ if (isset($_GET['action']) && $_GET['action'] == 'export_misc_work') {
 
 	/* ===== FETCH DATA ===== */
 	$stmt = $pdo->prepare("
-		SELECT 
-			work_title,
-			worker_name,
-			contact_number,
-			amount,
-			month,
-			year,
-			status,
-			created_at
-		FROM miscellaneous_works
-		$whereSql
-		ORDER BY year DESC, month DESC, created_at DESC
-	");
+        SELECT 
+            work_title,
+            worker_name,
+            contact_number,
+            amount,
+            month,
+            year,
+            status
+        FROM miscellaneous_works
+        $whereSql
+        ORDER BY year DESC, month DESC
+    ");
 	$stmt->execute($params);
 	$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -2847,80 +2839,77 @@ if (isset($_GET['action']) && $_GET['action'] == 'export_misc_work') {
 	header("Expires: 0");
 
 	echo "
-	<html>
-	<head>
-		<meta charset='UTF-8'>
-	</head>
-	<body>
+    <html>
+    <head>
+        <meta charset='UTF-8'>
+    </head>
+    <body>
 
-	<table border='1' cellspacing='0' cellpadding='6'>
+    <table border='1' cellspacing='0' cellpadding='6'>
 
-		<tr>
-			<th colspan='7' style='font-size:18px; font-weight:bold; text-align:center;'>
-				Miscellaneous Work Expense Report
-			</th>
-		</tr>
+        <tr>
+            <th colspan='7' style='font-size:18px; font-weight:bold; text-align:center;'>
+                Miscellaneous Work Expense Report
+            </th>
+        </tr>
 
-		<tr>
-			<td colspan='7'><strong>Month:</strong> {$monthText}</td>
-		</tr>
-		<tr>
-			<td colspan='7'><strong>Year:</strong> {$yearText}</td>
-		</tr>
-		<tr>
-			<td colspan='7'><strong>Generated On:</strong> " . date('d-m-Y H:i') . "</td>
-		</tr>
+        <tr>
+            <td colspan='7'><strong>Month:</strong> {$monthText}</td>
+        </tr>
+        <tr>
+            <td colspan='7'><strong>Year:</strong> {$yearText}</td>
+        </tr>
+        <tr>
+            <td colspan='7'><strong>Generated On:</strong> " . date('d-m-Y H:i') . "</td>
+        </tr>
 
-		<tr style='background:#343a40; color:#fff; font-weight:bold; text-align:center;'>
-			<th>Work Title</th>
-			<th>Worker Name</th>
-			<th>Contact Number</th>
-			<th>Amount (₹)</th>
-			<th>Month / Year</th>
-			<th>Status</th>
-			<th>Created Date</th>
-		</tr>
-	";
+        <tr style='background:#343a40; color:#fff; font-weight:bold; text-align:center;'>
+            <th>Work Title</th>
+            <th>Worker Name</th>
+            <th>Contact Number</th>
+            <th>Amount (₹)</th>
+            <th>Month / Year</th>
+            <th>Status</th>
+            <th>Created Date</th>
+        </tr>
+    ";
 
 	foreach ($rows as $r) {
-
 		$monthName = date('F', mktime(0, 0, 0, $r['month'], 1));
 		$monthYear = $monthName . ' ' . $r['year'];
 		$status = ucfirst($r['status'] ?? 'unpaid');
 		$statusColor = ($r['status'] ?? '') === 'paid' ? 'green' : 'red';
-		$createdDate = $r['created_at'] ? date('d-m-Y h:i A', strtotime($r['created_at'])) : '-';
+		$createdDate = '-'; // placeholder since created_at doesn't exist
 
 		echo "<tr>
-			<td>{$r['work_title']}</td>
-			<td>{$r['worker_name']}</td>
-			<td>{$r['contact_number']}</td>
-			<td><strong>₹" . number_format((float)$r['amount'], 2) . "</strong></td>
-			<td>{$monthYear}</td>
-			<td style='color:{$statusColor}; font-weight:bold;'>{$status}</td>
-			<td>{$createdDate}</td>
-		</tr>";
+            <td>{$r['work_title']}</td>
+            <td>{$r['worker_name']}</td>
+            <td>{$r['contact_number']}</td>
+            <td><strong>₹" . number_format((float)$r['amount'], 2) . "</strong></td>
+            <td>{$monthYear}</td>
+            <td style='color:{$statusColor}; font-weight:bold;'>{$status}</td>
+            <td>{$createdDate}</td>
+        </tr>";
 	}
 
 	/* ===== SUMMARY SECTION ===== */
 	echo "
-		<tr>
-			<td colspan='7' style='background:#f2f2f2; font-weight:bold; text-align:center;'>
-				SUMMARY
-			</td>
-		</tr>
-		<tr>
-			<td colspan='3'><strong>Grand Total Expense</strong></td>
-			<td colspan='4'><strong>₹" . number_format($grandTotal, 2) . "</strong></td>
-		</tr>
+        <tr>
+            <td colspan='7' style='background:#f2f2f2; font-weight:bold; text-align:center;'>
+                SUMMARY
+            </td>
+        </tr>
+        <tr>
+            <td colspan='3'><strong>Grand Total Expense</strong></td>
+            <td colspan='4'><strong>₹" . number_format($grandTotal, 2) . "</strong></td>
+        </tr>
 
-	</table>
-	</body>
-	</html>";
+    </table>
+    </body>
+    </html>";
 
 	exit;
 }
-
-
 
 
 

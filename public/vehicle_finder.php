@@ -83,7 +83,8 @@ if ($search != '') {
 
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="/society_maintenance/assets/css/my_styles.css?v=1.1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/society_maintenance/assets/css/my_styles.css?v=1.1">
     <link rel="stylesheet" href="../assets/css/styles.css">
 </head>
 
@@ -94,64 +95,138 @@ if ($search != '') {
         <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
         <main id="main-content">
+
+            <!-- TITLE -->
             <div class="text-center mb-5">
                 <h1 class="fw-800">Vehicle Finder</h1>
                 <p class="text-muted">Enter a vehicle number to find the owner's contact info.</p>
             </div>
 
-            <div class="search-container">
-                <div class="search-input-group">
-                    <i class="fa-solid fa-magnifying-glass text-muted fs-4"></i>
-                    <input type="text" placeholder="Enter Vehicle Number (e.g. CH01AX1234)..." id="vehicleSearch">
-                    <button class="btn btn-brand px-4 py-2" style="border-radius:10px;">Search</button>
-                </div>
-            </div>
+            <!-- SEARCH BOX (CONNECTED TO GET) -->
+            <form method="GET">
+                <div class="search-container mb-4" style="padding: 35px;">
+                    <div class="search-input-group" style="padding: 2px 15px;">
+                        <i class="fa-solid fa-magnifying-glass text-muted fs-4"></i>
+                        <input
+                            type="text"
+                            name="vehicle"
+                            placeholder="Enter Vehicle Number (e.g. MH12AB1234)..."
+                            style="font-weight: 600;"
+                            value="<?= htmlspecialchars($search) ?>">
 
-            <div class="results-list">
-                <div class="result-card shadow-sm">
-                    <div class="result-header">
-                        <span class="vehicle-plate">CH-01-AX-1234</span>
-                        <span class="badge-resident">Resident</span>
+                        <button type="submit" class="btn btn-brand px-4 py-2" style="border-radius:10px;">
+                            Search
+                        </button>
+
+                        <?php if ($search != ''): ?>
+                            <a href="vehicle_finder.php" class="btn btn-secondary px-3 py-2 ms-2" style="border-radius:10px;">
+                                Clear
+                            </a>
+                        <?php endif; ?>
                     </div>
-                    <div class="result-body">
-                        <div class="d-flex align-items-center gap-4">
-                            <div class="owner-avatar">RK</div>
-                            <div class="flex-grow-1">
-                                <h5 class="fw-bold mb-1">Rajesh Kumar</h5>
-                                <p class="text-muted m-0 small">Flat: <span class="fw-bold text-dark">A-402</span> | Slot: <span class="fw-bold text-dark">P-102</span></p>
-                            </div>
-                            <div class="text-end">
-                                <small class="text-muted d-block mb-1 fw-bold">CONTACT NUMBER</small>
-                                <div class="phone-highlight">
-                                    <i class="fa fa-phone-alt me-2"></i>+91 98765 43210
+                </div>
+            </form>
+
+            <!-- RESULTS -->
+            <?php if ($search != ''): ?>
+
+                <div class="results-list">
+
+                    <?php if (!empty($results)): ?>
+                        <?php foreach ($results as $r):
+                            $initial = strtoupper(substr($r['name'] ?? 'U', 0, 1));
+                            $badgeClass = ($r['type'] === 'Visitor')
+                                ? 'bg-warning text-dark'
+                                : 'badge-resident';
+                        ?>
+
+                            <div class="result-card shadow-sm mb-3">
+
+                                <!-- HEADER -->
+                                <div class="result-header <?= ($r['type'] === 'Visitor') ? 'bg-warning-subtle' : '' ?>">
+                                    <span class="vehicle-plate">
+                                        <?= htmlspecialchars($r['vehicle']) ?>
+                                    </span>
+
+                                    <span class="badge <?= $badgeClass ?> fw-bold small px-3 py-1" style="border-radius:20px;">
+                                        <?= $r['type'] ?>
+                                    </span>
+                                </div>
+
+                                <!-- BODY -->
+                                <div class="result-body">
+                                    <div class="d-flex align-items-center gap-4 flex-wrap">
+
+                                        <!-- Info -->
+                                        <div class="flex-grow-1">
+                                            <h5 class="fw-bold mb-1">
+                                                <?= htmlspecialchars($r['name'] ?? 'Unknown') ?>
+                                            </h5>
+
+                                            <p class="text-muted m-0 small">
+                                                <?php if ($r['type'] === 'Visitor'): ?>
+                                                    Visit Type:
+                                                    <span class="fw-bold text-primary">
+                                                        <?= htmlspecialchars($r['visit_type'] ?? '-') ?>
+                                                    </span>
+                                                    | Visiting:
+                                                    <span class="fw-bold text-dark">
+                                                        Block <?= $r['block_number'] ?> - Flat <?= $r['flat_number'] ?>
+                                                    </span>
+                                                    | Entry:
+                                                    <span class="fw-bold text-dark">
+                                                        <?= $r['in_time'] ?>
+                                                    </span>
+                                                <?php else: ?>
+                                                    Flat:
+                                                    <span class="fw-bold text-dark">
+                                                        Block <?= $r['block_number'] ?> - Flat <?= $r['flat_number'] ?>
+                                                    </span>
+                                                    | Parking Type:
+                                                    <span class="fw-bold text-dark">
+                                                        <?= $r['visit_type'] ?>
+                                                    </span>
+                                                <?php endif; ?>
+                                            </p>
+
+                                            <?php if (!empty($r['purpose'])): ?>
+                                                <p class="text-muted m-0 small">
+                                                    Purpose:
+                                                    <span class="fw-bold text-dark">
+                                                        <?= htmlspecialchars($r['purpose']) ?>
+                                                    </span>
+                                                </p>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <!-- Contact -->
+                                        <div class="text-end">
+                                            <small class="text-muted d-block mb-1 fw-bold">
+                                                <?= ($r['type'] === 'Visitor') ? 'MOBILE' : 'CONTACT' ?>
+                                            </small>
+
+                                            <div class="phone-highlight">
+                                                <i class="fa fa-phone-alt me-2"></i>
+                                                <?= htmlspecialchars($r['mobile'] ?? '-') ?>
+                                            </div>
+                                        </div>
+
+                                    </div>
                                 </div>
                             </div>
+
+                        <?php endforeach; ?>
+
+                    <?php else: ?>
+                        <div class="alert alert-danger text-center fw-bold">
+                            ❌ No Active Vehicle Found
                         </div>
-                    </div>
+                    <?php endif; ?>
+
                 </div>
 
-                <div class="result-card shadow-sm">
-                    <div class="result-header" style="background: #fffbeb;">
-                        <span class="vehicle-plate">HR-26-Z-9988</span>
-                        <span class="badge bg-warning text-dark fw-bold small px-3 py-1" style="border-radius:20px;">Visitor</span>
-                    </div>
-                    <div class="result-body">
-                        <div class="d-flex align-items-center gap-4">
-                            <div class="owner-avatar bg-warning text-dark">S</div>
-                            <div class="flex-grow-1">
-                                <h5 class="fw-bold mb-1">Suresh (Plumber)</h5>
-                                <p class="text-muted m-0 small">Visiting: <span class="fw-bold text-dark">B-105</span> | Entry: <span class="fw-bold text-dark">10:45 AM</span></p>
-                            </div>
-                            <div class="text-end">
-                                <small class="text-muted d-block mb-1 fw-bold">MOBILE</small>
-                                <div class="phone-highlight" style="background:#fff7ed; color:#9a3412; border-color:#fed7aa;">
-                                    <i class="fa fa-mobile-alt me-2"></i>+91 98111 00022
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <?php endif; ?>
+
         </main>
     </div>
 

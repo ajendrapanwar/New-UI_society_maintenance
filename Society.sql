@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Feb 25, 2026 at 12:26 PM
+-- Generation Time: Feb 26, 2026 at 12:54 PM
 -- Server version: 8.0.45-0ubuntu0.24.04.1
 -- PHP Version: 8.3.6
 
@@ -61,6 +61,14 @@ CREATE TABLE `complaints` (
   `resolved_at` datetime DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `complaints`
+--
+
+INSERT INTO `complaints` (`id`, `user_id`, `subject`, `message`, `image`, `status`, `resolve_note`, `resolved_at`, `created_at`) VALUES
+(2, 3, 'Water Problem', 'Water Problem', NULL, 'completed', 'Done', '2026-02-26 16:35:04', '2026-02-26 09:25:44'),
+(3, 3, 'Test', 'Test', NULL, 'pending', NULL, NULL, '2026-02-26 11:06:56');
 
 -- --------------------------------------------------------
 
@@ -315,7 +323,8 @@ CREATE TABLE `miscellaneous_works` (
 --
 
 INSERT INTO `miscellaneous_works` (`id`, `work_title`, `worker_name`, `contact_number`, `amount`, `description`, `month`, `year`, `status`, `paid_on`) VALUES
-(4, 'Plumber', 'Rajuuu', '7878787878', 200.00, 'Test', 1, 2026, 'paid', '2026-01-30 15:00:44');
+(4, 'Plumber', 'Rajuuu', '7878787878', 200.00, 'Test', 1, 2026, 'paid', '2026-01-30 15:00:44'),
+(6, 'Test', 'Test', '7777788888', 1000.00, 'Test', 2, 2026, 'paid', '2026-02-26 18:08:41');
 
 -- --------------------------------------------------------
 
@@ -326,6 +335,7 @@ INSERT INTO `miscellaneous_works` (`id`, `work_title`, `worker_name`, `contact_n
 CREATE TABLE `notifications` (
   `id` int NOT NULL,
   `title` varchar(255) NOT NULL,
+  `category` varchar(100) NOT NULL,
   `message` text NOT NULL,
   `start_date` datetime DEFAULT NULL,
   `end_date` datetime DEFAULT NULL,
@@ -336,10 +346,9 @@ CREATE TABLE `notifications` (
 -- Dumping data for table `notifications`
 --
 
-INSERT INTO `notifications` (`id`, `title`, `message`, `start_date`, `end_date`, `created_at`) VALUES
-(5, 'Maintenance Notice', 'Lift will not work !!', '2026-02-04 00:00:00', '2026-02-05 00:00:00', '2026-02-04 07:08:21'),
-(7, 'test', 'test', '2026-02-19 00:12:00', '2026-02-19 00:59:00', '2026-02-18 04:27:55'),
-(8, 'test', 'test', '2026-02-19 10:59:00', '2026-02-19 11:01:00', '2026-02-18 04:28:28');
+INSERT INTO `notifications` (`id`, `title`, `category`, `message`, `start_date`, `end_date`, `created_at`) VALUES
+(9, 'Test', 'General Info', 'Test', '2026-02-27 17:10:00', '2026-03-01 17:10:00', '2026-02-26 11:40:55'),
+(10, 'Test', 'Maintenance', 'Test', '2026-02-26 17:18:00', NULL, '2026-02-26 11:48:40');
 
 -- --------------------------------------------------------
 
@@ -644,7 +653,7 @@ ALTER TABLE `allotments`
 -- AUTO_INCREMENT for table `complaints`
 --
 ALTER TABLE `complaints`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `electricity_bills`
@@ -704,13 +713,13 @@ ALTER TABLE `maintenance_rates`
 -- AUTO_INCREMENT for table `miscellaneous_works`
 --
 ALTER TABLE `miscellaneous_works`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `resident_parking`

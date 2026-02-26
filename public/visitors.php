@@ -30,6 +30,106 @@ $stmt = $pdo->query("
 
 $visitors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+
+
+/* ================= ADD VISITOR (CHECK-IN) ================= */
+
+$errors = [];
+$name = $mobile = $vehicle = $flat_id = $purpose = $visit_type = "";
+
+/* FETCH FLATS FOR MODAL */
+$flats = $pdo->query("
+        SELECT f.id, f.flat_number, f.block_number
+        FROM allotments a
+        JOIN flats f ON a.flat_id = f.id
+        ORDER BY f.block_number, f.flat_number
+    ")->fetchAll(PDO::FETCH_ASSOC);
+
+
+/* FORM SUBMIT */
+if (isset($_POST['submit'])) {
+
+    $name       = trim($_POST['visitor_name']);
+    $mobile     = trim($_POST['mobile']);
+    $vehicle    = strtoupper(trim($_POST['vehicle_no']));
+    $flat_id    = $_POST['flat_id'] ?? '';
+    $visit_type = $_POST['visit_type'] ?? '';
+    $purpose    = trim($_POST['purpose'] ?? '');
+
+    /* ========= VALIDATION ========= */
+
+    if ($name == '') {
+        $errors['visitor_name'] = "Enter visitor name";
+    }
+
+    if ($mobile == '') {
+        $errors['mobile'] = "Enter mobile number";
+    } elseif (!preg_match('/^[0-9]{10}$/', $mobile)) {
+        $errors['mobile'] = "Enter valid 10 digit mobile number";
+    }
+
+    if ($vehicle == '') {
+        $errors['vehicle_no'] = "Enter vehicle number";
+    } elseif (!preg_match('/^[A-Z0-9- ]{4,20}$/', $vehicle)) {
+        $errors['vehicle_no'] = "Enter valid vehicle number";
+    }
+
+    if ($flat_id == '') {
+        $errors['flat_id'] = "Select flat";
+    }
+
+    if ($visit_type == '') {
+        $errors['visit_type'] = "Select visit type";
+    }
+
+    if ($visit_type === 'Other' && $purpose == '') {
+        $errors['purpose'] = "Enter purpose";
+    }
+
+    /* ========= CHECK VEHICLE IN RESIDENT PARKING ========= */
+    $checkVehicle = $pdo->prepare("
+        SELECT id FROM resident_parking 
+        WHERE vehicle1 = ? OR vehicle2 = ?
+    ");
+    $checkVehicle->execute([$vehicle, $vehicle]);
+
+    if ($checkVehicle->rowCount() > 0) {
+        $errors['vehicle_no'] = "This vehicle is already registered in resident parking";
+    }
+
+    /* ========= INSERT VISITOR ========= */
+    if (empty($errors)) {
+
+        $stmt = $pdo->prepare("
+            INSERT INTO visitor_entries
+            (visitor_name, mobile, vehicle_no, flat_id, visit_type, purpose)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ");
+
+        if ($stmt->execute([
+            $name,
+            $mobile,
+            $vehicle,
+            $flat_id,
+            $visit_type,
+            $purpose
+        ])) {
+
+            flash_set('success', 'Visitor Entry Added Successfully');
+            header('Location: ' . BASE_URL . 'visitors.php');
+            exit();
+        } else {
+
+            flash_set('err', 'Database error! Visitor not added.');
+            header('Location: ' . BASE_URL . 'visitors.php');
+            exit();
+        }
+    }
+}
+
+
+
+
 include '../resources/layout/header.php';
 ?>
 
@@ -74,7 +174,6 @@ include '../resources/layout/header.php';
 
 
     <div class="main-wrapper">
-
         <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
         <main id="main-content">
@@ -87,137 +186,325 @@ include '../resources/layout/header.php';
 
             <div class="data-card border-0 shadow-sm">
                 <div class="table-responsive">
-                    <table class="table table-hover datatable w-100 align-middle">
+                    <table class="table table-hover datatable w-100 align-middle" id="visitor-table">
                         <thead>
                             <tr>
-                                <th>Visitor Details</th>
-                                <th>Mobile Number</th>
-                                <th>Vehicle No</th>
-                                <th>Visiting Flat</th>
-                                <th>Entry/Exit Time</th>
-                                <th class="text-end">Action</th>
+                                <th>Name/Visit Type</th>
+                                <th>Mobile</th>
+                                <th>Vehicle</th>
+                                <th>Flat</th>
+                                <th>Purpose</th>
+                                <th>IN Time</th>
+                                <th>OUT Time</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>
-                                    <span class="fw-bold d-block">Amit Verma</span>
-                                    <span class="cat-badge cat-guest">Guest</span>
-                                </td>
-                                <td><span class="fw-bold"><i class="fa fa-phone small me-1"></i> +91 98765 43210</span></td>
-                                <td><span class="vehicle-tag">CH-01-AX-4432</span></td>
-                                <td class="fw-bold">B-402</td>
-                                <td>
-                                    <small class="text-muted d-block">In: 10:30 AM</small>
-                                    <small class="text-muted d-block">Out: --:--</small>
-                                </td>
-                                <td class="text-end">
-                                    <button class="btn btn-sm btn-outline-danger fw-bold">Check Out</button>
-                                </td>
-                            </tr>
+                            <?php if (!empty($visitors)): ?>
+                                <?php foreach ($visitors as $v): ?>
+                                    <tr>
+                                        <!-- NAME + TYPE -->
+                                        <td style="padding-bottom: 0.8rem" ;>
+                                            <span class="fw-bold d-block" style=" margin: 6px auto; padding-left: 2px;">
+                                                <?= htmlspecialchars($v['visitor_name']) ?>
+                                            </span>
+
+                                            <?php if (!empty($v['visit_type'])): ?>
+                                                <span class="cat-badge cat-guest">
+                                                    <?= htmlspecialchars($v['visit_type']) ?>
+                                                </span>
+                                            <?php endif; ?>
+                                        </td>
+
+                                        <!-- MOBILE -->
+                                        <td>
+                                            <span class="fw-bold">
+                                                <i class="fa fa-phone small me-1"></i>
+                                                <?= htmlspecialchars($v['mobile']) ?>
+                                            </span>
+                                        </td>
+
+                                        <!-- VEHICLE -->
+                                        <td>
+                                            <?php if (!empty($v['vehicle_no'])): ?>
+                                                <span class="vehicle-tag">
+                                                    <?= htmlspecialchars($v['vehicle_no']) ?>
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="text-muted">N/A</span>
+                                            <?php endif; ?>
+                                        </td>
+
+                                        <!-- FLAT -->
+                                        <td class="fw-bold">
+                                            <?php if ($v['flat_number']): ?>
+                                                <?= htmlspecialchars($v['block_number']) ?>-<?= htmlspecialchars($v['flat_number']) ?>
+                                            <?php else: ?>
+                                                <span class="text-muted">N/A</span>
+                                            <?php endif; ?>
+                                        </td>
+
+                                        <!-- PURPOSE -->
+                                        <td>
+                                            <?php if ($v['visit_type'] === 'Other'): ?>
+                                                <?= htmlspecialchars($v['purpose'] ?? '-') ?>
+                                            <?php else: ?>
+                                                -
+                                            <?php endif; ?>
+                                        </td>
+
+                                        <!-- IN TIME -->
+                                        <td>
+                                            <small class="text-muted d-block">
+                                                <?= $v['in_time_fmt'] ?>
+                                            </small>
+                                        </td>
+
+                                        <!-- OUT TIME -->
+                                        <td>
+                                            <?php if ($v['out_time']): ?>
+                                                <small class="text-success d-block">
+                                                    <?= $v['out_time_fmt'] ?>
+                                                </small>
+                                            <?php else: ?>
+                                                <span class="badge bg-warning">Inside</span>
+                                            <?php endif; ?>
+                                        </td>
+
+                                        <!-- ACTION -->
+                                        <td class="text-end">
+                                            <div class="action-btns">
+                                                <?php if (!$v['out_time']): ?>
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-outline-danger fw-bold checkout-btn"
+                                                        data-id="<?= $v['id'] ?>"
+                                                        data-name="<?= htmlspecialchars($v['visitor_name']) ?>"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#checkoutVisitorModal">
+                                                        Check Out
+                                                    </button>
+                                                <?php else: ?>
+                                                    <span class="badge bg-success">Exited</span>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="10" class="text-center text-muted py-4">
+                                        No visitor records found
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
             </div>
         </main>
-
     </div>
 
 
 
-    <!-- <div class="container-fluid px-4">
-    <h1 class="mt-4">Visitors</h1>
+    <!-- ADD VISITOR MODAL -->
+    <div class="modal fade" id="checkInModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius:20px; max-width:720px; margin:auto;">
 
-    <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
-        <li class="breadcrumb-item active">Visitors</li>
-    </ol>
+                <div class="modal-header border-0 p-4">
+                    <h5 class="modal-title fw-800">New Visitor Check-In</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
 
-    <div class="card shadow-sm">
-        <div class="card-header d-flex justify-content-between">
-            <h5 class="card-title mb-0">Visitors List</h5>
-            <a href="add/add_visitor.php" class="btn btn-success btn-sm">+ Add Visitor</a>
-        </div>
+                <div class="modal-body p-4 pt-0">
 
-        <div class="card-body table-responsive">
-            <table class="table table-bordered table-striped" id="visitor-table">
-                <thead class="table-dark">
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Mobile</th>
-                        <th>Vehicle</th>
-                        <th>Flat</th>
-                        <th>Visit Type</th>
-                        <th>Purpose</th>
-                        <th>IN Time</th>
-                        <th>OUT Time</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
+                    <!-- IMPORTANT: autocomplete off + fake fields to block chrome autofill -->
+                    <form method="POST" class="row g-3" autocomplete="off">
 
-                <tbody>
-                    <?php foreach ($visitors as $v): ?>
-                        <tr>
-                            <td><?= $v['id'] ?></td>
-                            <td><?= htmlspecialchars($v['visitor_name']) ?></td>
-                            <td><?= htmlspecialchars($v['mobile']) ?></td>
-                            <td><?= htmlspecialchars($v['vehicle_no']) ?></td>
+                        <!-- HIDDEN DUMMY FIELDS (Stops Chrome Autofill) -->
+                        <input type="text" name="fake_username" style="display:none">
+                        <input type="password" name="fake_password" style="display:none">
 
-                            <td>
-                                <?php if ($v['flat_number']): ?>
-                                    Block <?= $v['block_number'] ?> - Flat <?= $v['flat_number'] ?>
-                                <?php else: ?>
-                                    <span class="text-muted">N/A</span>
-                                <?php endif; ?>
-                            </td>
+                        <!-- NAME -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted">
+                                VISITOR NAME <span class="text-danger">*</span>
+                            </label>
 
+                            <input type="text"
+                                name="visitor_name"
+                                id="visitor_name"
+                                autocomplete="nope"
+                                autocorrect="off"
+                                autocapitalize="off"
+                                spellcheck="false"
+                                class="form-control bg-light border-0"
+                                placeholder="Enter name"
+                                value="<?= htmlspecialchars($name ?? '') ?>">
 
-                            <td><?= htmlspecialchars($v['visit_type']) ?></td>
-                            <td>
-                                <?php
-                                if ($v['visit_type'] == 'Other') {
-                                    echo htmlspecialchars($v['purpose'] ?? '');
-                                } else {
-                                    echo '-';
-                                }
-                                ?>
-                            </td>
+                            <small class="text-danger"><?= $errors['visitor_name'] ?? '' ?></small>
+                        </div>
 
+                        <!-- MOBILE -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted">
+                                MOBILE <span class="text-danger">*</span>
+                            </label>
 
-                            <td><?= $v['in_time_fmt'] ?></td>
+                            <input type="tel"
+                                name="mobile"
+                                autocomplete="new-password"
+                                inputmode="numeric"
+                                maxlength="10"
+                                class="form-control bg-light border-0"
+                                placeholder="10 digit number"
+                                value="<?= htmlspecialchars($mobile ?? '') ?>">
 
-                            <td>
-                                <?php if ($v['out_time']): ?>
-                                    <span class="text-success"><?= $v['out_time_fmt'] ?></span>
-                                <?php else: ?>
-                                    <span class="badge bg-warning">Inside</span>
-                                <?php endif; ?>
-                            </td>
+                            <small class="text-danger"><?= $errors['mobile'] ?? '' ?></small>
+                        </div>
 
+                        <!-- VEHICLE -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted">
+                                VEHICLE NO <span class="text-danger">*</span>
+                            </label>
 
-                            <td>
-                                <div class="action-btns">
-                                    <?php if (!$v['out_time']): ?>
-                                        <a href="visitors.php?action=out&id=<?= $v['id'] ?>"
-                                            class="btn btn-sm btn-danger"
-                                            onclick="return confirm('Mark visitor OUT?')">
-                                            OUT
-                                        </a>
-                                    <?php else: ?>
-                                        <span class="badge bg-success">Exited</span>
-                                    <?php endif; ?>
-                                </div>
-                            </td>
+                            <input type="text"
+                                name="vehicle_no"
+                                autocomplete="off"
+                                autocapitalize="characters"
+                                class="form-control bg-light border-0"
+                                placeholder="e.g. MH12AB1234"
+                                value="<?= htmlspecialchars($vehicle ?? '') ?>">
 
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                            <small class="text-danger"><?= $errors['vehicle_no'] ?? '' ?></small>
+                        </div>
 
+                        <!-- FLAT -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted">
+                                VISITING FLAT <span class="text-danger">*</span>
+                            </label>
+
+                            <select name="flat_id" class="form-select bg-light border-0" autocomplete="off">
+                                <option value="">Select Flat</option>
+                                <?php foreach ($flats as $f): ?>
+                                    <option value="<?= $f['id'] ?>"
+                                        <?= ($flat_id ?? '') == $f['id'] ? 'selected' : '' ?>>
+                                        Block <?= $f['block_number'] ?> - Flat <?= $f['flat_number'] ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+
+                            <small class="text-danger"><?= $errors['flat_id'] ?? '' ?></small>
+                        </div>
+
+                        <!-- VISIT TYPE -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted">
+                                VISIT TYPE <span class="text-danger">*</span>
+                            </label>
+
+                            <select name="visit_type" id="visit_type"
+                                class="form-select bg-light border-0" autocomplete="off">
+                                <option value="">Select Type</option>
+                                <option value="Guest" <?= ($visit_type ?? '') == 'Guest' ? 'selected' : '' ?>>Guest</option>
+                                <option value="Delivery Boy" <?= ($visit_type ?? '') == 'Delivery Boy' ? 'selected' : '' ?>>Delivery Boy</option>
+                                <option value="Electrician" <?= ($visit_type ?? '') == 'Electrician' ? 'selected' : '' ?>>Electrician</option>
+                                <option value="Plumber" <?= ($visit_type ?? '') == 'Plumber' ? 'selected' : '' ?>>Plumber</option>
+                                <option value="Other" <?= ($visit_type ?? '') == 'Other' ? 'selected' : '' ?>>Other</option>
+                            </select>
+
+                            <small class="text-danger"><?= $errors['visit_type'] ?? '' ?></small>
+                        </div>
+
+                        <!-- PURPOSE -->
+                        <div class="col-12" id="purposeBox" style="display:none;">
+                            <label class="form-label small fw-bold text-muted">
+                                PURPOSE
+                            </label>
+
+                            <input type="text"
+                                name="purpose"
+                                autocomplete="off"
+                                class="form-control bg-light border-0"
+                                placeholder="Enter purpose"
+                                value="<?= htmlspecialchars($purpose ?? '') ?>">
+
+                            <small class="text-danger"><?= $errors['purpose'] ?? '' ?></small>
+                        </div>
+
+                        <!-- SUBMIT -->
+                        <div class="col-12">
+                            <button type="submit"
+                                name="submit"
+                                class="btn btn-brand w-100 py-3 mt-3">
+                                Check-In Visitor
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
         </div>
     </div>
-</div> -->
+
+
+    <!-- CHECK OUT Confirmation MODAL -->
+    <div class="modal fade" id="checkoutVisitorModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius:18px;">
+
+                <div class="modal-body text-center p-4">
+
+                    <!-- Icon -->
+                    <div style="
+                    width:60px;
+                    height:60px;
+                    border-radius:50%;
+                    background:#fff3cd;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    margin:0 auto 15px;
+                    font-size:26px;">
+                        🚪
+                    </div>
+
+                    <!-- Title -->
+                    <h5 class="fw-bold mb-2 text-danger">Check Out Visitor</h5>
+
+                    <!-- Message -->
+                    <p class="text-muted mb-4">
+                        Are you sure you want to mark
+                        <span class="fw-bold" id="checkoutVisitorName">this visitor</span> as OUT?<br>
+                        <small class="text-danger">This action will record exit time.</small>
+                    </p>
+
+                    <!-- Buttons -->
+                    <div class="d-flex gap-3 justify-content-center">
+                        <button type="button"
+                            class="btn btn-light px-4 py-2"
+                            data-bs-dismiss="modal"
+                            style="border-radius:10px;">
+                            Cancel
+                        </button>
+
+                        <a href="#"
+                            id="confirmCheckoutBtn"
+                            class="btn btn-danger px-4 py-2 fw-bold"
+                            style="border-radius:10px;">
+                            Yes, Check Out
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 
     <!-- DATATABLES -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.2/css/dataTables.bootstrap5.min.css">
@@ -226,8 +513,46 @@ include '../resources/layout/header.php';
     <script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
 
     <script>
-        $(document).ready(function() {
+        document.addEventListener("DOMContentLoaded", function() {
+
+            // Initialize DataTable
             $('#visitor-table').DataTable();
+
+            // Handle Check Out Modal
+            $(document).on('click', '.checkout-btn', function() {
+                var visitorId = $(this).data('id');
+                var visitorName = $(this).data('name');
+
+                $('#checkoutVisitorName').text(visitorName);
+                $('#confirmCheckoutBtn').attr(
+                    'href',
+                    'visitors.php?action=out&id=' + visitorId
+                );
+            });
+
+            // Toggle Purpose Field
+            const visitType = document.getElementById('visit_type');
+            const purposeBox = document.getElementById('purposeBox');
+
+            function togglePurpose() {
+                if (visitType && visitType.value === 'Other') {
+                    purposeBox.style.display = 'block';
+                } else if (purposeBox) {
+                    purposeBox.style.display = 'none';
+                }
+            }
+
+            if (visitType) {
+                visitType.addEventListener('change', togglePurpose);
+                togglePurpose();
+            }
+
+            // Auto open modal if validation error exists
+            <?php if (!empty($errors)): ?>
+                var checkInModal = new bootstrap.Modal(document.getElementById('checkInModal'));
+                checkInModal.show();
+            <?php endif; ?>
+
         });
     </script>
 
