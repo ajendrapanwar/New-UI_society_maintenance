@@ -2,9 +2,8 @@
 require_once __DIR__ . '/../core/config.php';
 require_once __DIR__ . '/../core/helpers.php';
 
+// ACCESS CONTROL 
 requireRole(['admin', 'cashier']);
-
-
 
 
 // Handle Add Misc Work (Modal Form)
@@ -88,43 +87,52 @@ include('../resources/layout/header.php');
         <main id="main-content">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="fw-800 m-0">Miscellaneous Work</h1>
-                <button class="btn btn-brand shadow-sm" data-bs-toggle="modal" data-bs-target="#addMiscModal">
-                    <i class="fa-solid fa-plus me-2"></i> Add Expense
+                <button class="btn btn-brand btn-sm shadow-sm px-3"
+                    data-bs-toggle="modal"
+                    data-bs-target="#addMiscModal">
+                    <i class="fa-solid fa-plus me-1"></i>
+                    <span class="d-none d-sm-inline">Add Expense</span>
+                    <span class="d-inline d-sm-none">Add</span>
                 </button>
             </div>
 
 
-            <!-- FILTERS & EXPORT -->
-            <div class="mb-3 row g-2 align-items-end">
-                <div class="col-md-2">
-                    <label class="form-label">Month</label>
-                    <select id="filter-month" class="form-select form-select-sm">
-                        <option value="">All Months</option>
-                        <?php for ($m = 1; $m <= 12; $m++): ?>
-                            <option value="<?= $m ?>"><?= date('F', mktime(0, 0, 0, $m, 1)) ?></option>
-                        <?php endfor; ?>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">Year</label>
-                    <select id="filter-year" class="form-select form-select-sm">
-                        <option value="">All Years</option>
-                        <?php
-                        $currentYear = date('Y');
-                        for ($y = $currentYear; $y >= $currentYear - 5; $y--): ?>
-                            <option value="<?= $y ?>"><?= $y ?></option>
-                        <?php endfor; ?>
-                    </select>
-                </div>
-                <div class="col-md-2 d-grid">
-                    <button id="reset-filters" class="btn btn-outline-dark btn-sm">
-                        <i class="fa fa-rotate-left"></i> Reset
-                    </button>
-                </div>
-                <div class="col-md-2 ms-auto d-grid">
-                    <button id="export-excel" class="btn btn-dark btn-sm">
-                        <i class="fa fa-file-excel"></i> Export Excel
-                    </button>
+             <!-- FILTERS - NEW UI STYLE, OLD LOGIC -->
+            <div class="filter-box shadow-sm p-3 mb-4">
+                <div class="row g-3 align-items-end">
+                    <!-- YEAR -->
+                    <div class="col-md-2">
+                        <label class="small fw-bold text-muted">YEAR</label>
+                        <select id="filter-year" class="form-select border-0 bg-light">
+                            <option value="">All Years</option>
+                            <?php
+                            $currentYear = date('Y');
+                            for ($y = $currentYear; $y >= $currentYear - 5; $y--) {
+                                echo "<option value='$y'>$y</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+
+                    <!-- MONTH -->
+                    <div class="col-md-2">
+                        <label class="small fw-bold text-muted">MONTH</label>
+                        <select id="filter-month" class="form-select border-0 bg-light">
+                            <option value="">All Months</option>
+                            <?php
+                            for ($m = 1; $m <= 12; $m++) {
+                                echo "<option value='$m'>" . date('F', mktime(0, 0, 0, $m, 1)) . "</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+
+                    <!-- RESET / APPLY BUTTON -->
+                    <div class="col-md-2 d-grid">
+                        <button id="reset-filters" class="btn btn-outline-dark fw-bold py-2" style="border-radius:10px;">
+                            <i class="fa fa-rotate-left"></i> Reset
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -324,12 +332,7 @@ include('../resources/layout/header.php');
             $('#reset-filters').click(() => {
                 $('#filter-month,#filter-year').val('');
                 table.ajax.reload();
-            });
-            $('#export-excel').click(() => {
-                let month = $('#filter-month').val(),
-                    year = $('#filter-year').val();
-                window.location = '<?= BASE_URL ?>action.php?action=export_misc_work&month=' + month + '&year=' + year;
-            });
+            }); 
 
             $(document).on('click', '.delete_btn', function() {
                 var id = $(this).data('id');

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Feb 26, 2026 at 12:54 PM
+-- Generation Time: Feb 27, 2026 at 01:04 PM
 -- Server version: 8.0.45-0ubuntu0.24.04.1
 -- PHP Version: 8.3.6
 
@@ -217,7 +217,7 @@ CREATE TABLE `guard_salary` (
 
 INSERT INTO `guard_salary` (`id`, `guard_id`, `salary_month`, `salary_year`, `salary_amount`, `status`, `paid_on`, `generated_at`) VALUES
 (1, 1, 2, 2026, 10000.00, 'paid', '2026-01-30 11:32:29', '2026-01-30 05:54:01'),
-(2, 2, 2, 2026, 10000.00, 'unpaid', NULL, '2026-01-30 05:54:01'),
+(2, 2, 2, 2026, 10000.00, 'paid', '2026-02-27 10:40:36', '2026-01-30 05:54:01'),
 (3, 3, 2, 2026, 10000.00, 'unpaid', NULL, '2026-01-30 05:54:01');
 
 -- --------------------------------------------------------
@@ -731,7 +731,7 @@ ALTER TABLE `resident_parking`
 -- AUTO_INCREMENT for table `security_guards`
 --
 ALTER TABLE `security_guards`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `sweepers`

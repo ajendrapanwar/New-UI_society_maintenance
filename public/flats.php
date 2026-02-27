@@ -414,7 +414,6 @@ include('../resources/layout/header.php');
 					searchPlaceholder: "Search records..."
 				},
 
-
 				ajax: {
 					url: 'action.php',
 					type: 'POST',

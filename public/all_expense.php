@@ -49,70 +49,92 @@ include __DIR__ . '/../resources/layout/header.php';
         <main id="main-content">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="fw-800 m-0">Expense Report</h1>
-                <button class="btn btn-outline-dark fw-bold px-4" style="border-radius:10px;">
-                    <i class="fa-solid fa-file-excel me-2"></i> Export CSV
+                <button class="btn btn-outline-dark shadow-sm" id="export-excel">
+                    <i class="bi bi-file-earmark-excel"></i> Export Excel
                 </button>
             </div>
 
-            <div class="filter-box shadow-sm">
-                <form class="row g-3 align-items-end">
+
+            <!-- FILTERS - NEW UI STYLE, OLD LOGIC -->
+            <div class="filter-box shadow-sm p-3 mb-4">
+                <div class="row g-3 align-items-end">
+                    <!-- YEAR -->
+                    <div class="col-md-2">
+                        <label class="small fw-bold text-muted">YEAR</label>
+                        <select id="filter-year" class="form-select border-0 bg-light">
+                            <option value="">All Years</option>
+                            <?php
+                            $currentYear = date('Y');
+                            for ($y = $currentYear; $y >= $currentYear - 5; $y--) {
+                                echo "<option value='$y'>$y</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+
+                    <!-- MONTH -->
+                    <div class="col-md-2">
+                        <label class="small fw-bold text-muted">MONTH</label>
+                        <select id="filter-month" class="form-select border-0 bg-light">
+                            <option value="">All Months</option>
+                            <?php
+                            for ($m = 1; $m <= 12; $m++) {
+                                echo "<option value='$m'>" . date('F', mktime(0, 0, 0, $m, 1)) . "</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+
+                    <!-- STATUS -->
+                    <div class="col-md-3">
+                        <label class="small fw-bold text-muted">STATUS</label>
+                        <select id="filter-status" class="form-select border-0 bg-light">
+                            <option value="">All Status</option>
+                            <option value="paid" class="text-success">Paid</option>
+                            <option value="pending" class="text-danger">Pending</option>
+                            <option value="overdue" class="text-danger">Overdue</option>
+                        </select>
+                    </div>
+
+                    <!-- CATEGORY -->
                     <div class="col-md-3">
                         <label class="small fw-bold text-muted">CATEGORY</label>
-                        <select class="form-select border-0 bg-light py-2">
-                            <option>All Expenses</option>
-                            <option>Staff Salary</option>
-                            <option>Utility Bills</option>
-                            <option>Misc Repairs</option>
+                        <select id="filter-category" class="form-select border-0 bg-light py-2">
+                            <option value="">All Expenses</option>
+                            <option value="electricity_bills">Electricity Bills</option>
+                            <option value="miscellaneous_works">Misc Repairs</option>
+                            <option value="sweeper_salary">Sweeper Salary</option>
+                            <option value="guard_salary">Guard Salary</option>
+                            <option value="garbage_salary">Garbage Salary</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
-                        <label class="small fw-bold text-muted">PAYMENT STATUS</label>
-                        <select class="form-select border-0 bg-light py-2">
-                            <option>All Status</option>
-                            <option>Paid / Cleared</option>
-                            <option>Unpaid / Pending</option>
-                        </select>
+
+                    <!-- RESET -->
+                    <div class="col-md-2 d-grid">
+                        <button id="reset-filters" class="btn btn-outline-dark fw-bold py-2" style="border-radius:10px;">
+                            <i class="fa fa-rotate-left"></i> Reset
+                        </button>
                     </div>
-                    <div class="col-md-3">
-                        <label class="small fw-bold text-muted">MONTH/YEAR</label>
-                        <input type="month" class="form-control border-0 bg-light py-2" value="2026-02">
-                    </div>
-                    <div class="col-md-3">
-                        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" style="background:var(--brand); border-radius:10px; border:none;">Update Report</button>
-                    </div>
-                </form>
+                </div>
+
             </div>
+
 
             <div class="data-card border-0 shadow-sm">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle">
+                    <table id="expense-table" class="table table-hover align-middle">
                         <thead class="text-muted small uppercase">
                             <tr>
-                                <th>Date</th>
-                                <th>Expense Details</th>
-                                <th>Category</th>
+                                <th>ID</th>
+                                <th>Month/Year</th>
+                                <th>Name/Reading</th>
+                                <th>Expense Type</th>
                                 <th>Amount</th>
                                 <th>Status</th>
-                                <th class="text-end">Ref. No</th>
+                                <th>Paid On</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>18 Feb 2026</td>
-                                <td><span class="fw-bold">Electrician - Block B Wiring</span></td>
-                                <td><span class="badge bg-light text-dark">Misc Work</span></td>
-                                <td class="fw-bold">₹4,200</td>
-                                <td><span class="status-badge status-paid">Paid</span></td>
-                                <td class="text-end text-muted">#EXP-101</td>
-                            </tr>
-                            <tr>
-                                <td>20 Feb 2026</td>
-                                <td><span class="fw-bold">Monthly Garbage Collection</span></td>
-                                <td><span class="badge bg-light text-dark">Staff Salary</span></td>
-                                <td class="fw-bold">₹8,000</td>
-                                <td><span class="status-badge status-unpaid">Unpaid</span></td>
-                                <td class="text-end text-muted">#EXP-102</td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -148,6 +170,7 @@ include __DIR__ . '/../resources/layout/header.php';
                         d.month = $('#filter-month').val();
                         d.year = $('#filter-year').val();
                         d.status = $('#filter-status').val();
+                        d.category = $('#filter-category').val(); // <-- ADD THIS LINE
                     }
                 },
 
@@ -175,19 +198,56 @@ include __DIR__ . '/../resources/layout/header.php';
                 ]
             });
 
-            $('#filter-month, #filter-year, #filter-status').on('change', function() {
+            // Include category in filter reload
+            $('#filter-month, #filter-year, #filter-status, #filter-category').on('change', function() {
                 table.ajax.reload();
                 loadExpenseTotals();
             });
 
             $('#reset-filters').on('click', function() {
-                $('#filter-month,#filter-year,#filter-status').val('');
+                $('#filter-month,#filter-year,#filter-status,#filter-category').val(''); // reset category too
                 table.ajax.reload();
                 loadExpenseTotals();
             });
 
-            // Load totals on page load
             loadExpenseTotals();
+        });
+
+        // Update totals AJAX to include category
+        function loadExpenseTotals() {
+            $.ajax({
+                url: '<?= BASE_URL ?>action.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    action: 'fetch_expense_totals',
+                    month: $('#filter-month').val(),
+                    year: $('#filter-year').val(),
+                    status: $('#filter-status').val(),
+                    category: $('#filter-category').val() // <-- ADD THIS LINE
+                },
+                success: function(res) {
+                    $('#grandTotal').text('₹' + res.grandTotal);
+                    $('#paidTotal').text('₹' + res.paidTotal);
+                    $('#pendingTotal').text('₹' + res.unpaidTotal);
+                }
+            });
+        }
+
+        // EXPORT EXCEL with category
+        $('#export-excel').on('click', function() {
+            let month = $('#filter-month').val();
+            let year = $('#filter-year').val();
+            let status = $('#filter-status').val();
+            let category = $('#filter-category').val(); 
+
+            let url = '<?= BASE_URL ?>action.php?action=export_expense_bills' +
+                '&month=' + month +
+                '&year=' + year +
+                '&status=' + status +
+                '&category=' + category; // <-- ADD THIS LINE
+
+            window.location.href = url;
         });
 
 
@@ -211,25 +271,7 @@ include __DIR__ . '/../resources/layout/header.php';
                 }
             });
         }
-
-
-        // EXPORT
-        $('#export-excel').on('click', function() {
-
-            let month = $('#filter-month').val();
-            let year = $('#filter-year').val();
-            let status = $('#filter-status').val();
-
-            let url = '<?= BASE_URL ?>action.php?action=export_expense_bills' +
-                '&month=' + month +
-                '&year=' + year +
-                '&status=' + status;
-
-            window.location.href = url;
-        });
     </script>
-
-
 
 </body>
 

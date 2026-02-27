@@ -39,77 +39,97 @@ include __DIR__ . '/../resources/layout/header.php';
 
 
         <main id="main-content">
-            <h1 class="fw-800 mb-4">Collection Analysis</h1>
-
-            <div class="filter-box shadow-sm">
-                <form class="row g-3 align-items-end">
-                    <div class="col-md-2">
-                        <label class="small fw-bold text-muted">YEAR</label>
-                        <select class="form-select border-0 bg-light">
-                            <option>2026</option>
-                            <option>2025</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="small fw-bold text-muted">MONTH</label>
-                        <select class="form-select border-0 bg-light">
-                            <option>February</option>
-                            <option>January</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="small fw-bold text-muted">STATUS</label>
-                        <select class="form-select border-0 bg-light">
-                            <option>All Status</option>
-                            <option class="text-success">Paid</option>
-                            <option class="text-danger">Pending</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="small fw-bold text-muted">FLAT TYPE</label>
-                        <select class="form-select border-0 bg-light">
-                            <option>All Types</option>
-                            <option>1 BHK</option>
-                            <option>2 BHK</option>
-                            <option>3 BHK</option>
-                            <option>Villa</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-primary w-100 py-2 fw-bold" style="border-radius:10px;">Apply Filters</button>
-                    </div>
-                </form>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="fw-800 m-0">Collection Analysis</h1>
+                <button class="btn btn-outline-dark shadow-sm" id="export-excel">
+                    <i class="bi bi-file-earmark-excel"></i> Export Excel
+                </button>
             </div>
 
+            <!-- FILTERS - NEW UI STYLE, OLD LOGIC -->
+            <div class="filter-box shadow-sm p-3 mb-4">
+                <div class="row g-3 align-items-end">
+                    <!-- YEAR -->
+                    <div class="col-md-2">
+                        <label class="small fw-bold text-muted">YEAR</label>
+                        <select id="filter-year" class="form-select border-0 bg-light">
+                            <option value="">All Years</option>
+                            <?php
+                            $currentYear = date('Y');
+                            for ($y = $currentYear; $y >= $currentYear - 5; $y--) {
+                                echo "<option value='$y'>$y</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+
+                    <!-- MONTH -->
+                    <div class="col-md-2">
+                        <label class="small fw-bold text-muted">MONTH</label>
+                        <select id="filter-month" class="form-select border-0 bg-light">
+                            <option value="">All Months</option>
+                            <?php
+                            for ($m = 1; $m <= 12; $m++) {
+                                echo "<option value='$m'>" . date('F', mktime(0, 0, 0, $m, 1)) . "</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+
+                    <!-- STATUS -->
+                    <div class="col-md-3">
+                        <label class="small fw-bold text-muted">STATUS</label>
+                        <select id="filter-status" class="form-select border-0 bg-light">
+                            <option value="">All Status</option>
+                            <option value="paid" class="text-success">Paid</option>
+                            <option value="pending" class="text-danger">Pending</option>
+                            <option value="overdue" class="text-danger">Overdue</option>
+                        </select>
+                    </div>
+
+                    <!-- RESET / APPLY BUTTON -->
+                    <div class="col-md-2 d-grid">
+                        <button id="reset-filters" class="btn btn-outline-dark fw-bold py-2" style="border-radius:10px;">
+                            <i class="fa fa-rotate-left"></i> Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Totals -->
+                <div class="row mt-4 text-center text-md-start">
+                    <div class="col-md-4 col-12 mb-2">
+                        <strong>Grand Total:</strong>
+                        <span id="grandTotal"></span>
+                    </div>
+                    <div class="col-md-4 col-12 mb-2 text-success">
+                        <strong>Total Paid:</strong>
+                        <span id="paidTotal"></span>
+                    </div>
+                    <div class="col-md-4 col-12 mb-2 text-danger">
+                        <strong>Total Pending/Overdue:</strong>
+                        <span id="pendingTotal"></span>
+                    </div>
+                </div>
+            </div>
+
+
             <div class="data-card border-0 shadow-sm">
-                <table class="table table-hover datatable w-100">
+                <table id="bills-table" class="table table-hover datatable w-100">
                     <thead>
                         <tr>
-                            <th>Receipt No</th>
                             <th>Flat</th>
-                            <th>Resident</th>
-                            <th>Month</th>
+                            <th>Block</th>
+                            <th>Month / Year</th>
                             <th>Amount</th>
+                            <th>Fine</th>
+                            <th>Total</th>
                             <th>Status</th>
+                            <th>Payment Mode</th>
+                            <th>Paid On</th>
+                            <th>Overdue</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>#REC-992</td>
-                            <td>A-402</td>
-                            <td>Rajesh Kumar</td>
-                            <td>Feb 2026</td>
-                            <td>₹3,500</td>
-                            <td><span class="badge bg-success">Paid</span></td>
-                        </tr>
-                        <tr>
-                            <td>#REC-993</td>
-                            <td>B-101</td>
-                            <td>Sanjeev Sharma</td>
-                            <td>Feb 2026</td>
-                            <td>₹2,500</td>
-                            <td><span class="badge bg-warning">Pending</span></td>
-                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -123,8 +143,14 @@ include __DIR__ . '/../resources/layout/header.php';
     <script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
 
     <script>
-        $(function() {
+        $(document).ready(function() {
 
+            // Check if DataTable is already initialized
+            if ($.fn.DataTable.isDataTable('#bills-table')) {
+                $('#bills-table').DataTable().destroy();
+            }
+
+            // Initialize DataTable
             let table = $('#bills-table').DataTable({
                 processing: true,
                 serverSide: true,
@@ -133,8 +159,7 @@ include __DIR__ . '/../resources/layout/header.php';
                 lengthMenu: [5, 10, 25, 50],
                 order: [
                     [2, 'desc']
-                ],
-
+                ], // default order by month_year descending
                 ajax: {
                     url: '<?= BASE_URL ?>action.php',
                     type: 'POST',
@@ -145,7 +170,6 @@ include __DIR__ . '/../resources/layout/header.php';
                         d.status = $('#filter-status').val();
                     }
                 },
-
                 columns: [{
                         data: 'flat_number'
                     },
@@ -179,63 +203,61 @@ include __DIR__ . '/../resources/layout/header.php';
                 ]
             });
 
+            // Filter change events
             $('#filter-month, #filter-year, #filter-status').on('change', function() {
-                table.ajax.reload();
+                table.ajax.reload(null, false); // reload without resetting pagination
                 loadTotals();
             });
 
+            // Reset filters
             $('#reset-filters').on('click', function() {
                 $('#filter-month, #filter-year, #filter-status').val('');
-                table.ajax.reload();
+                table.ajax.reload(null, false);
                 loadTotals();
             });
 
             // Load totals on page load
             loadTotals();
 
+            // Function to load totals
+            function loadTotals() {
+                $.ajax({
+                    url: '<?= BASE_URL ?>action.php',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action: 'fetch_bill_totals',
+                        month: $('#filter-month').val(),
+                        year: $('#filter-year').val(),
+                        status: $('#filter-status').val()
+                    },
+                    success: function(res) {
+                        $('#grandTotal').text('₹' + res.grandTotal);
+                        $('#paidTotal').text('₹' + res.paidTotal);
+                        $('#pendingTotal').text('₹' + res.pendingTotal);
+                    },
+                    error: function(err) {
+                        console.error("Failed to fetch totals:", err);
+                    }
+                });
+            }
 
-        });
+            $('#export-excel').on('click', function() {
 
+                let month = $('#filter-month').val();
+                let year = $('#filter-year').val();
+                let status = $('#filter-status').val();
 
-        function loadTotals() {
+                let url = '<?= BASE_URL ?>action.php?action=export_all_maintenance_bills' +
+                    '&month=' + month +
+                    '&year=' + year +
+                    '&status=' + status;
 
-            $.ajax({
-                url: '<?= BASE_URL ?>action.php',
-                type: 'POST',
-                dataType: 'json',
-                data: {
-                    action: 'fetch_bill_totals',
-                    month: $('#filter-month').val(),
-                    year: $('#filter-year').val(),
-                    status: $('#filter-status').val()
-                },
-                success: function(res) {
-                    $('#grandTotal').text('₹' + res.grandTotal);
-                    $('#paidTotal').text('₹' + res.paidTotal);
-                    $('#pendingTotal').text('₹' + res.pendingTotal);
-                }
+                window.location.href = url;
             });
-        }
 
-
-
-        $('#export-excel').on('click', function() {
-
-            let month = $('#filter-month').val();
-            let year = $('#filter-year').val();
-            let status = $('#filter-status').val();
-
-            let url = '<?= BASE_URL ?>action.php?action=export_all_maintenance_bills' +
-                '&month=' + month +
-                '&year=' + year +
-                '&status=' + status;
-
-            window.location.href = url;
         });
     </script>
-
-
-
 
 </body>
 

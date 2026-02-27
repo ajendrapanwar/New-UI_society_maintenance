@@ -181,21 +181,31 @@ include('../resources/layout/header.php');
         <main id="main-content">
 
             <form method="POST">
-                <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex flex-column flex-md-row 
+            justify-content-between align-items-md-center 
+            mb-4">
+
                     <h1 class="fw-800 m-0">Monthly Fixed Rates</h1>
 
-                    <div>
-                        <button type="submit" name="update_rates" class="btn btn-brand shadow-sm ml-2 mb-1">
-                            <i class="fa-solid fa-floppy-disk me-2"></i> Update Rates
-                        </button>
+                    <div class="sm-w-100 mt-3 mt-md-0">
+                        <div class="d-flex flex-column flex-md-row gap-2">
 
-                        <button type="button"
-                            class="btn btn-brand shadow-sm me-2 mb-1"
-                            data-bs-toggle="modal"
-                            data-bs-target="#addRateModal">
-                            <i class="fa-solid fa-add me-2"></i> Add Rates
-                        </button>
+                            <button type="submit"
+                                name="update_rates"
+                                class="btn btn-brand shadow-sm">
+                                <i class="fa-solid fa-floppy-disk me-2"></i> Update Rates
+                            </button>
+
+                            <button type="button"
+                                class="btn btn-brand shadow-sm"
+                                data-bs-toggle="modal"
+                                data-bs-target="#addRateModal">
+                                <i class="fa-solid fa-plus me-2"></i> Add Rates
+                            </button>
+
+                        </div>
                     </div>
+
                 </div>
 
                 <div class="row g-4">

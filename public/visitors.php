@@ -179,8 +179,12 @@ include '../resources/layout/header.php';
         <main id="main-content">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="fw-800 m-0">Visitor Management</h1>
-                <button class="btn btn-brand shadow-sm" data-bs-toggle="modal" data-bs-target="#checkInModal">
-                    <i class="fa-solid fa-plus me-2"></i> New Check-In
+                <button class="btn btn-brand btn-sm shadow-sm px-3"
+                    data-bs-toggle="modal"
+                    data-bs-target="#addMiscModal">
+                    <i class="fa-solid fa-plus me-1"></i>
+                    <span class="d-none d-sm-inline">New Check-In</span>
+                    <span class="d-inline d-sm-none">Check-In</span>
                 </button>
             </div>
 
