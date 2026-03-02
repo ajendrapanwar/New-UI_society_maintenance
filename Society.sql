@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Feb 27, 2026 at 01:04 PM
+-- Generation Time: Mar 02, 2026 at 12:58 PM
 -- Server version: 8.0.45-0ubuntu0.24.04.1
 -- PHP Version: 8.3.6
 
@@ -348,7 +348,8 @@ CREATE TABLE `notifications` (
 
 INSERT INTO `notifications` (`id`, `title`, `category`, `message`, `start_date`, `end_date`, `created_at`) VALUES
 (9, 'Test', 'General Info', 'Test', '2026-02-27 17:10:00', '2026-03-01 17:10:00', '2026-02-26 11:40:55'),
-(10, 'Test', 'Maintenance', 'Test', '2026-02-26 17:18:00', NULL, '2026-02-26 11:48:40');
+(10, 'Test', 'Maintenance', 'Test', '2026-02-26 17:18:00', NULL, '2026-02-26 11:48:40'),
+(11, 'Holi event', 'General Info', 'Holi', '2026-03-01 06:00:00', '2026-03-05 00:00:00', '2026-03-02 07:15:03');
 
 -- --------------------------------------------------------
 
@@ -451,6 +452,32 @@ CREATE TABLE `sweeper_salary` (
 
 INSERT INTO `sweeper_salary` (`id`, `sweeper_id`, `salary_month`, `salary_year`, `salary_amount`, `status`, `paid_on`, `generated_at`) VALUES
 (1, 1, 2, 2026, 10000.00, 'unpaid', NULL, '2026-01-30 05:54:01');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tenants`
+--
+
+CREATE TABLE `tenants` (
+  `id` int NOT NULL,
+  `flat_no` varchar(50) NOT NULL,
+  `tenant_name` varchar(150) NOT NULL,
+  `vehicle_no` varchar(50) DEFAULT NULL,
+  `move_in` date NOT NULL,
+  `move_out` date DEFAULT NULL,
+  `agreement_file` varchar(255) DEFAULT NULL,
+  `police_files` text,
+  `status` enum('active','vacated') DEFAULT 'active',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `tenants`
+--
+
+INSERT INTO `tenants` (`id`, `flat_no`, `tenant_name`, `vehicle_no`, `move_in`, `move_out`, `agreement_file`, `police_files`, `status`, `created_at`) VALUES
+(7, '301', 'Test', 'CH01CU3333', '2026-03-02', NULL, '1772455249_agreement.pdf', '1772455249_police_0.pdf', 'active', '2026-03-02 12:40:49');
 
 -- --------------------------------------------------------
 
@@ -628,6 +655,12 @@ ALTER TABLE `sweeper_salary`
   ADD KEY `sweeper_id` (`sweeper_id`);
 
 --
+-- Indexes for table `tenants`
+--
+ALTER TABLE `tenants`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
@@ -719,7 +752,7 @@ ALTER TABLE `miscellaneous_works`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `resident_parking`
@@ -744,6 +777,12 @@ ALTER TABLE `sweepers`
 --
 ALTER TABLE `sweeper_salary`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `tenants`
+--
+ALTER TABLE `tenants`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `users`

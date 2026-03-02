@@ -62,7 +62,6 @@ try {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 
-
     <link rel="stylesheet" href="../../assets/css/styles.css">
 
 </head>
@@ -108,32 +107,19 @@ try {
 
                 <div class="nav-group-label">Admin Control</div>
                 <a class="nav-link <?= ($currentPage == 'complaints.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>complaints.php"><i class="fa-solid fa-headset"></i> Complaints</a>
-                <a class="nav-link d-flex align-items-center justify-content-between <?= ($currentPage == 'notifications.php') ? 'active' : '' ?>"
-                    href="<?= BASE_URL ?>notifications.php">
-
-                    <span>
-                        <i class="fa-solid fa-bell"></i> Notifications
-                    </span>
-
+                <a class="nav-link d-flex align-items-center justify-content-between <?= ($currentPage == 'notifications.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>notifications.php"><span><i class="fa-solid fa-bell"></i> Notifications</span>
                     <?php if ($notificationCount > 0): ?>
-                        <span style="
-                                    background: #0d6efd;
-                                    color: #fff;
-                                    font-size: 11px;
-                                    font-weight: 700;
-                                    padding: 2px 8px;
-                                    border-radius: 999px;
-                                    min-width: 22px;
-                                    text-align: center;
-                                ">
-                            <?= $notificationCount ?>
-                        </span>
+                        <span style="background: #0d6efd;color: #fff;font-size: 11px;font-weight: 700;padding: 2px 8px;border-radius: 999px;min-width: 22px;text-align: center;"><?= $notificationCount ?></span>
                     <?php endif; ?>
                 </a>
 
                 <div class="nav-group-label">Reports</div>
                 <a class="nav-link <?= ($currentPage == 'all_bill.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>all_bill.php"><i class="fa-solid fa-chart-column"></i> Collection Report</a>
                 <a class="nav-link <?= ($currentPage == 'all_expense.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>all_expense.php"><i class="fa-solid fa-chart-line"></i> Expense Report</a>
+
+            <div class="nav-group-label">Records</div>
+                <a class="nav-link <?= ($currentPage == 'tenants.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>tenants.php"><i class="fa-solid fa-people-group"></i> Tenant History</a>
+
 
                 <hr class="mx-3 my-4 opacity-10 border-white">
             </nav>

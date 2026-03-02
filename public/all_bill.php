@@ -37,7 +37,6 @@ include __DIR__ . '/../resources/layout/header.php';
 
     <div class="main-wrapper">
 
-
         <main id="main-content">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="fw-800 m-0">Collection Analysis</h1>
