@@ -1129,8 +1129,26 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills_user') {
 			'overdue'      => $isOverdue ? 'Yes' : 'No',
 			// Find the 'action' key in your $data array and replace it:
 			'action' => $bill['status'] === 'paid'
-				? '<a href="pay_Details.php?bill_id=' . $bill['maintenance_bill_id'] . '" class="btn btn-sm btn-info text-white"> View Receipt</a>'
+				? '<a href="' . BASE_URL . 'view/pay_Details.php?bill_id=' . $bill['maintenance_bill_id'] . '" 
+					class="btn btn-sm btn-brand"
+						style="font-size: 10px;
+							background-color: #4F47E5;
+							color: white;
+							border-radius: 10px;
+							font-weight: 600;
+							padding: 0.6rem 1.5rem;
+							border: none;
+							transition: 0.2s;">
+						<i class="fa fa-eye me-1"></i> View
+					</a>'
 				: '<button class="btn btn-sm btn-primary pay-now-btn" 
+				            style="background-color:#4F47E5;
+							color:white;
+							border-radius:10px;
+							font-weight:600;
+							padding:0.5rem 1rem;
+							border:none;
+							transition:0.2s;"
 							data-bill-id="' . $bill['maintenance_bill_id'] . '" 
 							data-amount="' . ($totalAmount * 100) . '" 
 							data-month="' . $bill['month_name'] . ' ' . $bill['bill_year'] . '">
@@ -2371,7 +2389,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_electricity_bills') {
                 padding:0.5rem 1rem;
                 border:none;
                 transition:0.2s;">
-               Pay
+               Pay Now
             </button>'
 			: '<span class="text-muted fw-bold">Paid</span>';
 

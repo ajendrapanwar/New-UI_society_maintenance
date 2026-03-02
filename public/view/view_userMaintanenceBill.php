@@ -40,155 +40,181 @@ $flatType = $user['flat_type'];
 
 include __DIR__ . '/../../resources/layout/header.php';
 ?>
-<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
 
-<div class="container-fluid px-4">
-    <h1 class="mt-4">My Maintenance Bill History</h1>
-    <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>dashboard.php">Dashboard</a></li>
-        <li class="breadcrumb-item active">Bills History</li>
-    </ol>
+<!DOCTYPE html>
+<html lang="en">
 
-    <!-- USER INFO -->
-    <div class="card mb-4 border-0 shadow-sm">
-        <div class="card-body d-flex flex-wrap gap-4">
-            <div><strong>Name:</strong> <?= htmlspecialchars($user['name']) ?></div>
-            <div><strong>Email:</strong> <?= htmlspecialchars($user['email']) ?></div>
-            <div><strong>Flat:</strong> <?= htmlspecialchars($user['flat_number']) ?></div>
-            <div><strong>Block:</strong> <?= htmlspecialchars($user['block_number']) ?></div>
-            <div><strong>Flat Type:</strong> <?= htmlspecialchars($flatType) ?></div>
-        </div>
-    </div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance Records</title>
 
-    <!-- BILLS TABLE -->
-    <div class="card">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table id="user-bills-table" class="table table-bordered table-striped">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Month / Year</th>
-                            <th>Amount</th>
-                            <th>Fine</th>
-                            <th>Total</th>
-                            <th>Status</th>
-                            <th>Mode</th>
-                            <th>Paid On</th>
-                            <th>Overdue</th>
-                            <th width="150">Action</th>
-                        </tr>
-                    </thead>
-                </table>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+
+<body>
+
+
+    <div class="main-wrapper">
+        <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <main id="main-content">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="fw-800 m-0">Maintenance Bill History</h1>
+
+                <!-- Back Button -->
+                <a href="javascript:history.back()" class="btn btn-outline-dark btn-sm">
+                    <i class="fa-solid fa-angle-left me-1"></i> Back
+                </a>
             </div>
-        </div>
+
+            <div class="data-card shadow-sm border-0">
+                <div class="card-body d-flex flex-wrap align-items-center gap-3">
+                    <!-- User Info -->
+                    <div><strong>Name:</strong> <?= htmlspecialchars($user['name']) ?></div>
+                    <div><strong>Email:</strong> <?= htmlspecialchars($user['email']) ?></div>
+                    <div><strong>Flat:</strong> <?= htmlspecialchars($user['flat_number']) ?></div>
+                    <div><strong>Block:</strong> <?= htmlspecialchars($user['block_number']) ?></div>
+                    <div><strong>Type:</strong> <?= htmlspecialchars($user['flat_type']) ?></div>
+
+                </div>
+            </div>
+
+            <div class="data-card shadow-sm border-0">
+                <div class="table-responsive">
+                    <table id="user-bills-table" class="table table-hover w-100">
+                        <thead>
+                            <tr>
+                                <th>Month / Year</th>
+                                <th>Amount</th>
+                                <th>Fine</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Mode</th>
+                                <th>Paid On</th>
+                                <th>Overdue</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
     </div>
-</div>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
 
-<!-- DataTables -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.2/css/dataTables.bootstrap5.min.css">
-<script src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.2/js/dataTables.bootstrap5.min.js"></script>
-
-
-<script>
-    $(document).ready(function() {
-        // Initialize DataTable
-        const table = $('#user-bills-table').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: {
-                url: '<?= BASE_URL ?>action.php',
-                type: 'POST',
-                data: {
-                    action: 'fetch_user_bills_user'
-                }
-            },
-            columns: [{
-                    data: 'month_year'
-                },
-                {
-                    data: 'amount'
-                },
-                {
-                    data: 'fine'
-                },
-                {
-                    data: 'total'
-                },
-                {
-                    data: 'status'
-                },
-                {
-                    data: 'payment_mode'
-                },
-                {
-                    data: 'paid_on'
-                },
-                {
-                    data: 'overdue'
-                },
-                {
-                    data: 'action',
-                    orderable: false
-                }
-            ]
-        });
-
-        // Handle Pay Now Button Click
-        $(document).on('click', '.pay-now-btn', function() {
-            const btn = $(this);
-            const options = {
-                "key": "rzp_test_SFWqAzBj2hWG9s", // Use your key
-                "amount": btn.data('amount'),
-                "currency": "INR",
-                "name": "Society Management",
-                "description": "Payment for " + btn.data('month'),
-                "handler": function(response) {
-                    verifyPayment(response, btn.data('bill-id'));
-                },
-                "prefill": {
-                    "name": "<?= $user['name'] ?>",
-                    "email": "<?= $user['email'] ?>"
-                },
-                "theme": {
-                    "color": "#3399cc"
-                }
-            };
-            const rzp = new Razorpay(options);
-            rzp.open();
-        });
-
-        // Function to verify and save to DB
-        function verifyPayment(razorResponse, billId) {
-            $.ajax({
-                url: '<?= BASE_URL ?>action.php',
-                type: 'POST',
-                dataType: 'json',
-                data: {
-                    action: 'capture_payment',
-                    bill_id: billId,
-                    razorpay_payment_id: razorResponse.razorpay_payment_id,
-                    payment_mode: 'online',
-                    payment_method: 'upi' // Note: This matches your ENUM
-                },
-                success: function(res) {
-                    if (res.status === 'success') {
-                        alert('Payment successful and recorded!');
-                        table.ajax.reload();
-                    } else {
-                        alert('Error updating record: ' + res.message);
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTable
+            const table = $('#user-bills-table').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '<?= BASE_URL ?>action.php',
+                    type: 'POST',
+                    data: {
+                        action: 'fetch_user_bills_user'
                     }
-                }
+                },
+                columns: [{
+                        data: 'month_year'
+                    },
+                    {
+                        data: 'amount'
+                    },
+                    {
+                        data: 'fine'
+                    },
+                    {
+                        data: 'total'
+                    },
+                    {
+                        data: 'status'
+                    },
+                    {
+                        data: 'payment_mode'
+                    },
+                    {
+                        data: 'paid_on'
+                    },
+                    {
+                        data: 'overdue'
+                    },
+                    {
+                        data: 'action',
+                        orderable: false
+                    }
+                ]
             });
-        }
-    });
-</script>
+
+            // Handle Pay Now Button Click
+            $(document).on('click', '.pay-now-btn', function() {
+                const btn = $(this);
+                const options = {
+                    "key": "rzp_test_SFWqAzBj2hWG9s", // Use your key
+                    "amount": btn.data('amount'),
+                    "currency": "INR",
+                    "name": "Society Management",
+                    "description": "Payment for " + btn.data('month'),
+                    "handler": function(response) {
+                        verifyPayment(response, btn.data('bill-id'));
+                    },
+                    "prefill": {
+                        "name": "<?= $user['name'] ?>",
+                        "email": "<?= $user['email'] ?>"
+                    },
+                    "theme": {
+                        "color": "#3399cc"
+                    }
+                };
+                const rzp = new Razorpay(options);
+                rzp.open();
+            });
+
+            // Function to verify and save to DB
+            function verifyPayment(razorResponse, billId) {
+                $.ajax({
+                    url: '<?= BASE_URL ?>action.php',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action: 'capture_payment',
+                        bill_id: billId,
+                        razorpay_payment_id: razorResponse.razorpay_payment_id,
+                        payment_mode: 'online',
+                        payment_method: 'upi' // Note: This matches your ENUM
+                    },
+                    success: function(res) {
+                        if (res.status === 'success') {
+                            alert('Payment successful and recorded!');
+                            table.ajax.reload();
+                        } else {
+                            alert('Error updating record: ' + res.message);
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 
+</body>
 
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</html>
 
 
 <?php include __DIR__ . '/../../resources/layout/footer.php'; ?>

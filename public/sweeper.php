@@ -184,9 +184,12 @@ include('../resources/layout/header.php');
         <main id="main-content">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="page-title m-0">Sweeper Inventory</h1>
-                <button class="btn btn-brand shadow-sm" data-bs-toggle="modal" data-bs-target="#addSweeperModal">
-                    <i class="fa-solid fa-plus me-2"></i> Add Sweepers
-                </button>
+                <!----------- Admin Only ----------->
+                <?php if ($_SESSION['user_role'] === 'admin'): ?>
+                    <button class="btn btn-brand shadow-sm" data-bs-toggle="modal" data-bs-target="#addSweeperModal">
+                        <i class="fa-solid fa-plus me-2"></i> Add Sweepers
+                    </button>
+                <?php endif; ?>
             </div>
 
             <div class="data-card shadow-sm border-0">

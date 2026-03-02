@@ -17,6 +17,34 @@ requireRole(['admin', 'cashier', 'user']);
 $name = $_SESSION['user_name'] ?? 'Admin';
 $initials = strtoupper(substr($name, 0, 1));
 
+
+
+$name = $_SESSION['name'] ?? 'User';
+$username = $_SESSION['username'] ?? '';
+$initials = strtoupper(substr($name, 0, 1));
+
+
+$blockFlat = '';
+
+if ($_SESSION['user_role'] === 'user') {
+
+    $stmt = $pdo->prepare("
+        SELECT f.block_number, f.flat_number
+        FROM allotments a
+        JOIN flats f ON f.id = a.flat_id
+        WHERE a.user_id = ?
+        LIMIT 1
+    ");
+
+    $stmt->execute([$_SESSION['user_id']]);
+    $flatData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($flatData) {
+        $blockFlat = $flatData['block_number'] . '-' . $flatData['flat_number'];
+    }
+}
+
+
 // Fetch notifications
 $now = date('Y-m-d H:i:s');
 
@@ -89,9 +117,16 @@ $notifCount = count($latestNotifications);
                     <?php else: ?>
 
                         <div class="text-end d-none d-sm-block">
-                            <p class="m-0 fw-bold fs-5"><?= htmlspecialchars($name) ?></p>
+                            <p class="m-0 small text-muted">Welcome Back,</p>
+                            <p class="m-0 fw-bold">
+                                <?= htmlspecialchars($name) ?>
+                                <?php if (!empty($blockFlat)): ?>
+                                    (<?= htmlspecialchars($blockFlat) ?>)
+                                <?php endif; ?>
+                            </p>
                         </div>
                         <div class="avatar-circle"><?= $initials ?></div>
+
                     <?php endif; ?>
 
                 </button>

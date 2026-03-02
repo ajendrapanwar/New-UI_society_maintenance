@@ -7,7 +7,7 @@ error_reporting(E_ALL);
 require_once __DIR__ . '/../core/config.php';
 require_once __DIR__ . '/../core/helpers.php';
 
-requireRole(['admin']);
+requireRole(['admin','cashier']);
 
 $errors = [];
 $monthError = '';

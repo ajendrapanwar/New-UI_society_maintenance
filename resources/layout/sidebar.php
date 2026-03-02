@@ -11,6 +11,8 @@ require_once __DIR__ . '/../../core/config.php';
 require_once __DIR__ . '/../../core/helpers.php';
 include __DIR__ . '/flash.php';
 
+requireRole(['admin', 'cashier', 'user']);
+
 // Fetch notifications
 $now = date('Y-m-d H:i:s');
 
@@ -26,9 +28,25 @@ $notifStmt->execute([$now, $now]);
 $latestNotifications = $notifStmt->fetchAll(PDO::FETCH_ASSOC);
 $notifCount = count($latestNotifications);
 
-requireRole(['admin', 'cashier', 'user']);
 
 $currentPage = basename($_SERVER['PHP_SELF']);
+
+
+/* ================= NOTIFICATION COUNT ================= */
+$notificationCount = 0;
+
+try {
+    // Show only active notifications (or you can change condition)
+    $stmtNoti = $pdo->query("
+        SELECT COUNT(*) 
+        FROM notifications 
+        WHERE (end_date IS NULL OR end_date >= NOW())
+    ");
+    $notificationCount = (int)$stmtNoti->fetchColumn();
+} catch (Exception $e) {
+    $notificationCount = 0; // fallback safety
+}
+
 ?>
 
 
@@ -59,42 +77,132 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         </button>
 
         <div class="sidebar-header">Society Maintenance</div>
-        <nav class="nav flex-column">
-            <a class="nav-link <?= ($currentPage == 'dashboard.php') ? 'active' : '' ?>"  href="<?= BASE_URL ?>dashboard.php"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
 
-            <div class="nav-group-label">Collection Management</div>
-            <a class="nav-link <?= ($currentPage == 'users.php') ? 'active' : '' ?>"  href="<?= BASE_URL ?>users.php"><i class="fa-solid fa-users"></i> Users</a>
-            <a class="nav-link <?= ($currentPage == 'flats.php') ? 'active' : '' ?>"  href="<?= BASE_URL ?>flats.php"><i class="fa-solid fa-building"></i> Flats</a>
-            <a class="nav-link <?= ($currentPage == 'allotments.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>allotments.php"><i class="fa-solid fa-key"></i> Allotments</a>
-            <a class="nav-link <?= ($currentPage == 'maintanenceRate.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>maintanenceRate.php"><i class="fa-solid fa-indian-rupee-sign"></i> Maintenance Rate</a>
-            <a class="nav-link <?= ($currentPage == 'maintanenceRecords.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>maintanenceRecords.php"><i class="fa-solid fa-file-invoice-dollar"></i> Maintenance Records</a>
+        <!---------------------------- Admin Sidebar ---------------------------->
+        <?php if ($_SESSION['user_role'] === 'admin'): ?>
 
-            <div class="nav-group-label">Expense & Salary</div>
-            <a class="nav-link <?= ($currentPage == 'miscellaneous_work.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>miscellaneous_work.php"><i class="fa-solid fa-screwdriver-wrench"></i> Miscellaneous Work</a>
-            <a class="nav-link collapsed" data-bs-toggle="collapse" href="#salarySub"><i class="fa-solid fa-wallet"></i> Salary Management <i class="fa-solid fa-chevron-down ms-auto opacity-50"></i></a>
-            <div class="collapse nav-sub" id="salarySub">
-                <a class="nav-link <?= ($currentPage == 'salary_security.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>salary_security.php">Security Salary</a>
-                <a class="nav-link <?= ($currentPage == 'salary_sweeper.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>salary_sweeper.php">Sweeper Salary</a>
-                <a class="nav-link <?= ($currentPage == 'salary_garbageCollector.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>salary_garbageCollector.php">Garbage Collector</a>
-            </div>
-            <a class="nav-link <?= ($currentPage == 'electricity_bills.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>electricity_bills.php"><i class="fa-solid fa-bolt"></i> Electricity Bills</a>
+            <nav class="nav flex-column">
+                <a class="nav-link <?= ($currentPage == 'dashboard.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>dashboard.php"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
 
-            <div class="nav-group-label">Parking & Security</div>
-            <a class="nav-link <?= ($currentPage == 'resident_parking.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>resident_parking.php"><i class="fa-solid fa-car"></i> Resident Parking</a>
-            <a class="nav-link <?= ($currentPage == 'visitors.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>visitors.php"><i class="fa-solid fa-user-clock"></i> Visitors</a>
-            <a class="nav-link <?= ($currentPage == 'vehicle_finder.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>vehicle_finder.php"><i class="fa-solid fa-magnifying-glass"></i> Vehicle Finder</a>
+                <div class="nav-group-label">Collection Management</div>
+                <a class="nav-link <?= ($currentPage == 'users.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>users.php"><i class="fa-solid fa-users"></i> Users</a>
+                <a class="nav-link <?= ($currentPage == 'flats.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>flats.php"><i class="fa-solid fa-building"></i> Flats</a>
+                <a class="nav-link <?= ($currentPage == 'allotments.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>allotments.php"><i class="fa-solid fa-key"></i> Allotments</a>
+                <a class="nav-link <?= ($currentPage == 'maintanenceRate.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>maintanenceRate.php"><i class="fa-solid fa-indian-rupee-sign"></i> Maintenance Rate</a>
+                <a class="nav-link <?= ($currentPage == 'maintanenceRecords.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>maintanenceRecords.php"><i class="fa-solid fa-file-invoice-dollar"></i> Maintenance Records</a>
 
-            <div class="nav-group-label">Admin Control</div>
-            <a class="nav-link <?= ($currentPage == 'complaints.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>complaints.php"><i class="fa-solid fa-headset"></i> Complaints</a>
-            <a class="nav-link <?= ($currentPage == 'notifications.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>notifications.php"><i class="fa-solid fa-bell"></i> Notifications</a>
+                <div class="nav-group-label">Expense & Salary</div>
+                <a class="nav-link <?= ($currentPage == 'miscellaneous_work.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>miscellaneous_work.php"><i class="fa-solid fa-screwdriver-wrench"></i> Miscellaneous Work</a>
+                <a class="nav-link collapsed" data-bs-toggle="collapse" href="#salarySub"><i class="fa-solid fa-wallet"></i> Salary Management <i class="fa-solid fa-chevron-down ms-auto opacity-50"></i></a>
+                <div class="collapse nav-sub" id="salarySub">
+                    <a class="nav-link <?= ($currentPage == 'salary_security.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>salary_security.php">Security Salary</a>
+                    <a class="nav-link <?= ($currentPage == 'salary_sweeper.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>salary_sweeper.php">Sweeper Salary</a>
+                    <a class="nav-link <?= ($currentPage == 'salary_garbageCollector.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>salary_garbageCollector.php">Garbage Collector</a>
+                </div>
+                <a class="nav-link <?= ($currentPage == 'electricity_bills.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>electricity_bills.php"><i class="fa-solid fa-bolt"></i> Electricity Bills</a>
 
-            <div class="nav-group-label">Reports</div>
-            <a class="nav-link <?= ($currentPage == 'all_bill.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>all_bill.php"><i class="fa-solid fa-chart-column"></i> Collection Report</a>
-            <a class="nav-link <?= ($currentPage == 'all_expense.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>all_expense.php"><i class="fa-solid fa-chart-line"></i> Expense Report</a>
+                <div class="nav-group-label">Parking & Security</div>
+                <a class="nav-link <?= ($currentPage == 'resident_parking.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>resident_parking.php"><i class="fa-solid fa-car"></i> Resident Parking</a>
+                <a class="nav-link <?= ($currentPage == 'visitors.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>visitors.php"><i class="fa-solid fa-user-clock"></i> Visitors</a>
+                <a class="nav-link <?= ($currentPage == 'vehicle_finder.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>vehicle_finder.php"><i class="fa-solid fa-magnifying-glass"></i> Vehicle Finder</a>
 
-            <hr class="mx-3 my-4 opacity-10 border-white">
-            <a class="nav-link text-warning" href="<?= BASE_URL ?>logout.php"><i class="fa-solid fa-power-off"></i> Logout System</a>
-        </nav>
+                <div class="nav-group-label">Admin Control</div>
+                <a class="nav-link <?= ($currentPage == 'complaints.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>complaints.php"><i class="fa-solid fa-headset"></i> Complaints</a>
+                <a class="nav-link d-flex align-items-center justify-content-between <?= ($currentPage == 'notifications.php') ? 'active' : '' ?>"
+                    href="<?= BASE_URL ?>notifications.php">
+
+                    <span>
+                        <i class="fa-solid fa-bell"></i> Notifications
+                    </span>
+
+                    <?php if ($notificationCount > 0): ?>
+                        <span style="
+                                    background: #0d6efd;
+                                    color: #fff;
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    padding: 2px 8px;
+                                    border-radius: 999px;
+                                    min-width: 22px;
+                                    text-align: center;
+                                ">
+                            <?= $notificationCount ?>
+                        </span>
+                    <?php endif; ?>
+                </a>
+
+                <div class="nav-group-label">Reports</div>
+                <a class="nav-link <?= ($currentPage == 'all_bill.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>all_bill.php"><i class="fa-solid fa-chart-column"></i> Collection Report</a>
+                <a class="nav-link <?= ($currentPage == 'all_expense.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>all_expense.php"><i class="fa-solid fa-chart-line"></i> Expense Report</a>
+
+                <hr class="mx-3 my-4 opacity-10 border-white">
+            </nav>
+
+            <!---------------------------- Cashier Sidebar ---------------------------->
+        <?php elseif ($_SESSION['user_role'] === 'cashier'): ?>
+
+            <nav class="nav flex-column">
+                <a class="nav-link <?= ($currentPage == 'dashboard.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>dashboard.php"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+
+                <div class="nav-group-label">Collection Management</div>
+                <a class="nav-link <?= ($currentPage == 'maintanenceRecords.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>maintanenceRecords.php"><i class="fa-solid fa-file-invoice-dollar"></i> Maintenance Records</a>
+
+                <div class="nav-group-label">Expense & Salary</div>
+                <a class="nav-link <?= ($currentPage == 'miscellaneous_work.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>miscellaneous_work.php"><i class="fa-solid fa-screwdriver-wrench"></i> Miscellaneous Work</a>
+                <a class="nav-link collapsed" data-bs-toggle="collapse" href="#salarySub"><i class="fa-solid fa-wallet"></i> Salary Management <i class="fa-solid fa-chevron-down ms-auto opacity-50"></i></a>
+                <div class="collapse nav-sub" id="salarySub">
+                    <a class="nav-link <?= ($currentPage == 'salary_security.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>salary_security.php">Security Salary</a>
+                    <a class="nav-link <?= ($currentPage == 'salary_sweeper.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>salary_sweeper.php">Sweeper Salary</a>
+                    <a class="nav-link <?= ($currentPage == 'salary_garbageCollector.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>salary_garbageCollector.php">Garbage Collector</a>
+                </div>
+                <a class="nav-link <?= ($currentPage == 'electricity_bills.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>electricity_bills.php"><i class="fa-solid fa-bolt"></i> Electricity Bills</a>
+
+                <div class="nav-group-label">Reports</div>
+                <a class="nav-link <?= ($currentPage == 'all_bill.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>all_bill.php"><i class="fa-solid fa-chart-column"></i> Collection Report</a>
+                <a class="nav-link <?= ($currentPage == 'all_expense.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>all_expense.php"><i class="fa-solid fa-chart-line"></i> Expense Report</a>
+
+                <hr class="mx-3 my-4 opacity-10 border-white">
+            </nav>
+
+            <!---------------------------- User Sidebar ---------------------------->
+        <?php else: ?>
+
+            <nav class="nav flex-column">
+                <a class="nav-link <?= ($currentPage == 'dashboard.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>dashboard.php"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+
+                <a class="nav-link <?= ($currentPage == 'view/view_userMaintanenceBill.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>view/view_userMaintanenceBill.php"><i class="fa-solid fa-chart-column"></i> My Bills</a>
+                <a class="nav-link <?= ($currentPage == 'view/view_userMaintanenceBill.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>view/view_userComplaint_status.php"><i class="fa-solid fa-headset"></i> Complaint Status</a>
+                <a class="nav-link d-flex align-items-center justify-content-between <?= ($currentPage == 'notifications.php') ? 'active' : '' ?>"
+                    href="<?= BASE_URL ?>notifications.php">
+
+                    <span>
+                        <i class="fa-solid fa-bell"></i> Notifications
+                    </span>
+
+                    <?php if ($notificationCount > 0): ?>
+                        <span style="
+                                    background: #dc3545;
+                                    color: #fff;
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    padding: 2px 8px;
+                                    border-radius: 999px;
+                                    min-width: 20px;
+                                    text-align: center;
+                                ">
+                            <?= $notificationCount ?>
+                        </span>
+                    <?php endif; ?>
+                </a>
+
+                <hr class="mx-3 my-4 opacity-10 border-white">
+            </nav>
+
+        <?php endif; ?>
+
+
+        <a class="nav-link text-warning" href="<?= BASE_URL ?>logout.php"><i class="fa-solid fa-power-off"></i> Logout System</a>
+
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -122,3 +230,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             });
         });
     </script>
+
+
+</body>
+
+</html>
