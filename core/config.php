@@ -4,12 +4,30 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+/* =====================================================
+   SESSION SETTINGS (NO AUTO LOGOUT - 7 DAYS)
+===================================================== */
 
-//    SESSION
+$sessionLifetime = 60 * 60 * 24 * 7; // 7 days
+
+ini_set('session.gc_maxlifetime', $sessionLifetime);
+
+session_set_cookie_params([
+    'lifetime' => $sessionLifetime,
+    'path'     => '/',
+    'secure'   => false, // ⚠ Change to true if using HTTPS
+    'httponly' => true,
+    'samesite' => 'Lax'
+]);
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+
+/* =====================================================
+   BASIC CONFIG
+===================================================== */
 
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'Society');
@@ -21,7 +39,9 @@ define('BASE_URL', '/society_maintenance/public/');
 date_default_timezone_set('Asia/Kolkata');
 
 
-//    DATABASE CONNECTION
+/* =====================================================
+   DATABASE CONNECTION
+===================================================== */
 
 try {
     $pdo = new PDO(
@@ -38,19 +58,24 @@ try {
 }
 
 
-//    DATABASE SETUP (RUN ONCE)
+/* =====================================================
+   DEFAULT ADMIN CREATION (RUN ONCE)
+===================================================== */
 
 try {
-    // Check if users table exists
+
     $stmt = $pdo->query("SHOW TABLES LIKE 'users'");
     $tableExists = $stmt->rowCount() > 0;
 
-    if (!$tableExists) {
+    if ($tableExists) {
+
+        $adminEmail = 'admin@society.com';
 
         $checkAdmin = $pdo->prepare("SELECT id FROM users WHERE email = ?");
         $checkAdmin->execute([$adminEmail]);
 
         if ($checkAdmin->rowCount() === 0) {
+
             $pdo->prepare(
                 "INSERT INTO users (name, email, password, role)
                  VALUES (?, ?, ?, 'admin')"
@@ -66,7 +91,9 @@ try {
 }
 
 
-//    GLOBAL DATA
+/* =====================================================
+   GLOBAL DATA
+===================================================== */
 
 $flatTypes = [
     '1 BHK Flat',
@@ -77,36 +104,21 @@ $flatTypes = [
 ];
 
 
+/* =====================================================
+   ROLE PROTECTION FUNCTION
+===================================================== */
+
 function requireRole(array $roles)
 {
-    if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'], $roles)) {
+    // Not logged in → go to login
+    if (!isset($_SESSION['user_id'])) {
+        header("Location: " . BASE_URL . "index.php");
+        exit;
+    }
 
-        http_response_code(403);
-        ?>
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <title>Session Expired</title>
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-        </head>
-        <body class="bg-light d-flex align-items-center justify-content-center vh-100">
-
-            <div class="text-center p-5 bg-white shadow rounded">
-                <h2 class="text-danger fw-bold">⚠️ Session Expired</h2>
-                <p class="text-muted mt-2">
-                    Your session is out, please login again !!
-                </p>
-
-                <a href="<?= BASE_URL ?>index.php" class="btn btn-primary mt-3">
-                    Login
-                </a>
-            </div>
-
-        </body>
-        </html>
-        <?php
+    // Logged in but wrong role → go to dashboard
+    if (!in_array($_SESSION['user_role'], $roles)) {
+        header("Location: " . BASE_URL . "dashboard.php");
         exit;
     }
 }
-
