@@ -181,9 +181,7 @@ include('../resources/layout/header.php');
         <main id="main-content">
 
             <form method="POST">
-                <div class="d-flex flex-column flex-md-row 
-            justify-content-between align-items-md-center 
-            mb-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
 
                     <h1 class="fw-800 m-0">Monthly Fixed Rates</h1>
 

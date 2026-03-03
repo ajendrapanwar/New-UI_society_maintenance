@@ -11,19 +11,19 @@ require_once __DIR__ . '/../../core/config.php';
 require_once __DIR__ . '/../../core/helpers.php';
 include __DIR__ . '/flash.php';
 
-
 requireRole(['admin', 'cashier', 'user']);
 
-$name = $_SESSION['user_name'] ?? 'Admin';
-$initials = strtoupper(substr($name, 0, 1));
+/* ================= USER NAME FIX ================= */
+$name = $_SESSION['user_name']
+    ?? $_SESSION['name']
+    ?? 'User';
 
-
-
-$name = $_SESSION['name'] ?? 'User';
 $username = $_SESSION['username'] ?? '';
-$initials = strtoupper(substr($name, 0, 1));
+
+$initials = strtoupper(substr(trim($name), 0, 1));
 
 
+/* ================= USER FLAT (FOR NORMAL USER) ================= */
 $blockFlat = '';
 
 if ($_SESSION['user_role'] === 'user') {
@@ -45,21 +45,20 @@ if ($_SESSION['user_role'] === 'user') {
 }
 
 
-// Fetch notifications
+/* ================= FETCH NOTIFICATIONS ================= */
 $now = date('Y-m-d H:i:s');
 
 $notifStmt = $pdo->prepare("
-        SELECT * 
-        FROM notifications 
-        WHERE (start_date IS NULL OR start_date <= ?)
-        AND (end_date IS NULL OR end_date >= ?)
-        ORDER BY id DESC
-    ");
+    SELECT * 
+    FROM notifications 
+    WHERE (start_date IS NULL OR start_date <= ?)
+    AND (end_date IS NULL OR end_date >= ?)
+    ORDER BY id DESC
+");
 $notifStmt->execute([$now, $now]);
 
 $latestNotifications = $notifStmt->fetchAll(PDO::FETCH_ASSOC);
 $notifCount = count($latestNotifications);
-
 ?>
 
 
@@ -108,12 +107,15 @@ $notifCount = count($latestNotifications);
                             <p class="m-0 fw-bold">Administrator</p>
                         </div>
                         <div class="avatar-circle"><?= $initials ?></div>
+
                     <?php elseif ($_SESSION['user_role'] === 'cashier'): ?>
 
                         <div class="text-end d-none d-sm-block">
-                            <p class="m-0 fw-bold fs-5"><?= htmlspecialchars($name) ?></p>
+                            <p class="m-0 small text-muted">Cashier</p>
+                            <p class="m-0 fw-bold"><?= htmlspecialchars($name) ?></p>
                         </div>
                         <div class="avatar-circle"><?= $initials ?></div>
+
                     <?php else: ?>
 
                         <div class="text-end d-none d-sm-block">

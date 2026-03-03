@@ -2831,3 +2831,125 @@ if (isset($_GET['action']) && $_GET['action'] === 'export_expense_bills') {
 	echo "</table></body></html>";
 	exit;
 }
+
+
+
+// FETCH USER BILLS BY FLAT (PAYMENT TERMINAL)
+if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills_by_flat') {
+
+	requireRole(['admin', 'cashier']);
+	header('Content-Type: application/json');
+
+	$draw   = intval($_POST['draw'] ?? 0);
+	$start  = intval($_POST['start'] ?? 0);
+	$length = intval($_POST['length'] ?? 10);
+	$flatId = $_POST['flat_id'] ?? '';
+
+	if (!ctype_digit($flatId)) {
+		echo json_encode([
+			"draw" => $draw,
+			"recordsTotal" => 0,
+			"recordsFiltered" => 0,
+			"data" => []
+		]);
+		exit;
+	}
+
+	/* ================= TOTAL COUNT ================= */
+	$stmt = $pdo->prepare("
+        SELECT COUNT(*) 
+        FROM maintenance_bills 
+        WHERE flat_id = ?
+    ");
+	$stmt->execute([$flatId]);
+	$recordsTotal = $stmt->fetchColumn();
+
+	/* ================= FETCH DATA ================= */
+	$stmt = $pdo->prepare("
+        SELECT 
+            mb.*,
+            mp.payment_mode,
+            mp.payment_method,
+            mp.paid_on
+        FROM maintenance_bills mb
+        LEFT JOIN maintenance_payments mp 
+            ON mp.maintenance_bill_id = mb.id
+        WHERE mb.flat_id = ?
+        ORDER BY mb.bill_year DESC, mb.bill_month DESC
+        LIMIT ?, ?
+    ");
+
+	$stmt->bindValue(1, $flatId, PDO::PARAM_INT);
+	$stmt->bindValue(2, $start, PDO::PARAM_INT);
+	$stmt->bindValue(3, $length, PDO::PARAM_INT);
+	$stmt->execute();
+
+	$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+	$data = [];
+
+	foreach ($rows as $r) {
+
+		$monthName = date('F', mktime(0, 0, 0, $r['bill_month'], 1));
+
+		/* ===== PAYMENT TEXT ===== */
+		$paymentText = '-';
+
+		if ($r['payment_mode'] === 'online') {
+			$paymentText = 'Online (' . strtoupper(str_replace('_', ' ', $r['payment_method'])) . ')';
+		} elseif ($r['payment_mode']) {
+			$paymentText = ucfirst($r['payment_mode']);
+		}
+
+		/* ===== ACTION BUTTON ===== */
+		if ($r['status'] === 'paid') {
+
+			$actionBtn = '
+                <a href="' . BASE_URL . 'view/pay_Details.php?bill_id=' . $r['id'] . '" 
+               class="btn btn-sm btn-brand"
+				style="font-size: 10px;
+				    background-color: #4F47E5;
+					color: white;
+					border-radius: 10px;
+					font-weight: 600;
+					padding: 0.6rem 1.5rem;
+					border: none;
+					transition: 0.2s;">
+                <i class="fa fa-eye me-1"></i> View
+        	</a>';
+
+
+		} else {
+
+			$actionBtn = '
+                <select class="form-select form-select-sm payment-type"
+                    data-bill="' . $r['id'] . '"
+                    data-amount="' . $r['total_amount'] . '"
+                    style="min-width:120px;">
+                    <option value="">💳 Payment</option>
+                    <option value="cash">💵 Cash</option>
+                    <option value="online">🌐 Online</option>
+                </select>';
+		}
+
+		$data[] = [
+			'month_year'   => $monthName . ' ' . $r['bill_year'],
+			'amount'       => '₹' . number_format($r['amount'], 2),
+			'fine'         => '₹' . number_format($r['fine_amount'], 2),
+			'total'        => '<strong>₹' . number_format($r['total_amount'], 2) . '</strong>',
+			'status'       => '<span class="badge bg-' . ($r['status'] === 'paid' ? 'success' : 'warning') . '">' . ucfirst($r['status']) . '</span>',
+			'payment_mode' => $paymentText,
+			'paid_on'      => $r['paid_on'] ? date('d-m-Y H:i', strtotime($r['paid_on'])) : '-',
+			'overdue'      => $r['status'] === 'overdue' ? 'Yes' : 'No',
+			'action'       => $actionBtn
+		];
+	}
+
+	echo json_encode([
+		"draw" => $draw,
+		"recordsTotal" => intval($recordsTotal),
+		"recordsFiltered" => intval($recordsTotal),
+		"data" => $data
+	]);
+	exit;
+}

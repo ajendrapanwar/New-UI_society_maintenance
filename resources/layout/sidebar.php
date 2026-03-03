@@ -117,7 +117,7 @@ try {
                 <a class="nav-link <?= ($currentPage == 'all_bill.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>all_bill.php"><i class="fa-solid fa-chart-column"></i> Collection Report</a>
                 <a class="nav-link <?= ($currentPage == 'all_expense.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>all_expense.php"><i class="fa-solid fa-chart-line"></i> Expense Report</a>
 
-            <div class="nav-group-label">Records</div>
+                <div class="nav-group-label">Records</div>
                 <a class="nav-link <?= ($currentPage == 'tenants.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>tenants.php"><i class="fa-solid fa-people-group"></i> Tenant History</a>
 
 
@@ -154,31 +154,35 @@ try {
         <?php else: ?>
 
             <nav class="nav flex-column">
-                <a class="nav-link <?= ($currentPage == 'dashboard.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>dashboard.php"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+                <a class="nav-link <?= ($currentPage == 'dashboard.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>dashboard.php"><i class="fa-solid fa-house-user"></i> My Home</a>
+                <div class="nav-group-label">Payments & Bills</div>
+                <a class="nav-link <?= ($currentPage == 'view/view_userMaintanenceBill.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>view/view_userMaintanenceBill.php"><i class="fa-solid fa-file-invoice-dollar"></i> Maintenance Bills</a>
 
-                <a class="nav-link <?= ($currentPage == 'view/view_userMaintanenceBill.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>view/view_userMaintanenceBill.php"><i class="fa-solid fa-chart-column"></i> My Bills</a>
-                <a class="nav-link <?= ($currentPage == 'view/view_userMaintanenceBill.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>view/view_userComplaint_status.php"><i class="fa-solid fa-headset"></i> Complaint Status</a>
+                <div class="nav-group-label">Security & Guests</div>
+                <a class="nav-link" href="<?= BASE_URL ?>user_visitors.php"><i class="fa-solid fa-user-shield"></i> Guest History</a>
+
+                <div class="nav-group-label">Support</div>
+                <a class="nav-link <?= ($currentPage == 'view/view_userMaintanenceBill.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>view/view_userComplaint_status.php"><i class="fa-solid fa-circle-question"></i> My Complaints</a>
                 <a class="nav-link d-flex align-items-center justify-content-between <?= ($currentPage == 'notifications.php') ? 'active' : '' ?>"
                     href="<?= BASE_URL ?>notifications.php">
 
                     <span>
-                        <i class="fa-solid fa-bell"></i> Notifications
-                    </span>
-
-                    <?php if ($notificationCount > 0): ?>
-                        <span style="
+                        <i class="fa-solid fa-bullhorn me-2"></i><span style="margin-right: 10px;">Society Notices</span>
+                        <?php if ($notificationCount > 0): ?>
+                            <span style="
                                     background: #dc3545;
                                     color: #fff;
                                     font-size: 11px;
                                     font-weight: 700;
-                                    padding: 2px 8px;
+                                    padding: 3px 7px;
                                     border-radius: 999px;
                                     min-width: 20px;
                                     text-align: center;
                                 ">
-                            <?= $notificationCount ?>
-                        </span>
-                    <?php endif; ?>
+                                <?= $notificationCount ?>
+                            </span>
+                        <?php endif; ?>
+                    </span>
                 </a>
 
                 <hr class="mx-3 my-4 opacity-10 border-white">

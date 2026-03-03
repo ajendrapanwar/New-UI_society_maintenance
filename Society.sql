@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Mar 02, 2026 at 12:58 PM
+-- Generation Time: Mar 03, 2026 at 07:44 AM
 -- Server version: 8.0.45-0ubuntu0.24.04.1
 -- PHP Version: 8.3.6
 
@@ -463,6 +463,7 @@ CREATE TABLE `tenants` (
   `id` int NOT NULL,
   `flat_no` varchar(50) NOT NULL,
   `tenant_name` varchar(150) NOT NULL,
+  `mobile_no` varchar(15) NOT NULL,
   `vehicle_no` varchar(50) DEFAULT NULL,
   `move_in` date NOT NULL,
   `move_out` date DEFAULT NULL,
@@ -476,8 +477,8 @@ CREATE TABLE `tenants` (
 -- Dumping data for table `tenants`
 --
 
-INSERT INTO `tenants` (`id`, `flat_no`, `tenant_name`, `vehicle_no`, `move_in`, `move_out`, `agreement_file`, `police_files`, `status`, `created_at`) VALUES
-(7, '301', 'Test', 'CH01CU3333', '2026-03-02', NULL, '1772455249_agreement.pdf', '1772455249_police_0.pdf', 'active', '2026-03-02 12:40:49');
+INSERT INTO `tenants` (`id`, `flat_no`, `tenant_name`, `mobile_no`, `vehicle_no`, `move_in`, `move_out`, `agreement_file`, `police_files`, `status`, `created_at`) VALUES
+(7, '301', 'Test', '8888877777', 'CH01CU3333', '2026-03-02', NULL, '1772455249_agreement.pdf', '1772455249_police_0.pdf', 'active', '2026-03-02 12:40:49');
 
 -- --------------------------------------------------------
 

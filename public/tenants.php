@@ -8,6 +8,7 @@ requireRole(['admin', 'user']);
 $errors = [
     'flat_no' => '',
     'tenant_name' => '',
+    'mobile_no' => '',
     'move_in' => '',
     'agreement' => '',
     'police_files' => '',
@@ -15,6 +16,7 @@ $errors = [
 $old = [
     'flat_no' => '',
     'tenant_name' => '',
+    'mobile_no' => '',
     'vehicle_no' => '',
     'move_in' => '',
 ];
@@ -25,11 +27,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_tenant'])) {
 
     $old['flat_no'] = trim($_POST['flat_no'] ?? '');
     $old['tenant_name'] = trim($_POST['tenant_name'] ?? '');
+    $old['mobile_no'] = trim($_POST['mobile_no'] ?? '');
     $old['vehicle_no'] = trim($_POST['vehicle_no'] ?? '');
     $old['move_in'] = $_POST['move_in'] ?? '';
 
     $flat_no = $old['flat_no'];
     $tenant_name = $old['tenant_name'];
+    $mobile_no = $old['mobile_no'];
     $vehicle_no = $old['vehicle_no'];
     $move_in = $old['move_in'];
 
@@ -44,6 +48,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_tenant'])) {
         $errors['tenant_name'] = "Tenant name is required.";
     } elseif (strlen($tenant_name) < 3) {
         $errors['tenant_name'] = "Name must be at least 3 characters.";
+    }
+
+    /* ===== MOBILE VALIDATION ===== */
+    if (empty($mobile_no)) {
+        $errors['mobile_no'] = "Mobile number is required.";
+    } elseif (!preg_match('/^[0-9]{10}$/', $mobile_no)) {
+        $errors['mobile_no'] = "Enter valid 10 digit mobile number.";
     }
 
     if (empty($move_in)) {
@@ -169,12 +180,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_tenant'])) {
             $policeFiles = implode(",", $policeFilesArray);
 
             $stmt = $pdo->prepare("INSERT INTO tenants 
-            (flat_no, tenant_name, vehicle_no, move_in, agreement_file, police_files) 
-            VALUES (?, ?, ?, ?, ?, ?)");
+                (flat_no, tenant_name, mobile_no, vehicle_no, move_in, agreement_file, police_files) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)");
 
             $stmt->execute([
                 $flat_no,
                 $tenant_name,
+                $mobile_no,
                 $vehicle_no,
                 $move_in,
                 $agreementName,
@@ -346,14 +358,22 @@ include __DIR__ . '/../resources/layout/header.php';
     <div class="main-wrapper">
 
         <main id="main-content">
-            <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+
                 <div>
                     <h1 class="fw-800 m-0">Tenant & Archive Ledger</h1>
                     <p class="text-muted small">View active and historical tenant documents anytime.</p>
                 </div>
-                <button class="btn btn-brand shadow-sm" data-bs-toggle="modal" data-bs-target="#addTenantModal">
-                    <i class="fa-solid fa-user-plus me-2"></i> New Registration
-                </button>
+
+                <div class="sm-w-100 mt-3 mt-md-0">
+                    <div class="d-flex flex-column flex-md-row gap-2">
+                        <button type="button" class="btn btn-brand shadow-sm" data-bs-toggle="modal" data-bs-target="#addTenantModal">
+                            <i class="fa-solid fa-user-plus me-2"></i> New Registration
+                        </button>
+                    </div>
+                </div>
+
             </div>
 
             <div class="data-card shadow-sm border-0">
@@ -362,6 +382,7 @@ include __DIR__ . '/../resources/layout/header.php';
                         <thead>
                             <tr>
                                 <th>Resident & Unit</th>
+                                <th>Mobile No</th>
                                 <th>Rent Period</th>
                                 <th>Agreement</th>
                                 <th>Verification Files</th>
@@ -383,6 +404,10 @@ include __DIR__ . '/../resources/layout/header.php';
                                                 <span class="vehicle-plate"><?= htmlspecialchars($t['vehicle_no']) ?></span>
                                             <?php endif; ?>
                                         </small>
+                                    </td>
+
+                                    <td>
+                                        <?= htmlspecialchars($t['mobile_no']) ?>
                                     </td>
 
                                     <td>
@@ -472,7 +497,7 @@ include __DIR__ . '/../resources/layout/header.php';
                         <!-- FLAT SELECT (ONLY NOT ALLOTTED) -->
                         <div class="col-12">
                             <label class="form-label small fw-bold text-muted">
-                                SELECT FLAT (Not Allotted) *
+                                SELECT FLAT *
                             </label>
 
                             <select name="flat_no" class="form-select bg-light border-0 <?= $errors['flat_no'] ? 'is-invalid' : '' ?>">
@@ -521,6 +546,24 @@ include __DIR__ . '/../resources/layout/header.php';
                                 name="vehicle_no"
                                 class="form-control bg-light border-0"
                                 placeholder="Optional (MH12AB1234)">
+                        </div>
+
+                        <!-- MOBILE NUMBER -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted">
+                                MOBILE NUMBER *
+                            </label>
+                            <input type="text"
+                                name="mobile_no"
+                                value="<?= htmlspecialchars($old['mobile_no']) ?>"
+                                class="form-control bg-light border-0 <?= $errors['mobile_no'] ? 'is-invalid' : '' ?>"
+                                placeholder="Enter 10 digit mobile number">
+
+                            <?php if ($errors['mobile_no']): ?>
+                                <div class="invalid-feedback d-block">
+                                    <?= $errors['mobile_no'] ?>
+                                </div>
+                            <?php endif; ?>
                         </div>
 
                         <!-- MOVE IN DATE -->
@@ -589,11 +632,11 @@ include __DIR__ . '/../resources/layout/header.php';
         </div>
     </div>
 
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    <script src="js/main.js"></script>
+    
     <script>
         document.getElementById('policeFiles').addEventListener('change', function() {
             const p = document.getElementById('preview');
