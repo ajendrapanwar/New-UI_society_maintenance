@@ -158,8 +158,9 @@ try {
                 <div class="nav-group-label">Payments & Bills</div>
                 <a class="nav-link <?= ($currentPage == 'view/view_userMaintanenceBill.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>view/view_userMaintanenceBill.php"><i class="fa-solid fa-file-invoice-dollar"></i> Maintenance Bills</a>
 
-                <div class="nav-group-label">Security & Guests</div>
+                <div class="nav-group-label">Guests & Records</div>
                 <a class="nav-link" href="<?= BASE_URL ?>user_visitors.php"><i class="fa-solid fa-user-shield"></i> Guest History</a>
+                <a class="nav-link <?= ($currentPage == 'tenants.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>tenants.php"><i class="fa-solid fa-people-group"></i> Tenant History</a>
 
                 <div class="nav-group-label">Support</div>
                 <a class="nav-link <?= ($currentPage == 'view/view_userMaintanenceBill.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>view/view_userComplaint_status.php"><i class="fa-solid fa-circle-question"></i> My Complaints</a>

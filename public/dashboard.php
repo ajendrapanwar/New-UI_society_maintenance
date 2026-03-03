@@ -354,27 +354,21 @@ include('../resources/layout/header.php');
 						<!-- SELECT FLAT -->
 						<div class="row">
 							<div class="col-md-8 mb-4">
-								<label class="form-label fw-bold text-muted small uppercase">
-									Select Allotted Flat
-								</label>
+								<div class="col-md-8 mb-2">
+									<label class="form-label fw-bold text-muted small uppercase">
+										Search Flat Number
+									</label>
 
-								<select id="flatSelect" class="form-select form-select-lg">
-									<option value="">-- Select Flat --</option>
+									<input type="text"
+										id="flatSearch"
+										class="form-control form-control-lg"
+										placeholder="Type flat number (e.g. 101, A-203)">
+								</div>
 
-									<?php foreach ($allottedFlats as $flat): ?>
-										<option
-											value="<?= $flat['flat_id'] ?>"
-											data-name="<?= htmlspecialchars($flat['name']) ?>"
-											data-email="<?= htmlspecialchars($flat['email']) ?>"
-											data-flat="<?= htmlspecialchars($flat['flat_number']) ?>"
-											data-block="<?= htmlspecialchars($flat['block_number']) ?>"
-											data-type="<?= htmlspecialchars($flat['flat_type']) ?>">
-											Block <?= htmlspecialchars($flat['block_number']) ?>
-											- <?= htmlspecialchars($flat['flat_number']) ?>
-											(<?= htmlspecialchars($flat['name']) ?>)
-										</option>
-									<?php endforeach; ?>
-								</select>
+								<!-- SEARCH RESULT LIST -->
+								<div class="col-md-8 mb-4">
+									<div id="flatResults" class="list-group shadow-sm" style="display:none;"></div>
+								</div>
 							</div>
 						</div>
 
@@ -549,46 +543,82 @@ include('../resources/layout/header.php');
 	<script>
 		$(document).ready(function() {
 
-			let billsTable = null;
+			/* ===== SEARCH FLAT ===== */
+			$('#flatSearch').on('keyup', function() {
 
-			$('#flatSelect').on('change', function() {
+				let keyword = $(this).val().trim();
 
-				const selected = this.options[this.selectedIndex];
-				const flatId = this.value;
-
-				if (!flatId) {
-					$('#userInfoCard').hide();
-					$('#ledgerTableBox').hide();
+				if (keyword.length < 1) {
+					$('#flatResults').hide().html('');
 					return;
 				}
 
-				// Fill user info
-				$('#infoName').text(selected.dataset.name);
-				$('#infoEmail').text(selected.dataset.email);
-				$('#infoFlat').text(selected.dataset.flat);
-				$('#infoBlock').text(selected.dataset.block);
-				$('#infoType').text(selected.dataset.type);
+				$.ajax({
+					url: '<?= BASE_URL ?>action.php',
+					method: 'POST',
+					data: {
+						action: 'search_flat_for_cashier',
+						keyword: keyword
+					},
+					dataType: 'json',
+					success: function(res) {
+
+						if (res.length === 0) {
+							$('#flatResults').hide().html('');
+							return;
+						}
+
+						let html = '';
+
+						$.each(res, function(i, flat) {
+							html += `
+                <a href="#" class="list-group-item list-group-item-action flat-item"
+                   data-id="${flat.flat_id}"
+                   data-name="${flat.name}"
+                   data-email="${flat.email}"
+                   data-flat="${flat.flat_number}"
+                   data-block="${flat.block_number}"
+                   data-type="${flat.flat_type}">
+                   Block ${flat.block_number} - ${flat.flat_number}
+                   (${flat.name})
+                </a>`;
+						});
+
+						$('#flatResults').html(html).show();
+					}
+				});
+
+			});
+
+
+			/* ===== CLICK SEARCH RESULT ===== */
+			$(document).on('click', '.flat-item', function(e) {
+				e.preventDefault();
+
+				let flatId = $(this).data('id');
+
+				$('#flatResults').hide();
+				$('#flatSearch').val($(this).data('flat'));
+
+				// Fill User Info
+				$('#infoName').text($(this).data('name'));
+				$('#infoEmail').text($(this).data('email'));
+				$('#infoFlat').text($(this).data('flat'));
+				$('#infoBlock').text($(this).data('block'));
+				$('#infoType').text($(this).data('type'));
 
 				$('#userInfoCard').show();
 				$('#ledgerTableBox').show();
 
-				// Destroy old table if exists
-				if (billsTable !== null) {
-					billsTable.destroy();
+				if ($.fn.DataTable.isDataTable('#bills-table')) {
+					$('#bills-table').DataTable().destroy();
 					$('#bills-table tbody').empty();
 				}
 
-				billsTable = $('#bills-table').DataTable({
-					dom: '<"d-flex justify-content-between mb-4"lf>rt<"d-flex justify-content-between mt-4"ip>',
+				$('#bills-table').DataTable({
 					processing: true,
 					serverSide: true,
-					responsive: true,
 					pageLength: 5,
-					lengthMenu: [5, 10, 25, 50],
-					order: [
-						[0, 'desc']
-					],
-
 					ajax: {
 						url: '<?= BASE_URL ?>action.php',
 						type: 'POST',
@@ -597,7 +627,6 @@ include('../resources/layout/header.php');
 							d.flat_id = flatId;
 						}
 					},
-
 					columns: [{
 							data: 'month_year'
 						},
@@ -624,13 +653,13 @@ include('../resources/layout/header.php');
 						},
 						{
 							data: 'action',
-							orderable: false,
-							searchable: false
+							orderable: false
 						}
 					]
 				});
 
 			});
+
 
 		});
 

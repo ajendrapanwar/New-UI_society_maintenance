@@ -86,6 +86,16 @@ include __DIR__ . '/../resources/layout/header.php';
                         </select>
                     </div>
 
+                    <!-- PAYMENT MODE -->
+                    <div class="col-md-3">
+                        <label class="small fw-bold text-muted">PAYMENT MODE</label>
+                        <select id="filter-payment-mode" class="form-select border-0 bg-light">
+                            <option value="">All Modes</option>
+                            <option value="cash">Cash</option>
+                            <option value="online">Online</option>
+                        </select>
+                    </div>
+
                     <!-- RESET / APPLY BUTTON -->
                     <div class="col-md-2 d-grid">
                         <button id="reset-filters" class="btn btn-outline-dark fw-bold py-2" style="border-radius:10px;">
@@ -167,6 +177,7 @@ include __DIR__ . '/../resources/layout/header.php';
                         d.month = $('#filter-month').val();
                         d.year = $('#filter-year').val();
                         d.status = $('#filter-status').val();
+                        d.payment_mode = $('#filter-payment-mode').val();
                     }
                 },
                 columns: [{
@@ -203,14 +214,14 @@ include __DIR__ . '/../resources/layout/header.php';
             });
 
             // Filter change events
-            $('#filter-month, #filter-year, #filter-status').on('change', function() {
+            $('#filter-month, #filter-year, #filter-status, #filter-payment-mode').on('change', function() {
                 table.ajax.reload(null, false); // reload without resetting pagination
                 loadTotals();
             });
 
             // Reset filters
             $('#reset-filters').on('click', function() {
-                $('#filter-month, #filter-year, #filter-status').val('');
+                $('#filter-month, #filter-year, #filter-status, #filter-payment-mode').val('');
                 table.ajax.reload(null, false);
                 loadTotals();
             });
@@ -228,7 +239,8 @@ include __DIR__ . '/../resources/layout/header.php';
                         action: 'fetch_bill_totals',
                         month: $('#filter-month').val(),
                         year: $('#filter-year').val(),
-                        status: $('#filter-status').val()
+                        status: $('#filter-status').val(),
+                        payment_mode: $('#filter-payment-mode').val()
                     },
                     success: function(res) {
                         $('#grandTotal').text('₹' + res.grandTotal);
@@ -246,11 +258,13 @@ include __DIR__ . '/../resources/layout/header.php';
                 let month = $('#filter-month').val();
                 let year = $('#filter-year').val();
                 let status = $('#filter-status').val();
+                let payment_mode = $('#filter-payment-mode').val();
 
                 let url = '<?= BASE_URL ?>action.php?action=export_all_maintenance_bills' +
                     '&month=' + month +
                     '&year=' + year +
-                    '&status=' + status;
+                    '&status=' + status +
+                    '&payment_mode=' + payment_mode;
 
                 window.location.href = url;
             });

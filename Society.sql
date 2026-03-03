@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Mar 03, 2026 at 07:44 AM
+-- Generation Time: Mar 03, 2026 at 11:45 AM
 -- Server version: 8.0.45-0ubuntu0.24.04.1
 -- PHP Version: 8.3.6
 
@@ -461,7 +461,7 @@ INSERT INTO `sweeper_salary` (`id`, `sweeper_id`, `salary_month`, `salary_year`,
 
 CREATE TABLE `tenants` (
   `id` int NOT NULL,
-  `flat_no` varchar(50) NOT NULL,
+  `flat_id` int NOT NULL,
   `tenant_name` varchar(150) NOT NULL,
   `mobile_no` varchar(15) NOT NULL,
   `vehicle_no` varchar(50) DEFAULT NULL,
@@ -477,8 +477,9 @@ CREATE TABLE `tenants` (
 -- Dumping data for table `tenants`
 --
 
-INSERT INTO `tenants` (`id`, `flat_no`, `tenant_name`, `mobile_no`, `vehicle_no`, `move_in`, `move_out`, `agreement_file`, `police_files`, `status`, `created_at`) VALUES
-(7, '301', 'Test', '8888877777', 'CH01CU3333', '2026-03-02', NULL, '1772455249_agreement.pdf', '1772455249_police_0.pdf', 'active', '2026-03-02 12:40:49');
+INSERT INTO `tenants` (`id`, `flat_id`, `tenant_name`, `mobile_no`, `vehicle_no`, `move_in`, `move_out`, `agreement_file`, `police_files`, `status`, `created_at`) VALUES
+(7, 9, 'Test', '8888877777', 'CH01CU3333', '2026-03-02', '2026-03-03', '1772455249_agreement.pdf', '1772455249_police_0.pdf', 'vacated', '2026-03-02 12:40:49'),
+(8, 1, 'Test', '1445454555', 'CH01CU1235', '2026-03-01', NULL, '1772531149_agreement.pdf', '1772531149_police_0.jpg', 'active', '2026-03-03 09:45:49');
 
 -- --------------------------------------------------------
 
@@ -507,7 +508,8 @@ INSERT INTO `users` (`id`, `name`, `email`, `mobile`, `dob`, `gender`, `role`, `
 (3, 'User1', 'User1@test.com', '7894561234', '2000-10-10', 'Male', 'user', '$2y$10$jG3oHf/u7D6nqgBrwF0YXOxr2g3GXhkkTeQwfesMHKUhSUojxpMPO', '2026-02-24 11:41:54'),
 (4, 'User2', 'User2@test.com', '7894561236', '2000-10-10', 'Male', 'user', '$2y$10$MqtbNwr.4kjOeRRWWwAreuYt3eul9zFuXj2aF6B.WqfAn..nWhbh.', '2026-02-12 04:37:02'),
 (34, 'User3', 'jaspreetkarayat@gmail.com', '7894561239', '2000-10-10', 'Male', 'user', '$2y$10$InUkJ7bOi1QtynaUX6kmie4BzQBaMETRCdrfcCJbftHHTXkEhlv9a', '2026-02-24 11:36:55'),
-(37, 'Cashier', 'cashier@test.com', '7897897899', '2000-01-01', 'Male', 'cashier', '$2y$10$wE1kNsf96oBP3z75jmtoMOvWns5L7N3W5eiMM.jPfssii1CZ/8ca6', '2026-02-24 10:47:23');
+(37, 'Cashier', 'cashier@test.com', '7897897899', '2000-01-01', 'Male', 'cashier', '$2y$10$wE1kNsf96oBP3z75jmtoMOvWns5L7N3W5eiMM.jPfssii1CZ/8ca6', '2026-02-24 10:47:23'),
+(47, 'Admin', 'admin@society.com', NULL, NULL, NULL, 'admin', '$2y$10$THdhIM9S3C.4JjqTaKYJ0OBAOWHGKS3WUCD44bJhOeVkLPDAXEOQO', '2026-03-03 09:31:41');
 
 -- --------------------------------------------------------
 
@@ -783,13 +785,13 @@ ALTER TABLE `sweeper_salary`
 -- AUTO_INCREMENT for table `tenants`
 --
 ALTER TABLE `tenants`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
 
 --
 -- AUTO_INCREMENT for table `visitor_entries`

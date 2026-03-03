@@ -25,13 +25,13 @@ $old = [
 /* ================= ADD TENANT ================= */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_tenant'])) {
 
-    $old['flat_no'] = trim($_POST['flat_no'] ?? '');
+    $old['flat_id'] = trim($_POST['flat_id'] ?? '');
     $old['tenant_name'] = trim($_POST['tenant_name'] ?? '');
     $old['mobile_no'] = trim($_POST['mobile_no'] ?? '');
     $old['vehicle_no'] = trim($_POST['vehicle_no'] ?? '');
     $old['move_in'] = $_POST['move_in'] ?? '';
 
-    $flat_no = $old['flat_no'];
+    $flat_id = $old['flat_no'];
     $tenant_name = $old['tenant_name'];
     $mobile_no = $old['mobile_no'];
     $vehicle_no = $old['vehicle_no'];
@@ -105,8 +105,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_tenant'])) {
 
     /* ===== CHECK DUPLICATE ACTIVE TENANT ===== */
     if (empty($errors['flat_no'])) {
-        $checkTenant = $pdo->prepare("SELECT id FROM tenants WHERE flat_no = ? AND status = 'active'");
-        $checkTenant->execute([$flat_no]);
+        $checkTenant = $pdo->prepare("SELECT id FROM tenants WHERE flat_id = ? AND status = 'active'");
+        $checkTenant->execute([$flat_id]);
 
         if ($checkTenant->fetch()) {
             $errors['flat_no'] = "This flat already has an active tenant.";
@@ -180,11 +180,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_tenant'])) {
             $policeFiles = implode(",", $policeFilesArray);
 
             $stmt = $pdo->prepare("INSERT INTO tenants 
-                (flat_no, tenant_name, mobile_no, vehicle_no, move_in, agreement_file, police_files) 
-                VALUES (?, ?, ?, ?, ?, ?, ?)");
+            (flat_id, tenant_name, mobile_no, vehicle_no, move_in, agreement_file, police_files)
+            VALUES (?, ?, ?, ?, ?, ?, ?)");
 
             $stmt->execute([
-                $flat_no,
+                $flat_id,
                 $tenant_name,
                 $mobile_no,
                 $vehicle_no,
@@ -207,12 +207,11 @@ $availableFlats = $pdo->query("
     FROM flats f
     INNER JOIN allotments a ON f.id = a.flat_id
     LEFT JOIN tenants t 
-        ON t.flat_no = f.flat_number 
+        ON t.flat_id = f.id 
         AND t.status = 'active'
     WHERE t.id IS NULL
     ORDER BY f.block_number, f.flat_number ASC
 ")->fetchAll(PDO::FETCH_ASSOC);
-
 
 
 /* ================= VACATE TENANT ================= */
@@ -232,7 +231,41 @@ if (isset($_GET['vacate']) && ctype_digit($_GET['vacate'])) {
     exit;
 }
 
-$stmt = $pdo->query("SELECT * FROM tenants ORDER BY move_in DESC");
+// $stmt = $pdo->query("
+//     SELECT t.*, f.flat_number, f.block_number
+//     FROM tenants t
+//     JOIN flats f ON t.flat_id = f.id
+//     ORDER BY t.move_in DESC
+// ");
+// $tenants = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$role   = $_SESSION['user_role'] ?? null;
+$userId = $_SESSION['user_id'] ?? null;
+
+if ($role === 'admin') {
+
+    // Admin sees all tenants
+    $stmt = $pdo->query("
+        SELECT t.*, f.flat_number, f.block_number
+        FROM tenants t
+        JOIN flats f ON t.flat_id = f.id
+        ORDER BY t.move_in DESC
+    ");
+} else {
+
+    // User sees only their allotted flat tenants
+    $stmt = $pdo->prepare("
+        SELECT t.*, f.flat_number, f.block_number
+        FROM tenants t
+        JOIN flats f ON t.flat_id = f.id
+        JOIN allotments a ON f.id = a.flat_id
+        WHERE a.user_id = ?
+        ORDER BY t.move_in DESC
+    ");
+
+    $stmt->execute([$userId]);
+}
+
 $tenants = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 
@@ -366,13 +399,16 @@ include __DIR__ . '/../resources/layout/header.php';
                     <p class="text-muted small">View active and historical tenant documents anytime.</p>
                 </div>
 
-                <div class="sm-w-100 mt-3 mt-md-0">
-                    <div class="d-flex flex-column flex-md-row gap-2">
-                        <button type="button" class="btn btn-brand shadow-sm" data-bs-toggle="modal" data-bs-target="#addTenantModal">
-                            <i class="fa-solid fa-user-plus me-2"></i> New Registration
-                        </button>
+
+                <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+                    <div class="sm-w-100 mt-3 mt-md-0">
+                        <div class="d-flex flex-column flex-md-row gap-2">
+                            <button type="button" class="btn btn-brand shadow-sm" data-bs-toggle="modal" data-bs-target="#addTenantModal">
+                                <i class="fa-solid fa-user-plus me-2"></i> New Registration
+                            </button>
+                        </div>
                     </div>
-                </div>
+                <?php endif; ?>
 
             </div>
 
@@ -387,7 +423,9 @@ include __DIR__ . '/../resources/layout/header.php';
                                 <th>Agreement</th>
                                 <th>Verification Files</th>
                                 <th>Status</th>
-                                <th class="text-end">Action</th>
+                                <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+                                    <th class="text-end">Action</th>
+                                <?php endif; ?>
                             </tr>
                         </thead>
                         <tbody>
@@ -399,7 +437,8 @@ include __DIR__ . '/../resources/layout/header.php';
                                             <?= $t['status'] === 'vacated' ? '(Past)' : '' ?>
                                         </span>
                                         <small>
-                                            Flat: <?= htmlspecialchars($t['flat_no']) ?> |
+                                            Flat: <?= htmlspecialchars($t['block_number']) ?> -
+                                            <?= htmlspecialchars($t['flat_number']) ?> |
                                             <?php if ($t['vehicle_no']): ?>
                                                 <span class="vehicle-plate"><?= htmlspecialchars($t['vehicle_no']) ?></span>
                                             <?php endif; ?>
@@ -454,21 +493,23 @@ include __DIR__ . '/../resources/layout/header.php';
                                         <?php endif; ?>
                                     </td>
 
-                                    <td class="text-end">
-                                        <?php if ($t['status'] === 'active'): ?>
-                                            <a href="?vacate=<?= $t['id'] ?>"
-                                                class="btn btn-sm btn-outline-danger"
-                                                onclick="return confirm('Confirm move-out?')">
-                                                Vacate
-                                            </a>
-                                        <?php else: ?>
-                                            <a href="?delete=<?= $t['id'] ?>"
-                                                class="btn btn-sm btn-outline-danger"
-                                                onclick="return confirm('Are you sure you want to permanently delete this tenant record? This action cannot be undone.')">
-                                                <i class="fa fa-trash"></i>
-                                            </a>
-                                        <?php endif; ?>
-                                    </td>
+                                    <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+                                        <td class="text-end">
+                                            <?php if ($t['status'] === 'active'): ?>
+                                                <a href="?vacate=<?= $t['id'] ?>"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                    onclick="return confirm('Confirm move-out?')">
+                                                    Vacate
+                                                </a>
+                                            <?php else: ?>
+                                                <a href="?delete=<?= $t['id'] ?>"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                    onclick="return confirm('Are you sure you want to permanently delete this tenant record? This action cannot be undone.')">
+                                                    <i class="fa fa-trash"></i>
+                                                </a>
+                                            <?php endif; ?>
+                                        </td>
+                                    <?php endif; ?>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -500,12 +541,13 @@ include __DIR__ . '/../resources/layout/header.php';
                                 SELECT FLAT *
                             </label>
 
-                            <select name="flat_no" class="form-select bg-light border-0 <?= $errors['flat_no'] ? 'is-invalid' : '' ?>">
+                            <select name="flat_id" class="form-select bg-light border-0 <?= $errors['flat_no'] ? 'is-invalid' : '' ?>">
                                 <option value="">Select Available Flat</option>
 
                                 <?php foreach ($availableFlats as $flat): ?>
-                                    <option value="<?= htmlspecialchars($flat['flat_number']) ?>"
-                                        <?= ($old['flat_no'] === $flat['flat_number']) ? 'selected' : '' ?>>
+                                    <option
+                                        value="<?= htmlspecialchars($flat['id']) ?>"
+                                        <?= ($old['flat_no'] == $flat['id']) ? 'selected' : '' ?>>
                                         Block <?= htmlspecialchars($flat['block_number']) ?> -
                                         <?= htmlspecialchars($flat['flat_number']) ?>
                                     </option>
@@ -636,7 +678,7 @@ include __DIR__ . '/../resources/layout/header.php';
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    
+
     <script>
         document.getElementById('policeFiles').addEventListener('change', function() {
             const p = document.getElementById('preview');

@@ -181,7 +181,7 @@ include '../resources/layout/header.php';
                 <h1 class="fw-800 m-0">Visitor Management</h1>
                 <button class="btn btn-brand btn-sm shadow-sm px-3"
                     data-bs-toggle="modal"
-                    data-bs-target="#addMiscModal">
+                    data-bs-target="#checkInModal">
                     <i class="fa-solid fa-plus me-1"></i>
                     <span class="d-none d-sm-inline">New Check-In</span>
                     <span class="d-inline d-sm-none">Check-In</span>

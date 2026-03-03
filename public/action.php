@@ -1203,7 +1203,6 @@ if (isset($_POST['action']) && $_POST['action'] === 'capture_payment') {
 
 
 
-
 // FETCH ALL MAINTENANCE BILLS 
 if (isset($_POST['action']) && $_POST['action'] === 'fetch_all_bills') {
 
@@ -1216,6 +1215,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_all_bills') {
 	$month  = $_POST['month']  ?? '';
 	$year   = $_POST['year']   ?? '';
 	$status = $_POST['status'] ?? '';
+	$payment_mode = $_POST['payment_mode'] ?? '';
 
 	/* ================= FILTER CONDITIONS ================= */
 	$where  = " WHERE 1=1 ";
@@ -1234,6 +1234,16 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_all_bills') {
 	if (in_array($status, ['paid', 'pending', 'overdue'])) {
 		$where .= " AND mb.status = :status ";
 		$params[':status'] = $status;
+	}
+
+	// ✅ FIXED PAYMENT MODE FILTER
+	if (in_array($payment_mode, ['cash', 'online'])) {
+		$where .= " AND mb.id IN (
+                        SELECT mp.maintenance_bill_id
+                        FROM maintenance_payments mp
+                        WHERE mp.payment_mode = :payment_mode
+                    ) ";
+		$params[':payment_mode'] = $payment_mode;
 	}
 
 	/* ================= TOTAL RECORDS ================= */
@@ -1290,8 +1300,9 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_all_bills') {
 	foreach ($params as $k => $v) {
 		$stmt->bindValue($k, $v);
 	}
-	$stmt->bindValue(':start', $start, PDO::PARAM_INT);
-	$stmt->bindValue(':length', $length, PDO::PARAM_INT);
+
+	$stmt->bindValue(':start', (int)$start, PDO::PARAM_INT);
+	$stmt->bindValue(':length', (int)$length, PDO::PARAM_INT);
 
 	$stmt->execute();
 	$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1332,6 +1343,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_all_bills') {
 		"recordsFiltered" => intval($recordsFiltered),
 		"data"            => $data
 	]);
+
 	exit;
 }
 
@@ -1393,6 +1405,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'export_all_maintenance_bills'
 	$month  = $_GET['month']  ?? '';
 	$year   = $_GET['year']   ?? '';
 	$status = $_GET['status'] ?? '';
+	$payment_mode = $_GET['payment_mode'] ?? '';
 
 	$where = [];
 	$params = [];
@@ -1410,6 +1423,17 @@ if (isset($_GET['action']) && $_GET['action'] === 'export_all_maintenance_bills'
 	if (in_array($status, ['paid', 'pending', 'overdue'])) {
 		$where[] = 'mb.status = ?';
 		$params[] = $status;
+	}
+
+	if (in_array($payment_mode, ['cash', 'online'])) {
+		$where[] = "
+        EXISTS (
+            SELECT 1 FROM maintenance_payments mp
+            WHERE mp.maintenance_bill_id = mb.id
+            AND mp.payment_mode = ?
+        )
+    ";
+		$params[] = $payment_mode;
 	}
 
 	$whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
@@ -1649,7 +1673,6 @@ if (isset($_POST['action']) && $_POST['action'] == 'fetch_misc_works') {
 	]);
 	exit;
 }
-
 
 
 
@@ -2917,8 +2940,6 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills_by_flat') 
 					transition: 0.2s;">
                 <i class="fa fa-eye me-1"></i> View
         	</a>';
-
-
 		} else {
 
 			$actionBtn = '
@@ -2952,4 +2973,35 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills_by_flat') 
 		"data" => $data
 	]);
 	exit;
+}
+
+
+
+/* ================= SEARCH FLAT FOR CASHIER ================= */
+if (isset($_POST['action']) && $_POST['action'] === 'search_flat_for_cashier') {
+
+    requireRole(['admin','cashier']);
+
+    $keyword = trim($_POST['keyword']);
+
+    $stmt = $pdo->prepare("
+        SELECT 
+            a.flat_id,
+            f.block_number,
+            f.flat_number,
+            f.flat_type,
+            u.name,
+            u.email
+        FROM allotments a
+        JOIN flats f ON a.flat_id = f.id
+        JOIN users u ON a.user_id = u.id
+        WHERE f.flat_number LIKE ?
+        ORDER BY f.block_number, f.flat_number
+        LIMIT 10
+    ");
+
+    $stmt->execute(["%$keyword%"]);
+
+    echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+    exit;
 }
