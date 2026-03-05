@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Mar 03, 2026 at 11:45 AM
+-- Generation Time: Mar 05, 2026 at 12:47 PM
 -- Server version: 8.0.45-0ubuntu0.24.04.1
 -- PHP Version: 8.3.6
 
@@ -58,6 +58,7 @@ CREATE TABLE `complaints` (
   `image` varchar(255) DEFAULT NULL,
   `status` enum('pending','processing','completed') NOT NULL DEFAULT 'pending',
   `resolve_note` text,
+  `user_seen` tinyint(1) DEFAULT '0',
   `resolved_at` datetime DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -66,9 +67,8 @@ CREATE TABLE `complaints` (
 -- Dumping data for table `complaints`
 --
 
-INSERT INTO `complaints` (`id`, `user_id`, `subject`, `message`, `image`, `status`, `resolve_note`, `resolved_at`, `created_at`) VALUES
-(2, 3, 'Water Problem', 'Water Problem', NULL, 'completed', 'Done', '2026-02-26 16:35:04', '2026-02-26 09:25:44'),
-(3, 3, 'Test', 'Test', NULL, 'pending', NULL, NULL, '2026-02-26 11:06:56');
+INSERT INTO `complaints` (`id`, `user_id`, `subject`, `message`, `image`, `status`, `resolve_note`, `user_seen`, `resolved_at`, `created_at`) VALUES
+(8, 3, 'Water Problem', 'Water Problem', NULL, 'completed', 'DONE', 1, '2026-03-05 12:25:49', '2026-03-05 06:55:19');
 
 -- --------------------------------------------------------
 
@@ -143,6 +143,29 @@ INSERT INTO `flats` (`id`, `flat_number`, `floor`, `block_number`, `flat_type`, 
 (5, '201', 1, 'B', '2 BHK Flat', '2023-03-06 12:49:24'),
 (9, '301', 1, 'C', '3 BHK Flat', '2023-03-06 12:50:17'),
 (34, '101', 2, 'A', '1 BHK Flat', '2026-02-12 09:28:45');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `flat_types`
+--
+
+CREATE TABLE `flat_types` (
+  `id` int NOT NULL,
+  `type_name` varchar(50) NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `flat_types`
+--
+
+INSERT INTO `flat_types` (`id`, `type_name`, `created_at`) VALUES
+(1, '1 BHK Flat', '2026-03-05 15:36:45'),
+(3, '2 BHK Flat', '2026-03-05 15:46:41'),
+(4, '3 BHK Flat', '2026-03-05 15:47:01'),
+(5, '4 BHK Flat', '2026-03-05 15:47:11'),
+(6, '5 BHK Flat', '2026-03-05 15:50:22');
 
 -- --------------------------------------------------------
 
@@ -342,15 +365,6 @@ CREATE TABLE `notifications` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
---
--- Dumping data for table `notifications`
---
-
-INSERT INTO `notifications` (`id`, `title`, `category`, `message`, `start_date`, `end_date`, `created_at`) VALUES
-(9, 'Test', 'General Info', 'Test', '2026-02-27 17:10:00', '2026-03-01 17:10:00', '2026-02-26 11:40:55'),
-(10, 'Test', 'Maintenance', 'Test', '2026-02-26 17:18:00', NULL, '2026-02-26 11:48:40'),
-(11, 'Holi event', 'General Info', 'Holi', '2026-03-01 06:00:00', '2026-03-05 00:00:00', '2026-03-02 07:15:03');
-
 -- --------------------------------------------------------
 
 --
@@ -479,7 +493,7 @@ CREATE TABLE `tenants` (
 
 INSERT INTO `tenants` (`id`, `flat_id`, `tenant_name`, `mobile_no`, `vehicle_no`, `move_in`, `move_out`, `agreement_file`, `police_files`, `status`, `created_at`) VALUES
 (7, 9, 'Test', '8888877777', 'CH01CU3333', '2026-03-02', '2026-03-03', '1772455249_agreement.pdf', '1772455249_police_0.pdf', 'vacated', '2026-03-02 12:40:49'),
-(8, 1, 'Test', '1445454555', 'CH01CU1235', '2026-03-01', NULL, '1772531149_agreement.pdf', '1772531149_police_0.jpg', 'active', '2026-03-03 09:45:49');
+(8, 1, 'Test', '1445454555', 'CH01CU1235', '2026-03-01', '2026-03-05', '1772531149_agreement.pdf', '1772531149_police_0.jpg', 'vacated', '2026-03-03 09:45:49');
 
 -- --------------------------------------------------------
 
@@ -494,7 +508,7 @@ CREATE TABLE `users` (
   `mobile` varchar(15) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `dob` date DEFAULT NULL,
   `gender` varchar(10) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `role` enum('admin','cashier','user') CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL DEFAULT 'user',
+  `role` enum('admin','cashier','user','security_guard') COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `password` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
@@ -509,7 +523,9 @@ INSERT INTO `users` (`id`, `name`, `email`, `mobile`, `dob`, `gender`, `role`, `
 (4, 'User2', 'User2@test.com', '7894561236', '2000-10-10', 'Male', 'user', '$2y$10$MqtbNwr.4kjOeRRWWwAreuYt3eul9zFuXj2aF6B.WqfAn..nWhbh.', '2026-02-12 04:37:02'),
 (34, 'User3', 'jaspreetkarayat@gmail.com', '7894561239', '2000-10-10', 'Male', 'user', '$2y$10$InUkJ7bOi1QtynaUX6kmie4BzQBaMETRCdrfcCJbftHHTXkEhlv9a', '2026-02-24 11:36:55'),
 (37, 'Cashier', 'cashier@test.com', '7897897899', '2000-01-01', 'Male', 'cashier', '$2y$10$wE1kNsf96oBP3z75jmtoMOvWns5L7N3W5eiMM.jPfssii1CZ/8ca6', '2026-02-24 10:47:23'),
-(47, 'Admin', 'admin@society.com', NULL, NULL, NULL, 'admin', '$2y$10$THdhIM9S3C.4JjqTaKYJ0OBAOWHGKS3WUCD44bJhOeVkLPDAXEOQO', '2026-03-03 09:31:41');
+(47, 'Admin', 'admin@society.com', NULL, NULL, NULL, 'admin', '$2y$10$THdhIM9S3C.4JjqTaKYJ0OBAOWHGKS3WUCD44bJhOeVkLPDAXEOQO', '2026-03-03 09:31:41'),
+(48, 'Gaurd 1', 'gaurd1@gmail.com', '9696998989', '2015-01-12', 'Male', 'security_guard', '$2y$10$rOz7UmlhGr1lvaS9QBOy5OgKjzVeclgMVjhf7iLeyCficJdk2I9N6', '2026-03-05 10:35:26'),
+(49, 'Gaurd 2', 'gaurd2@gmail.com', '9797998989', '2016-02-23', 'Male', 'security_guard', '$2y$10$d0s085v/mhvDazJLJxFn1uwgBz9vLp7ygTASqRnRBP7b7xvtkfV0a', '2026-03-05 10:49:22');
 
 -- --------------------------------------------------------
 
@@ -574,6 +590,13 @@ ALTER TABLE `electricity_payments`
 --
 ALTER TABLE `flats`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `flat_types`
+--
+ALTER TABLE `flat_types`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `type_name` (`type_name`);
 
 --
 -- Indexes for table `garbage_collectors`
@@ -689,7 +712,7 @@ ALTER TABLE `allotments`
 -- AUTO_INCREMENT for table `complaints`
 --
 ALTER TABLE `complaints`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `electricity_bills`
@@ -708,6 +731,12 @@ ALTER TABLE `electricity_payments`
 --
 ALTER TABLE `flats`
   MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+
+--
+-- AUTO_INCREMENT for table `flat_types`
+--
+ALTER TABLE `flat_types`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `garbage_collectors`
@@ -791,7 +820,7 @@ ALTER TABLE `tenants`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- AUTO_INCREMENT for table `visitor_entries`

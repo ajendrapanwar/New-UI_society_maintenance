@@ -47,6 +47,47 @@ try {
     $notificationCount = 0; // fallback safety
 }
 
+
+
+/* ================= USER COMPLETED COMPLAINT COUNT ================= */
+
+$usercomplaintCount = 0;
+
+if ($_SESSION['user_role'] === 'user') {
+
+    $userId = $_SESSION['user_id'];
+
+    $stmtComplaint = $pdo->prepare("
+        SELECT COUNT(*)
+        FROM complaints
+        WHERE user_id = ?
+        AND status = 'completed'
+        AND user_seen = 0
+    ");
+
+    $stmtComplaint->execute([$userId]);
+
+    $usercomplaintCount = (int)$stmtComplaint->fetchColumn();
+}
+
+
+/* ================= COMPLAINT COUNT ================= */
+$complaintCount = 0;
+
+try {
+
+    $stmtComplaint = $pdo->query("
+        SELECT COUNT(*)
+        FROM complaints
+        WHERE status IN ('pending','processing')
+    ");
+
+    $complaintCount = (int)$stmtComplaint->fetchColumn();
+} catch (Exception $e) {
+    $complaintCount = 0;
+}
+
+
 ?>
 
 
@@ -106,7 +147,20 @@ try {
                 <a class="nav-link <?= ($currentPage == 'vehicle_finder.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>vehicle_finder.php"><i class="fa-solid fa-magnifying-glass"></i> Vehicle Finder</a>
 
                 <div class="nav-group-label">Admin Control</div>
-                <a class="nav-link <?= ($currentPage == 'complaints.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>complaints.php"><i class="fa-solid fa-headset"></i> Complaints</a>
+                <a class="nav-link d-flex align-items-center justify-content-between <?= ($currentPage == 'complaints.php') ? 'active' : '' ?>"
+                    href="<?= BASE_URL ?>complaints.php">
+
+                    <span>
+                        <i class="fa-solid fa-headset"></i> Complaints
+                    </span>
+
+                    <?php if ($complaintCount > 0): ?>
+                        <span style="background: #0d6efd;color: #fff;font-size: 11px;font-weight: 700;padding: 2px 8px;border-radius: 999px;min-width: 22px;text-align: center;">
+                            <?= $complaintCount ?>
+                        </span>
+                    <?php endif; ?>
+
+                </a>
                 <a class="nav-link d-flex align-items-center justify-content-between <?= ($currentPage == 'notifications.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>notifications.php"><span><i class="fa-solid fa-bell"></i> Notifications</span>
                     <?php if ($notificationCount > 0): ?>
                         <span style="background: #0d6efd;color: #fff;font-size: 11px;font-weight: 700;padding: 2px 8px;border-radius: 999px;min-width: 22px;text-align: center;"><?= $notificationCount ?></span>
@@ -163,10 +217,24 @@ try {
                 <a class="nav-link <?= ($currentPage == 'tenants.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>tenants.php"><i class="fa-solid fa-people-group"></i> Tenant History</a>
 
                 <div class="nav-group-label">Support</div>
-                <a class="nav-link <?= ($currentPage == 'view/view_userMaintanenceBill.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>view/view_userComplaint_status.php"><i class="fa-solid fa-circle-question"></i> My Complaints</a>
-                <a class="nav-link d-flex align-items-center justify-content-between <?= ($currentPage == 'notifications.php') ? 'active' : '' ?>"
-                    href="<?= BASE_URL ?>notifications.php">
+                <a class="nav-link d-flex align-items-center justify-content-between 
+                    <?= ($currentPage == 'view_userComplaint_status.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>view/view_userComplaint_status.php">
+                    <span><i class="fa-solid fa-circle-question me-2"></i><span style="margin-right: 10px;">My Complaints</span>
 
+                        <?php if ($usercomplaintCount > 0): ?>
+                            <span style="
+                                    background: #dc3545;
+                                    color: #fff;
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    padding: 3px 8px;
+                                    border-radius: 999px;
+                                    min-width: 20px;
+                                    text-align: center;
+                                "><?= $usercomplaintCount ?></span>
+                        <?php endif; ?>
+                </a>
+                <a class="nav-link d-flex align-items-center justify-content-between <?= ($currentPage == 'notifications.php') ? 'active' : '' ?>" href="<?= BASE_URL ?>notifications.php">
                     <span>
                         <i class="fa-solid fa-bullhorn me-2"></i><span style="margin-right: 10px;">Society Notices</span>
                         <?php if ($notificationCount > 0): ?>

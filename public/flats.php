@@ -72,6 +72,10 @@ if (isset($_POST['add_flats'])) {
 }
 
 
+/* FETCH FLAT TYPES FROM DATABASE */
+$stmt = $pdo->query("SELECT type_name FROM flat_types ORDER BY type_name ASC");
+$flatTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
 // Handle Delete
 if (
 	isset($_GET['action'], $_GET['id']) &&
@@ -114,12 +118,26 @@ include('../resources/layout/header.php');
 		<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
 		<main id="main-content">
-			<div class="d-flex justify-content-between align-items-center mb-4">
-				<h1 class="page-title m-0">Flat Inventory</h1>
-				<button class="btn btn-brand shadow-sm" data-bs-toggle="modal" data-bs-target="#addFlatModal">
-					<i class="fa-solid fa-plus me-2"></i> Add Flat
-				</button>
+			<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+
+				<h1 class="fw-800 m-0">Flat Inventory</h1>
+
+				<div class="sm-w-100 mt-3 mt-md-0">
+					<div class="d-flex flex-column flex-md-row gap-2">
+
+						<a href="<?= BASE_URL ?>flat_types.php" class="btn btn-brand shadow-sm">
+							<i class="fa-solid fa-building me-2"></i> Flat Type
+						</a>
+
+						<button type="button" class="btn btn-brand shadow-sm" data-bs-toggle="modal" data-bs-target="#addFlatModal">
+							<i class="fa-solid fa-plus me-2"></i> Add Flat
+						</button>
+
+					</div>
+				</div>
+
 			</div>
+
 
 			<div class="data-card shadow-sm border-0">
 				<div class="table-responsive">
@@ -139,7 +157,6 @@ include('../resources/layout/header.php');
 				</div>
 			</div>
 		</main>
-
 	</div>
 
 	<!-- Add Flat Popup -->
@@ -339,7 +356,6 @@ include('../resources/layout/header.php');
 			</div>
 		</div>
 	</div>
-
 
 
 	<!-- DELETE Confirmation MODAL -->

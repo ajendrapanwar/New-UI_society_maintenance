@@ -19,6 +19,17 @@ $errors = [];
 $user_id   = $_SESSION['user_id'];
 $user_name = $_SESSION['user_name'];
 
+/* MARK COMPLETED COMPLAINTS AS SEEN */
+
+$pdo->prepare("
+    UPDATE complaints
+    SET user_seen = 1
+    WHERE user_id = ?
+    AND status = 'completed'
+    AND user_seen = 0
+")->execute([$user_id]);
+
+
 $subject = $message = "";
 
 /* ================= SUBMIT COMPLAINT ================= */
@@ -162,7 +173,7 @@ include __DIR__ . '/../../resources/layout/header.php';
 
             <div class="data-card shadow-sm border-0">
                 <div class="table-responsive">
-                    <table id="user-bills-table" class="table table-hover w-100">
+                    <table class="table table-hover w-100">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -305,11 +316,15 @@ include __DIR__ . '/../../resources/layout/header.php';
 
     <script>
         $(document).ready(function() {
-            $('#complaint-table').DataTable({
-                pageLength: 10,
+            $('#complaints-table').DataTable({
+                dom: '<"d-flex justify-content-between mb-4"lf>rt<"d-flex justify-content-between mt-4"ip>',
                 ordering: true,
                 responsive: true,
+                pageLength: 5,
+                lengthMenu: [5, 10, 25, 50],
                 language: {
+                    search: "",
+                    searchPlaceholder: "Search complaints...",
                     emptyTable: "No complaints found"
                 }
             });

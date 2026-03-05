@@ -2980,11 +2980,11 @@ if (isset($_POST['action']) && $_POST['action'] === 'fetch_user_bills_by_flat') 
 /* ================= SEARCH FLAT FOR CASHIER ================= */
 if (isset($_POST['action']) && $_POST['action'] === 'search_flat_for_cashier') {
 
-    requireRole(['admin','cashier']);
+	requireRole(['admin', 'cashier']);
 
-    $keyword = trim($_POST['keyword']);
+	$keyword = trim($_POST['keyword']);
 
-    $stmt = $pdo->prepare("
+	$stmt = $pdo->prepare("
         SELECT 
             a.flat_id,
             f.block_number,
@@ -3000,8 +3000,29 @@ if (isset($_POST['action']) && $_POST['action'] === 'search_flat_for_cashier') {
         LIMIT 10
     ");
 
-    $stmt->execute(["%$keyword%"]);
+	$stmt->execute(["%$keyword%"]);
 
-    echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
-    exit;
+	echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+	exit;
+}
+
+
+if ($_POST['action'] == 'fetch_flat_types') {
+
+	$stmt = $pdo->query("
+        SELECT id,type_name,created_at
+        FROM flat_types
+        ORDER BY id DESC
+    ");
+
+	$data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+	echo json_encode([
+		"draw" => intval($_POST['draw'] ?? 1),
+		"recordsTotal" => count($data),
+		"recordsFiltered" => count($data),
+		"data" => $data
+	]);
+
+	exit;
 }

@@ -68,7 +68,6 @@ if ($_SESSION['user_role'] === 'admin') {
         SELECT * FROM notifications 
         ORDER BY id DESC
     ");
-
 } else {
 
     // User sees ONLY active notifications
@@ -198,56 +197,59 @@ include __DIR__ . '/../resources/layout/header.php';
 
             <!-- Notification Display -->
             <h5 class="fw-bold mb-3">Recent Announcements</h5>
-            <?php foreach ($notifications as $n): ?>
-                <?php
-                /* ===== INLINE STYLING BASED ON CATEGORY ===== */
-                $borderColor = '#6c757d';
-                $tagBg = '#f1f5f9';
-                $tagColor = '#334155';
-                $tagBorder = '#e2e8f0';
 
-                switch ($n['category']) {
-                    case 'General Info':
-                        $borderColor = '#0d6efd';
-                        $tagBg = '#e0f2fe';
-                        $tagColor = '#0369a1';
-                        $tagBorder = '#bae6fd';
-                        break;
+            <?php if (!empty($notifications)): ?>
 
-                    case 'Maintenance':
-                        $borderColor = '#f59e0b';
-                        $tagBg = '#fff7ed';
-                        $tagColor = '#b45309';
-                        $tagBorder = '#fed7aa';
-                        break;
+                <?php foreach ($notifications as $n): ?>
+                    <?php
+                    /* ===== INLINE STYLING BASED ON CATEGORY ===== */
+                    $borderColor = '#6c757d';
+                    $tagBg = '#f1f5f9';
+                    $tagColor = '#334155';
+                    $tagBorder = '#e2e8f0';
 
-                    case 'Emergency':
-                        $borderColor = '#dc3545';
-                        $tagBg = '#fee2e2';
-                        $tagColor = '#b91c1c';
-                        $tagBorder = '#fecaca';
-                        break;
+                    switch ($n['category']) {
+                        case 'General Info':
+                            $borderColor = '#0d6efd';
+                            $tagBg = '#e0f2fe';
+                            $tagColor = '#0369a1';
+                            $tagBorder = '#bae6fd';
+                            break;
 
-                    case 'Event':
-                        $borderColor = '#198754';
-                        $tagBg = '#dcfce7';
-                        $tagColor = '#166534';
-                        $tagBorder = '#bbf7d0';
-                        break;
-                }
+                        case 'Maintenance':
+                            $borderColor = '#f59e0b';
+                            $tagBg = '#fff7ed';
+                            $tagColor = '#b45309';
+                            $tagBorder = '#fed7aa';
+                            break;
 
-                // Date formatting
-                $start_display = $n['start_date']
-                    ? date('d M Y, h:i A', strtotime($n['start_date']))
-                    : '-';
+                        case 'Emergency':
+                            $borderColor = '#dc3545';
+                            $tagBg = '#fee2e2';
+                            $tagColor = '#b91c1c';
+                            $tagBorder = '#fecaca';
+                            break;
 
-                $end_display = $n['end_date']
-                    ? date('d M Y, h:i A', strtotime($n['end_date']))
-                    : 'Present';
-                ?>
+                        case 'Event':
+                            $borderColor = '#198754';
+                            $tagBg = '#dcfce7';
+                            $tagColor = '#166534';
+                            $tagBorder = '#bbf7d0';
+                            break;
+                    }
 
-                <div class="notice-card shadow-sm"
-                    style="
+                    // Date formatting
+                    $start_display = $n['start_date']
+                        ? date('d M Y, h:i A', strtotime($n['start_date']))
+                        : '-';
+
+                    $end_display = $n['end_date']
+                        ? date('d M Y, h:i A', strtotime($n['end_date']))
+                        : 'Present';
+                    ?>
+
+                    <div class="notice-card shadow-sm"
+                        style="
                             border-left: 4px solid <?= $borderColor ?>;
                             border-radius: 12px;
                             padding: 16px;
@@ -255,10 +257,10 @@ include __DIR__ . '/../resources/layout/header.php';
                             margin-bottom: 15px;
                         ">
 
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <!-- CATEGORY TAG -->
-                            <span style="
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <!-- CATEGORY TAG -->
+                                <span style="
                                         background: <?= $tagBg ?>;
                                         color: <?= $tagColor ?>;
                                         border: 1px solid <?= $tagBorder ?>;
@@ -269,37 +271,46 @@ include __DIR__ . '/../resources/layout/header.php';
                                         display: inline-block;
                                         margin-bottom: 6px;
                                     ">
-                                <?= htmlspecialchars($n['category']) ?>
-                            </span>
+                                    <?= htmlspecialchars($n['category']) ?>
+                                </span>
 
-                            <!-- TITLE -->
-                            <h5 class="fw-bold mb-1">
-                                <?= htmlspecialchars($n['title']) ?>
-                            </h5>
+                                <!-- TITLE -->
+                                <h5 class="fw-bold mb-1">
+                                    <?= htmlspecialchars($n['title']) ?>
+                                </h5>
 
-                            <!-- MESSAGE -->
-                            <p class="text-muted small mb-0">
-                                <?= nl2br(htmlspecialchars($n['message'])) ?>
-                            </p>
+                                <!-- MESSAGE -->
+                                <p class="text-muted small mb-0">
+                                    <?= nl2br(htmlspecialchars($n['message'])) ?>
+                                </p>
 
-                            <!-- DATE -->
-                            <small class="text-muted small mt-1 d-block">
-                                <?= $start_display ?> — <?= $end_display ?>
-                            </small>
-                        </div>
-
-                        <!-- ADMIN DELETE BUTTON -->
-                        <?php if ($_SESSION['user_role'] === 'admin'): ?>
-                            <div class="text-end">
-                                <button class="btn btn-sm btn-link text-danger p-0 mt-2 delete-notification-btn"
-                                    data-id="<?= $n['id'] ?>">
-                                    <i class="fa fa-trash"></i>
-                                </button>
+                                <!-- DATE -->
+                                <small class="text-muted small mt-1 d-block">
+                                    <?= $start_display ?> — <?= $end_display ?>
+                                </small>
                             </div>
-                        <?php endif; ?>
+
+                            <!-- ADMIN DELETE BUTTON -->
+                            <?php if ($_SESSION['user_role'] === 'admin'): ?>
+                                <div class="text-end">
+                                    <button class="btn btn-sm btn-link text-danger p-0 mt-2 delete-notification-btn"
+                                        data-id="<?= $n['id'] ?>">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
+                <?php endforeach; ?>
+
+            <?php else: ?>
+
+                <div class="alert alert-info text-center fw-bold py-4">
+                    <i class="fa-regular fa-bell me-2"></i>
+                    No New Notification
                 </div>
-            <?php endforeach; ?>
+
+            <?php endif; ?>
         </main>
 
     </div>

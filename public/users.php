@@ -50,7 +50,7 @@ if (isset($_POST['add_user'])) {
         $errors['gender'] = 'Please select gender';
     }
 
-    if (!in_array($role, ['admin', 'cashier', 'user'])) {
+    if (!in_array($role, ['admin', 'cashier', 'user', 'security_guard'])) {
         $errors['role'] = 'Please select role';
     }
 
@@ -270,6 +270,7 @@ include('../resources/layout/header.php');
                                 <option value="user" <?= $role === 'user' ? 'selected' : '' ?>>Resident</option>
                                 <option value="cashier" <?= $role === 'cashier' ? 'selected' : '' ?>>Cashier</option>
                                 <option value="admin" <?= $role === 'admin' ? 'selected' : '' ?>>Admin</option>
+                                <option value="security_guard" <?= $role === 'security_guard' ? 'selected' : '' ?>>Security Guard</option>
                             </select>
                             <small class="text-danger"><?= $errors['role'] ?? '' ?></small>
                         </div>
@@ -349,6 +350,7 @@ include('../resources/layout/header.php');
                                 <option value="user">Resident</option>
                                 <option value="cashier">Cashier</option>
                                 <option value="admin">Admin</option>
+                                <option value="security_guard">Security Guard</option>
                             </select>
                             <small class="text-danger" id="error_role"></small>
                         </div>
@@ -364,7 +366,6 @@ include('../resources/layout/header.php');
             </div>
         </div>
     </div>
-
 
 
     <!-- DELETE Confirmation MODAL -->
@@ -479,6 +480,7 @@ include('../resources/layout/header.php');
 
                             if (role === 'admin') roleClass = 'role-admin';
                             else if (role === 'cashier') roleClass = 'role-cashier';
+                            else if (role === 'security_guard');
 
                             return `<span class="role-badge ${roleClass}">${role}</span>`;
                         }

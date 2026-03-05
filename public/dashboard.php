@@ -14,7 +14,7 @@ header("Pragma: no-cache");
 // ================= ACCESS CONTROL =================
 if (
 	!isset($_SESSION['user_id']) ||
-	!in_array($_SESSION['user_role'], ['admin', 'cashier', 'user'])
+	!in_array($_SESSION['user_role'], ['admin', 'cashier', 'user', 'security_guard'])
 ) {
 	header('Location: ' . BASE_URL . 'logout.php');
 	exit();
@@ -166,7 +166,216 @@ if ($_SESSION['user_role'] === 'cashier') {
 }
 
 
+
+
+// ================= RECENT TRANSACTIONS =================
+$transactions = [];
+
+if ($_SESSION['user_role'] === 'user' && $flat_id) {
+
+	$stmt = $pdo->prepare("
+    SELECT 
+        mb.id,
+        mb.bill_month,
+        mb.bill_year,
+        mb.total_amount,
+        mb.status,
+        mp.paid_on
+		FROM maintenance_bills mb
+		JOIN maintenance_payments mp 
+			ON mb.id = mp.maintenance_bill_id
+		WHERE mb.flat_id = ?
+		AND mb.status = 'paid'
+		ORDER BY mp.paid_on DESC
+		LIMIT 5
+	");
+
+	$stmt->execute([$flat_id]);
+	$transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+
+
+// ================= LAST PAYMENT INFO =================
+$last_payment_amount = 0;
+$last_payment_date   = '';
+
+if ($_SESSION['user_role'] === 'user' && $flat_id) {
+
+	$stmt = $pdo->prepare("
+        SELECT mb.total_amount, mp.paid_on
+        FROM maintenance_bills mb
+        JOIN maintenance_payments mp 
+            ON mb.id = mp.maintenance_bill_id
+        WHERE mb.flat_id = ?
+        ORDER BY mp.paid_on DESC
+        LIMIT 1
+    ");
+
+	$stmt->execute([$flat_id]);
+	$payment = $stmt->fetch(PDO::FETCH_ASSOC);
+
+	if ($payment) {
+		$last_payment_amount = number_format($payment['total_amount']);
+		$last_payment_date   = date('d M', strtotime($payment['paid_on']));
+	}
+}
+
+
+// ================= VEHICLE NUMBER =================
+$vehicle_number = '';
+
+if ($_SESSION['user_role'] === 'user' && $flat_id) {
+
+	$stmt = $pdo->prepare("
+        SELECT vehicle1
+        FROM resident_parking
+        WHERE flat_id = ?
+        LIMIT 1
+    ");
+
+	$stmt->execute([$flat_id]);
+	$vehicle = $stmt->fetch(PDO::FETCH_ASSOC);
+
+	if ($vehicle) {
+		$vehicle_number = $vehicle['vehicle1'];
+	}
+}
+
+
 include('../resources/layout/header.php');
+?>
+
+
+
+
+<?php
+
+
+/* ================= MARK VISITOR OUT ================= */
+if (isset($_GET['action']) && $_GET['action'] == 'out' && isset($_GET['id'])) {
+	$stmt = $pdo->prepare("UPDATE visitor_entries SET out_time = NOW() WHERE id = ?");
+	$stmt->execute([$_GET['id']]);
+
+	// $_SESSION['success'] = "Visitor marked OUT successfully";
+	flash_set('success', 'Visitor marked OUT successfully');
+	header('Location: ' . BASE_URL . 'visitors.php');
+	exit();
+}
+
+/* ================= FETCH VISITOR DATA ================= */
+$stmt = $pdo->query("
+		SELECT 
+			v.*,
+			f.flat_number, 
+			f.block_number,
+			DATE_FORMAT(v.in_time, '%d-%m-%Y %h:%i %p') AS in_time_fmt,
+			DATE_FORMAT(v.out_time, '%d-%m-%Y %h:%i %p') AS out_time_fmt
+		FROM visitor_entries v
+		LEFT JOIN flats f ON v.flat_id = f.id
+		ORDER BY v.id DESC
+	");
+
+$visitors = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
+
+/* ================= ADD VISITOR (CHECK-IN) ================= */
+
+$errors = [];
+$name = $mobile = $vehicle = $flat_id = $purpose = $visit_type = "";
+
+/* FETCH FLATS FOR MODAL */
+$flats = $pdo->query("
+			SELECT f.id, f.flat_number, f.block_number
+			FROM allotments a
+			JOIN flats f ON a.flat_id = f.id
+			ORDER BY f.block_number, f.flat_number
+		")->fetchAll(PDO::FETCH_ASSOC);
+
+
+/* FORM SUBMIT */
+if (isset($_POST['submit'])) {
+
+	$name       = trim($_POST['visitor_name']);
+	$mobile     = trim($_POST['mobile']);
+	$vehicle    = strtoupper(trim($_POST['vehicle_no']));
+	$flat_id    = $_POST['flat_id'] ?? '';
+	$visit_type = $_POST['visit_type'] ?? '';
+	$purpose    = trim($_POST['purpose'] ?? '');
+
+	/* ========= VALIDATION ========= */
+
+	if ($name == '') {
+		$errors['visitor_name'] = "Enter visitor name";
+	}
+
+	if ($mobile == '') {
+		$errors['mobile'] = "Enter mobile number";
+	} elseif (!preg_match('/^[0-9]{10}$/', $mobile)) {
+		$errors['mobile'] = "Enter valid 10 digit mobile number";
+	}
+
+	if ($vehicle == '') {
+		$errors['vehicle_no'] = "Enter vehicle number";
+	} elseif (!preg_match('/^[A-Z0-9- ]{4,20}$/', $vehicle)) {
+		$errors['vehicle_no'] = "Enter valid vehicle number";
+	}
+
+	if ($flat_id == '') {
+		$errors['flat_id'] = "Select flat";
+	}
+
+	if ($visit_type == '') {
+		$errors['visit_type'] = "Select visit type";
+	}
+
+	if ($visit_type === 'Other' && $purpose == '') {
+		$errors['purpose'] = "Enter purpose";
+	}
+
+	/* ========= CHECK VEHICLE IN RESIDENT PARKING ========= */
+	$checkVehicle = $pdo->prepare("
+			SELECT id FROM resident_parking 
+			WHERE vehicle1 = ? OR vehicle2 = ?
+		");
+	$checkVehicle->execute([$vehicle, $vehicle]);
+
+	if ($checkVehicle->rowCount() > 0) {
+		$errors['vehicle_no'] = "This vehicle is already registered in resident parking";
+	}
+
+	/* ========= INSERT VISITOR ========= */
+	if (empty($errors)) {
+
+		$stmt = $pdo->prepare("
+				INSERT INTO visitor_entries
+				(visitor_name, mobile, vehicle_no, flat_id, visit_type, purpose)
+				VALUES (?, ?, ?, ?, ?, ?)
+			");
+
+		if ($stmt->execute([
+			$name,
+			$mobile,
+			$vehicle,
+			$flat_id,
+			$visit_type,
+			$purpose
+		])) {
+
+			flash_set('success', 'Visitor Entry Added Successfully');
+			header('Location: ' . BASE_URL . 'visitors.php');
+			exit();
+		} else {
+
+			flash_set('err', 'Database error! Visitor not added.');
+			header('Location: ' . BASE_URL . 'visitors.php');
+			exit();
+		}
+	}
+}
+
+
 ?>
 
 
@@ -272,6 +481,73 @@ include('../resources/layout/header.php');
 						</div>
 					</div>
 				</div>
+
+				<!-- Payment Terminal -->
+				<div class="col-lg-12">
+					<div class="data-card border-0 shadow-sm">
+						<h4 class="fw-800 mb-4">Maintenance Ledger</h4>
+
+						<!-- SELECT FLAT -->
+						<div class="row">
+							<div class="col-lg-12 mb-4">
+
+								<label class="form-label fw-bold text-muted small uppercase">
+									Search Flat Number
+								</label>
+
+								<div class="input-group input-group-lg">
+									<input type="text"
+										id="flatSearch"
+										class="form-control"
+										placeholder="Type flat number (e.g. 101, A-203)">
+
+									<button class="btn btn-outline-dark" type="button" id="clearFlatSearch">
+										Clear
+									</button>
+								</div>
+
+								<!-- SEARCH RESULT LIST -->
+								<div id="flatResults" class="list-group shadow-sm mt-2" style="display:none;"></div>
+
+							</div>
+						</div>
+
+						<!-- USER INFO CARD -->
+						<div id="userInfoCard" class="data-card shadow-sm border-0 mb-4" style="display:none;">
+							<div class="card-body d-flex flex-wrap align-items-center gap-3">
+								<div><strong>Name:</strong> <span id="infoName"></span></div>
+								<div><strong>Email:</strong> <span id="infoEmail"></span></div>
+								<div><strong>Flat:</strong> <span id="infoFlat"></span></div>
+								<div><strong>Block:</strong> <span id="infoBlock"></span></div>
+								<div><strong>Type:</strong> <span id="infoType"></span></div>
+							</div>
+						</div>
+
+						<!-- LEDGER TABLE -->
+						<div id="ledgerTableBox" class="data-card shadow-sm border-0" style="display:none;">
+							<div class="table-responsive">
+								<table id="bills-table" class="table table-hover w-100">
+									<thead>
+										<tr>
+											<th>Month / Year</th>
+											<th>Amount</th>
+											<th>Fine</th>
+											<th>Total</th>
+											<th>Status</th>
+											<th>Mode</th>
+											<th>Paid On</th>
+											<th>Overdue</th>
+											<th class="text-end">Action</th>
+										</tr>
+									</thead>
+									<tbody></tbody>
+								</table>
+							</div>
+						</div>
+
+					</div>
+				</div>
+
 			</main>
 
 		</div>
@@ -353,22 +629,26 @@ include('../resources/layout/header.php');
 
 						<!-- SELECT FLAT -->
 						<div class="row">
-							<div class="col-md-8 mb-4">
-								<div class="col-md-8 mb-2">
-									<label class="form-label fw-bold text-muted small uppercase">
-										Search Flat Number
-									</label>
+							<div class="col-lg-12 mb-4">
 
+								<label class="form-label fw-bold text-muted small uppercase">
+									Search Flat Number
+								</label>
+
+								<div class="input-group input-group-lg">
 									<input type="text"
 										id="flatSearch"
-										class="form-control form-control-lg"
+										class="form-control"
 										placeholder="Type flat number (e.g. 101, A-203)">
+
+									<button class="btn btn-outline-dark" type="button" id="clearFlatSearch">
+										Clear
+									</button>
 								</div>
 
 								<!-- SEARCH RESULT LIST -->
-								<div class="col-md-8 mb-4">
-									<div id="flatResults" class="list-group shadow-sm" style="display:none;"></div>
-								</div>
+								<div id="flatResults" class="list-group shadow-sm mt-2" style="display:none;"></div>
+
 							</div>
 						</div>
 
@@ -411,6 +691,11 @@ include('../resources/layout/header.php');
 			</main>
 		</div>
 
+
+	<?php elseif ($_SESSION['user_role'] === 'security_guard'): ?>
+
+		<?php include('/security_guard.php'); ?>
+
 		<!--------------------- USER VIEW ---------------------->
 	<?php else: ?>
 
@@ -422,14 +707,121 @@ include('../resources/layout/header.php');
 					<h2 class="fw-800 m-0">My Dashboard</h2>
 				</div>
 
-				<div class="row g-3 mb-5">
-					<div class="col-6 col-lg-3">
-						<div class="stat-card border-danger">
-							<p class="text-danger small fw-bold mb-1">PENDING</p>
-							<h3 class="fw-bold m-0">₹ <?= $total_pending_amount ?></h3>
+				<div class="row g-4 mb-5">
+					<div class="col-lg-8">
+						<div class="data-card bg-white h-100 d-flex flex-column justify-content-center border-start border-5 border-primary" style="border-left-color: var(--brand-color) !important;">
+							<div class="row align-items-center">
+								<div class="col-md-8">
+									<p class="text-muted mb-1 font-semibold">OUTSTANDING BALANCE</p>
+									<h1 class="display-5 fw-bold mb-3">₹ <?= $total_pending_amount ?></h1>
+								</div>
+								<div class="col-md-4 d-none d-md-block text-center opacity-25">
+									<i class="fa-solid fa-wallet fa-6x"></i>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-lg-4">
+						<div class="stat-card bg-white">
+							<h6 class="fw-bold mb-3">Quick Info</h6>
+							<div class="d-flex justify-content-between mb-2">
+								<span class="text-muted">Last Payment:</span>
+								<span class="fw-bold">
+									₹ <?= $last_payment_amount ?: '0' ?>
+									(<?= $last_payment_date ?: 'No Payment' ?>)
+								</span>
+							</div>
+							<div class="d-flex justify-content-between mb-2">
+								<span class="text-muted">Registered Vehicle:</span>
+								<span class="fw-bold text-primary">
+									<?= $vehicle_number ?: 'No Vehicle Registered' ?>
+								</span>
+							</div>
 						</div>
 					</div>
 				</div>
+
+				<div class="data-card">
+					<div class="d-flex justify-content-between align-items-center mb-4">
+						<h5 class="fw-bold m-0">Recent Transaction History</h5>
+						<a href="<?= BASE_URL ?>view/view_userMaintanenceBill.php" class="text-primary fw-bold text-decoration-none small">View Full Ledger</a>
+					</div>
+					<div class="table-responsive">
+						<table class="table table-hover datatable w-100">
+							<thead>
+								<tr>
+									<th>Date</th>
+									<th>Description</th>
+									<th>Bill Amount</th>
+									<th>Status</th>
+									<th class="text-end">Action</th>
+								</tr>
+							</thead>
+							<tbody>
+
+								<?php if ($transactions): ?>
+									<?php foreach ($transactions as $row): ?>
+
+										<tr>
+
+											<td>
+												<?= date('d M Y', strtotime($row['bill_year'] . '-' . $row['bill_month'] . '-01')) ?>
+											</td>
+
+											<td>Monthly Maintenance Fee</td>
+
+											<td>₹<?= number_format($row['total_amount'], 2) ?></td>
+
+											<td>
+												<?php if ($row['status'] === 'paid'): ?>
+													<span class="badge bg-success">Paid</span>
+												<?php else: ?>
+													<span class="badge bg-danger">Pending</span>
+												<?php endif; ?>
+											</td>
+
+											<td class="text-end">
+
+												<?php if ($row['status'] === 'paid'): ?>
+
+													<a href="<?= BASE_URL ?>view/pay_Details.php?bill_id=<?= $row['id'] ?>"
+														class="btn btn-sm"
+														style=" font-size: 10px;
+																background-color: #4F47E5;
+																color: white;
+																border-radius: 10px;
+																font-weight: 600;
+																padding: 0.6rem 1.5rem;
+																border: none;
+																transition: 0.2s;">
+														<i class="fa fa-eye"></i> View
+													</a>
+
+												<?php else: ?>
+
+													<span class="text-muted">Not Available</span>
+
+												<?php endif; ?>
+
+											</td>
+
+										</tr>
+
+									<?php endforeach; ?>
+								<?php else: ?>
+
+									<tr>
+										<td colspan="5" class="text-center text-muted">No Transactions Found</td>
+									</tr>
+
+								<?php endif; ?>
+
+							</tbody>
+						</table>
+					</div>
+				</div>
+
+
 			</main>
 		</div>
 
@@ -618,7 +1010,7 @@ include('../resources/layout/header.php');
 				$('#bills-table').DataTable({
 					processing: true,
 					serverSide: true,
-					pageLength: 5,
+					pageLength: 10,
 					ajax: {
 						url: '<?= BASE_URL ?>action.php',
 						type: 'POST',
@@ -762,6 +1154,7 @@ include('../resources/layout/header.php');
 			$('#onlinePaymentForm button[type="submit"]')
 				.prop('disabled', false)
 				.text('Submit Payment');
+			location.reload();
 		});
 
 		$('#cashConfirmModal').on('hidden.bs.modal', function() {
@@ -770,8 +1163,18 @@ include('../resources/layout/header.php');
 				.prop('disabled', false)
 				.text('Yes, Confirm');
 		});
-	</script>
 
+
+		$('#clearFlatSearch').on('click', function() {
+
+			$('#flatSearch').val('');
+			$('#flatResults').hide().empty();
+
+			$('#userInfoCard').hide();
+			$('#ledgerTableBox').hide();
+
+		});
+	</script>
 
 </body>
 

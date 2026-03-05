@@ -496,17 +496,22 @@ include __DIR__ . '/../resources/layout/header.php';
                                     <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
                                         <td class="text-end">
                                             <?php if ($t['status'] === 'active'): ?>
-                                                <a href="?vacate=<?= $t['id'] ?>"
-                                                    class="btn btn-sm btn-outline-danger"
-                                                    onclick="return confirm('Confirm move-out?')">
+                                                <button
+                                                    class="btn btn-sm btn-outline-danger vacateTenantBtn"
+                                                    data-id="<?= $t['id'] ?>"
+                                                    data-name="<?= htmlspecialchars($t['tenant_name']) ?>"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#vacateTenantModal">
                                                     Vacate
-                                                </a>
+                                                </button>
                                             <?php else: ?>
-                                                <a href="?delete=<?= $t['id'] ?>"
-                                                    class="btn btn-sm btn-outline-danger"
-                                                    onclick="return confirm('Are you sure you want to permanently delete this tenant record? This action cannot be undone.')">
+                                                <button
+                                                    class="btn btn-sm btn-outline-danger deleteTenantBtn"
+                                                    data-id="<?= $t['id'] ?>"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteTenantModal">
                                                     <i class="fa fa-trash"></i>
-                                                </a>
+                                                </button>
                                             <?php endif; ?>
                                         </td>
                                     <?php endif; ?>
@@ -675,6 +680,114 @@ include __DIR__ . '/../resources/layout/header.php';
     </div>
 
 
+    <!-- VACATE TENANT MODAL -->
+    <div class="modal fade" id="vacateTenantModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius:18px;">
+
+                <div class="modal-body text-center p-4">
+
+                    <!-- Icon -->
+                    <div style="
+                width:60px;
+                height:60px;
+                border-radius:50%;
+                background:#fff4e5;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                margin:0 auto 15px;
+                font-size:26px;">
+                        🚪
+                    </div>
+
+                    <!-- Title -->
+                    <h5 class="fw-bold mb-2 text-warning">Vacate Tenant</h5>
+
+                    <!-- Message -->
+                    <p class="text-muted mb-4">
+                        Are you sure you want to move out this tenant?<br>
+                        <small class="text-warning">The record will be archived.</small>
+                    </p>
+
+                    <!-- Buttons -->
+                    <div class="d-flex gap-3 justify-content-center">
+
+                        <button type="button"
+                            class="btn btn-light px-4 py-2"
+                            data-bs-dismiss="modal"
+                            style="border-radius:10px;">
+                            Cancel
+                        </button>
+
+                        <button type="button"
+                            id="confirmVacateTenantBtn"
+                            class="btn btn-warning px-4 py-2 fw-bold"
+                            style="border-radius:10px;">
+                            Yes, Vacate
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- DELETE TENANT MODAL -->
+    <div class="modal fade" id="deleteTenantModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius:18px;">
+
+                <div class="modal-body text-center p-4">
+
+                    <!-- Icon -->
+                    <div style="
+                    width:60px;
+                    height:60px;
+                    border-radius:50%;
+                    background:#ffe5e5;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    margin:0 auto 15px;
+                    font-size:26px;">
+                        🧾
+                    </div>
+
+                    <!-- Title -->
+                    <h5 class="fw-bold mb-2 text-danger">Delete Tenant Record</h5>
+
+                    <!-- Message -->
+                    <p class="text-muted mb-4">
+                        Are you sure you want to permanently delete this tenant record?<br>
+                        <small class="text-danger">All agreement and verification files will also be removed.</small>
+                    </p>
+
+                    <!-- Buttons -->
+                    <div class="d-flex gap-3 justify-content-center">
+                        <button type="button"
+                            class="btn btn-light px-4 py-2"
+                            data-bs-dismiss="modal"
+                            style="border-radius:10px;">
+                            Cancel
+                        </button>
+
+                        <button type="button"
+                            id="confirmDeleteTenantBtn"
+                            class="btn btn-danger px-4 py-2 fw-bold"
+                            style="border-radius:10px;">
+                            Yes, Delete
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
@@ -765,6 +878,49 @@ include __DIR__ . '/../resources/layout/header.php';
                     previewBox.classList.remove("d-none");
                 }
             });
+        });
+    </script>
+
+    <script>
+        let tenantIdToVacate = null;
+
+        document.querySelectorAll(".vacateTenantBtn").forEach(btn => {
+
+            btn.addEventListener("click", function() {
+
+                tenantIdToVacate = this.getAttribute("data-id");
+
+            });
+
+        });
+
+        document.getElementById("confirmVacateTenantBtn").addEventListener("click", function() {
+
+            if (tenantIdToVacate) {
+                window.location.href = "?vacate=" + tenantIdToVacate;
+            }
+
+        });
+
+
+        let tenantIdToDelete = null;
+
+        document.querySelectorAll(".deleteTenantBtn").forEach(btn => {
+
+            btn.addEventListener("click", function() {
+
+                tenantIdToDelete = this.getAttribute("data-id");
+
+            });
+
+        });
+
+        document.getElementById("confirmDeleteTenantBtn").addEventListener("click", function() {
+
+            if (tenantIdToDelete) {
+                window.location.href = "?delete=" + tenantIdToDelete;
+            }
+
         });
     </script>
 

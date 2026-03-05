@@ -68,19 +68,22 @@ if (isset($_POST['action']) && $_POST['action'] === 'update_complaint') {
 
     $resolved_at = ($status === 'completed') ? date("Y-m-d H:i:s") : NULL;
 
+
     $stmt = $pdo->prepare("
         UPDATE complaints 
-        SET status = ?, resolve_note = ?, resolved_at = ?
+        SET status = ?, 
+            resolve_note = ?, 
+            resolved_at = ?, 
+            user_seen = IF(? = 'completed', 0, user_seen)
         WHERE id = ?
     ");
 
-    if ($stmt->execute([$status, $resolve_note, $resolved_at, $id])) {
+    if ($stmt->execute([$status, $resolve_note, $resolved_at, $status, $id])) {
         flash_set('success', 'Complaint updated successfully');
         echo json_encode(['status' => 'success']);
     } else {
         echo json_encode(['status' => 'error', 'msg' => 'Update failed']);
     }
-
     exit;
 }
 

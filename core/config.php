@@ -92,33 +92,26 @@ try {
 
 
 /* =====================================================
-   GLOBAL DATA
-===================================================== */
-
-$flatTypes = [
-    '1 BHK Flat',
-    '2 BHK Flat',
-    '3 BHK Flat',
-    '4 BHK Flat',
-    '5 BHK Flat'
-];
-
-
-/* =====================================================
    ROLE PROTECTION FUNCTION
 ===================================================== */
 
 function requireRole(array $roles)
 {
-    // Not logged in → go to login
+    // Not logged in
     if (!isset($_SESSION['user_id'])) {
         header("Location: " . BASE_URL . "index.php");
         exit;
     }
 
-    // Logged in but wrong role → go to dashboard
+    // Logged in but wrong role
     if (!in_array($_SESSION['user_role'], $roles)) {
-        header("Location: " . BASE_URL . "dashboard.php");
+
+        if ($_SESSION['user_role'] === 'security_guard') {
+            header("Location: " . BASE_URL . "security_guard.php");
+        } else {
+            header("Location: " . BASE_URL . "dashboard.php");
+        }
+
         exit;
     }
 }

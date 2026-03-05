@@ -117,10 +117,17 @@ include __DIR__ . '/../../resources/layout/header.php';
 
     <script>
         $(document).ready(function() {
-            // Initialize DataTable
+
             const table = $('#user-bills-table').DataTable({
+                dom: '<"d-flex justify-content-between mb-4"lf>rt<"d-flex justify-content-between mt-4"ip>',
                 processing: true,
                 serverSide: true,
+                pageLength: 5,
+                lengthMenu: [5, 10, 25, 50],
+                language: {
+                    search: "",
+                    searchPlaceholder: "Search records..."
+                },
                 ajax: {
                     url: '<?= BASE_URL ?>action.php',
                     type: 'POST',

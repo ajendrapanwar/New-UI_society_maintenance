@@ -69,7 +69,6 @@ $notifCount = count($latestNotifications);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <link rel="stylesheet" href="../../assets/css/styles.css">
 
     <style>
@@ -151,6 +150,22 @@ $notifCount = count($latestNotifications);
                             <span>Change Password</span>
                         </a>
                     </li>
+
+                    <!-- Divider -->
+                    <li>
+                        <hr class="dropdown-divider m-0">
+                    </li>
+
+                    <!-- Logout -->
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center py-2 text-danger" href="<?= BASE_URL ?>logout.php">
+                            <div class="menu-icon bg-danger-soft me-3">
+                                <i class="fas fa-sign-out-alt text-danger"></i>
+                            </div>
+                            <span>Logout</span>
+                        </a>
+                    </li>
+
                 </ul>
             </div>
         </div>

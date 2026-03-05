@@ -2,9 +2,7 @@
 require_once __DIR__ . '/../core/config.php';
 requireRole(['admin', 'security']);
 
-include __DIR__ . '/../resources/layout/header.php';
-
-$search = $_GET['vehicle'] ?? '';
+$search = $_GET['vehicle'] ?? $_POST['vehicle'] ?? '';
 $results = [];
 
 if ($search != '') {
@@ -12,7 +10,6 @@ if ($search != '') {
     $like = "%$search%";
 
     $stmt = $pdo->prepare("
-        /* ================= VISITOR VEHICLES (ONLY INSIDE) ================= */
         SELECT 
             'Visitor' AS type,
             v.visitor_name AS name,
@@ -31,7 +28,6 @@ if ($search != '') {
 
         UNION ALL
 
-        /* ================= RESIDENT VEHICLE 1 ================= */
         SELECT 
             'Resident' AS type,
             u.name AS name,
@@ -50,7 +46,6 @@ if ($search != '') {
 
         UNION ALL
 
-        /* ================= RESIDENT VEHICLE 2 ================= */
         SELECT 
             'Resident' AS type,
             u.name AS name,
@@ -66,11 +61,131 @@ if ($search != '') {
         JOIN flats f ON rp.flat_id = f.id
         LEFT JOIN users u ON rp.user_id = u.id
         WHERE rp.vehicle2 LIKE ?
+
+
+        UNION ALL
+
+        SELECT 
+            'Tenant' AS type,
+            t.tenant_name AS name,
+            t.mobile_no AS mobile,
+            t.vehicle_no AS vehicle,
+            'Tenant Parking' AS visit_type,
+            NULL AS purpose,
+            f.block_number,
+            f.flat_number,
+            DATE_FORMAT(t.move_in,'%d-%m-%Y %h:%i %p') AS in_time,
+            NULL AS out_time
+        FROM tenants t
+        JOIN flats f ON t.flat_id = f.id
+        WHERE t.vehicle_no LIKE ?
+        AND t.status = 'active'
+
     ");
 
-    $stmt->execute([$like, $like, $like]);
+    $stmt->execute([$like, $like, $like, $like]);
     $results = $stmt->fetchAll();
 }
+
+/* ================= AJAX RESPONSE ================= */
+
+if (isset($_POST['vehicle'])) {
+
+    if (!empty($results)) {
+
+        foreach ($results as $r):
+
+            if ($r['type'] === 'Visitor') {
+                $badgeClass = 'bg-warning text-dark';
+            } elseif ($r['type'] === 'Tenant') {
+                $badgeClass = 'bg-info text-dark';
+            } else {
+                $badgeClass = 'badge-resident';
+            }
+?>
+
+            <div class="result-card shadow-sm mb-3">
+
+                <div class="result-header <?= ($r['type'] === 'Visitor') ? 'bg-warning-subtle' : '' ?>">
+                    <span class="vehicle-plate"><?= htmlspecialchars($r['vehicle']) ?></span>
+
+                    <span class="badge <?= $badgeClass ?> fw-bold small px-3 py-1" style="border-radius:20px;">
+                        <?= $r['type'] ?>
+                    </span>
+                </div>
+
+                <div class="result-body">
+                    <div class="d-flex align-items-center gap-4 flex-wrap">
+
+                        <div class="flex-grow-1">
+
+                            <h5 class="fw-bold mb-1">
+                                <?= htmlspecialchars($r['name'] ?? 'Unknown') ?>
+                            </h5>
+
+                            <p class="text-muted m-0 small">
+
+                                <?php if ($r['type'] === 'Visitor'): ?>
+
+                                    Visit Type:
+                                    <span class="fw-bold text-primary">
+                                        <?= htmlspecialchars($r['visit_type'] ?? '-') ?>
+                                    </span>
+
+                                    | Visiting:
+                                    <span class="fw-bold text-dark">
+                                        Block <?= $r['block_number'] ?> - Flat <?= $r['flat_number'] ?>
+                                    </span>
+
+                                    | Entry:
+                                    <span class="fw-bold text-dark">
+                                        <?= $r['in_time'] ?>
+                                    </span>
+
+                                <?php else: ?>
+
+                                    Flat:
+                                    <span class="fw-bold text-dark">
+                                        Block <?= $r['block_number'] ?> - Flat <?= $r['flat_number'] ?>
+                                    </span>
+
+                                    | Parking Type:
+                                    <span class="fw-bold text-dark">
+                                        <?= $r['visit_type'] ?>
+                                    </span>
+
+                                <?php endif; ?>
+
+                            </p>
+
+                        </div>
+
+                        <div class="text-end">
+                            <small class="text-muted d-block mb-1 fw-bold">
+                                <?= ($r['type'] === 'Visitor') ? 'MOBILE' : 'CONTACT' ?>
+                            </small>
+
+                            <div class="phone-highlight">
+                                <i class="fa fa-phone-alt me-2"></i>
+                                <?= htmlspecialchars($r['mobile'] ?? '-') ?>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+<?php
+        endforeach;
+    } else {
+        echo '<div class="alert alert-danger text-center fw-bold">❌ No Vehicle Found</div>';
+    }
+
+    exit;
+}
+
+include __DIR__ . '/../resources/layout/header.php';
 ?>
 
 <!DOCTYPE html>
@@ -102,137 +217,75 @@ if ($search != '') {
                 <p class="text-muted">Enter a vehicle number to find the owner's contact info.</p>
             </div>
 
-            <!-- SEARCH BOX (CONNECTED TO GET) -->
-            <form method="GET">
-                <div class="search-container mb-4" style="padding: 35px;">
-                    <div class="search-input-group" style="padding: 2px 15px;">
-                        <i class="fa-solid fa-magnifying-glass text-muted fs-4"></i>
+            <!-- SEARCH BOX -->
+            <form onsubmit="return false;">
+                <div class="search-container mb-4" style="padding:15px;">
+                    <div class="search-input-group d-flex align-items-center gap-2" style="padding:6px 12px;">
+
+                        <i class="fa-solid fa-magnifying-glass text-muted"></i>
+
                         <input
                             type="text"
-                            name="vehicle"
-                            placeholder="Enter Vehicle Number (e.g. MH12AB1234)..."
-                            style="font-weight: 600;"
-                            value="<?= htmlspecialchars($search) ?>">
+                            id="vehicleSearch"
+                            placeholder="Enter Vehicle Number..."
+                            style="font-weight:600; height:36px; border:none; outline:none; flex:1;"
+                            autocomplete="off">
 
-                        <button type="submit" class="btn btn-brand px-4 py-2" style="border-radius:10px;">
-                            Search
+                        <button id="clearBtn"
+                            class="btn btn-outline-dark btn-sm px-3"
+                            style="display:none; border-radius:8px;">
+                            Clear
                         </button>
 
-                        <?php if ($search != ''): ?>
-                            <a href="vehicle_finder.php" class="btn btn-secondary px-3 py-2 ms-2" style="border-radius:10px;">
-                                Clear
-                            </a>
-                        <?php endif; ?>
                     </div>
                 </div>
             </form>
 
-            <!-- RESULTS -->
-            <?php if ($search != ''): ?>
-
-                <div class="results-list">
-
-                    <?php if (!empty($results)): ?>
-                        <?php foreach ($results as $r):
-                            $initial = strtoupper(substr($r['name'] ?? 'U', 0, 1));
-                            $badgeClass = ($r['type'] === 'Visitor')
-                                ? 'bg-warning text-dark'
-                                : 'badge-resident';
-                        ?>
-
-                            <div class="result-card shadow-sm mb-3">
-
-                                <!-- HEADER -->
-                                <div class="result-header <?= ($r['type'] === 'Visitor') ? 'bg-warning-subtle' : '' ?>">
-                                    <span class="vehicle-plate">
-                                        <?= htmlspecialchars($r['vehicle']) ?>
-                                    </span>
-
-                                    <span class="badge <?= $badgeClass ?> fw-bold small px-3 py-1" style="border-radius:20px;">
-                                        <?= $r['type'] ?>
-                                    </span>
-                                </div>
-
-                                <!-- BODY -->
-                                <div class="result-body">
-                                    <div class="d-flex align-items-center gap-4 flex-wrap">
-
-                                        <!-- Info -->
-                                        <div class="flex-grow-1">
-                                            <h5 class="fw-bold mb-1">
-                                                <?= htmlspecialchars($r['name'] ?? 'Unknown') ?>
-                                            </h5>
-
-                                            <p class="text-muted m-0 small">
-                                                <?php if ($r['type'] === 'Visitor'): ?>
-                                                    Visit Type:
-                                                    <span class="fw-bold text-primary">
-                                                        <?= htmlspecialchars($r['visit_type'] ?? '-') ?>
-                                                    </span>
-                                                    | Visiting:
-                                                    <span class="fw-bold text-dark">
-                                                        Block <?= $r['block_number'] ?> - Flat <?= $r['flat_number'] ?>
-                                                    </span>
-                                                    | Entry:
-                                                    <span class="fw-bold text-dark">
-                                                        <?= $r['in_time'] ?>
-                                                    </span>
-                                                <?php else: ?>
-                                                    Flat:
-                                                    <span class="fw-bold text-dark">
-                                                        Block <?= $r['block_number'] ?> - Flat <?= $r['flat_number'] ?>
-                                                    </span>
-                                                    | Parking Type:
-                                                    <span class="fw-bold text-dark">
-                                                        <?= $r['visit_type'] ?>
-                                                    </span>
-                                                <?php endif; ?>
-                                            </p>
-
-                                            <?php if (!empty($r['purpose'])): ?>
-                                                <p class="text-muted m-0 small">
-                                                    Purpose:
-                                                    <span class="fw-bold text-dark">
-                                                        <?= htmlspecialchars($r['purpose']) ?>
-                                                    </span>
-                                                </p>
-                                            <?php endif; ?>
-                                        </div>
-
-                                        <!-- Contact -->
-                                        <div class="text-end">
-                                            <small class="text-muted d-block mb-1 fw-bold">
-                                                <?= ($r['type'] === 'Visitor') ? 'MOBILE' : 'CONTACT' ?>
-                                            </small>
-
-                                            <div class="phone-highlight">
-                                                <i class="fa fa-phone-alt me-2"></i>
-                                                <?= htmlspecialchars($r['mobile'] ?? '-') ?>
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </div>
-                            </div>
-
-                        <?php endforeach; ?>
-
-                    <?php else: ?>
-                        <div class="alert alert-danger text-center fw-bold">
-                            ❌ No Active Vehicle Found
-                        </div>
-                    <?php endif; ?>
-
-                </div>
-
-            <?php endif; ?>
+            <div id="resultsContainer"></div>
 
         </main>
     </div>
 
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
+
+    <script>
+        $(document).ready(function() {
+
+            $("#vehicleSearch").keyup(function() {
+
+                let vehicle = $(this).val();
+
+                if (vehicle.length === 0) {
+                    $("#resultsContainer").html('');
+                    $("#clearBtn").hide();
+                    return;
+                }
+
+                $("#clearBtn").show();
+
+                $.ajax({
+                    url: "vehicle_finder.php",
+                    method: "POST",
+                    data: {
+                        vehicle: vehicle
+                    },
+                    success: function(data) {
+                        $("#resultsContainer").html(data);
+                    }
+                });
+
+            });
+
+            $("#clearBtn").click(function() {
+                $("#vehicleSearch").val('');
+                $("#resultsContainer").html('');
+                $(this).hide();
+            });
+
+        });
+    </script>
+
 </body>
 
 </html>

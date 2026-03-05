@@ -4,55 +4,66 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Initialize specific error variables
- $email_error = '';
- $password_error = '';
- $login_error = '';
- $email_value = '';
+// Initialize error variables
+$email_error = '';
+$password_error = '';
+$login_error = '';
+$email_value = '';
 
-// Check if config exists
+// Load config
 if (file_exists(__DIR__ . '/../core/config.php')) {
     require_once __DIR__ . '/../core/config.php';
 } else {
     if (!defined('BASE_URL')) define('BASE_URL', '/');
 }
 
-// Security Headers
+/* ================= REDIRECT IF ALREADY LOGGED IN ================= */
+
+if (isset($_SESSION['user_id'])) {
+
+    if ($_SESSION['user_role'] === 'security_guard') {
+        header("Location: " . BASE_URL . "security_guard.php");
+    } else {
+        header("Location: " . BASE_URL . "dashboard.php");
+    }
+
+    exit;
+}
+
+/* ================= SECURITY HEADERS ================= */
+
 header("Expires: Tue, 01 Jan 2000 00:00:00 GMT");
 header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
-if (isset($_SESSION['user_id'])) {
-    header('Location: ' . BASE_URL . 'dashboard.php');
-    exit;
-}
+/* ================= HANDLE LOGIN ================= */
 
-// Handle Login
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btn_login'])) {
 
     $email    = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
-    
-    // Keep the value for the input field
+
     $email_value = $email;
 
-    // 1. Validate Email
+    // Validate Email
     if ($email === '') {
         $email_error = 'Please enter your email address.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $email_error = 'Please enter a valid email address.';
     }
 
-    // 2. Validate Password
+    // Validate Password
     if ($password === '') {
         $password_error = 'Please enter your password.';
     }
 
-    // 3. Database Check (Only if no field errors)
+    // If validation passes
     if (empty($email_error) && empty($password_error)) {
+
         if (isset($pdo)) {
+
             $stmt = $pdo->prepare("SELECT id, name, email, password, role FROM users WHERE email = ?");
             $stmt->execute([$email]);
             $user = $stmt->fetch();
@@ -63,18 +74,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btn_login'])) {
                 $_SESSION['user_role'] = $user['role'];
                 $_SESSION['user_name'] = $user['name'];
 
-                // Role-based redirect
-                if ($user['role'] === 'admin') {
-                    header('Location: ' . BASE_URL . 'dashboard.php');
-                } elseif ($user['role'] === 'cashier') {
-                    header('Location: ' . BASE_URL . 'dashboard.php');
+                /* ROLE BASED REDIRECT */
+
+                if ($user['role'] === 'security_guard') {
+
+                    header("Location: " . BASE_URL . "security_guard.php");
+
                 } else {
-                    header('Location: ' . BASE_URL . 'dashboard.php');
+
+                    header("Location: " . BASE_URL . "dashboard.php");
+
                 }
+
                 exit;
+
             } else {
                 $login_error = 'Invalid email or password.';
             }
+
         } else {
             $login_error = 'Database connection not configured.';
         }
@@ -99,7 +116,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btn_login'])) {
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <link rel="stylesheet" href="<?= BASE_URL ?>../assets/css/login_style.css">
 
     <script>
         // Prevent back-forward cache issues
@@ -195,20 +211,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btn_login'])) {
 
                 <!-- PASSWORD FORM -->
                 <form action="" method="POST" id="form-pass" class="space-y-6">
-                    
+
                     <!-- Email Field -->
                     <div>
                         <label class="block text-xs font-bold uppercase text-slate-500 mb-2 ml-1">Email Address</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400"><i class="fa-solid fa-envelope"></i></div>
-                            
+
                             <!-- Dynamic class added here: If error, border becomes red -->
                             <input type="email" name="email" placeholder="admin@society.com"
                                 value="<?php echo htmlspecialchars($email_value); ?>"
                                 class="w-full pl-12 pr-4 py-4 rounded-2xl border outline-none transition-all placeholder:text-slate-300 
                                 <?php echo (!empty($email_error) ? 'border-red-500 text-red-900 focus:border-red-500 focus:ring-red-200' : 'border-slate-200 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5'); ?>">
                         </div>
-                        
+
                         <!-- ERROR MESSAGE BLOCK ADDED HERE -->
                         <?php if (!empty($email_error)): ?>
                             <p class="text-red-500 text-xs mt-2 ml-1 flex items-center">
@@ -225,9 +241,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btn_login'])) {
                         </div>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400"><i class="fa-solid fa-lock"></i></div>
-                            
+
                             <!-- Dynamic class added here: If error, border becomes red -->
-                            <input type="password" name="password" placeholder="••••••••" 
+                            <input type="password" name="password" placeholder="••••••••"
                                 class="w-full pl-12 pr-4 py-4 rounded-2xl border outline-none transition-all 
                                 <?php echo (!empty($password_error) ? 'border-red-500 text-red-900 focus:border-red-500 focus:ring-red-200' : 'border-slate-200 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5'); ?>">
                         </div>
@@ -270,4 +286,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btn_login'])) {
         }
     </script>
 </body>
+
 </html>

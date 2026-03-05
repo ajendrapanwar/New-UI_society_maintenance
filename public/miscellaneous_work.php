@@ -97,7 +97,7 @@ include('../resources/layout/header.php');
             </div>
 
 
-             <!-- FILTERS - NEW UI STYLE, OLD LOGIC -->
+            <!-- FILTERS - NEW UI STYLE, OLD LOGIC -->
             <div class="filter-box shadow-sm p-3 mb-4">
                 <div class="row g-3 align-items-end">
                     <!-- YEAR -->
@@ -311,10 +311,16 @@ include('../resources/layout/header.php');
             <?php } ?>
 
             let table = $('#misc-table').DataTable({
+                dom: '<"d-flex justify-content-between mb-4"lf>rt<"d-flex justify-content-between mt-4"ip>',
                 processing: true,
                 serverSide: true,
                 searching: false,
                 pageLength: 5,
+                lengthMenu: [5, 10, 25, 50],
+                language: {
+                    search: "",
+                    searchPlaceholder: "Search records..."
+                },
                 ajax: {
                     url: '<?= BASE_URL ?>action.php',
                     type: 'POST',
@@ -331,7 +337,7 @@ include('../resources/layout/header.php');
             $('#reset-filters').click(() => {
                 $('#filter-month,#filter-year').val('');
                 table.ajax.reload();
-            }); 
+            });
 
             $(document).on('click', '.delete_btn', function() {
                 var id = $(this).data('id');
