@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Mar 05, 2026 at 12:47 PM
+-- Generation Time: Mar 06, 2026 at 12:14 PM
 -- Server version: 8.0.45-0ubuntu0.24.04.1
 -- PHP Version: 8.3.6
 
@@ -538,6 +538,7 @@ CREATE TABLE `visitor_entries` (
   `visitor_name` varchar(100) NOT NULL,
   `mobile` varchar(15) DEFAULT NULL,
   `vehicle_no` varchar(50) DEFAULT NULL,
+  `photo` varchar(255) DEFAULT NULL,
   `flat_id` int NOT NULL,
   `visit_type` enum('Guest','Delivery Boy','Electrician','Plumber','Other') NOT NULL,
   `purpose` varchar(255) DEFAULT NULL,
@@ -549,10 +550,10 @@ CREATE TABLE `visitor_entries` (
 -- Dumping data for table `visitor_entries`
 --
 
-INSERT INTO `visitor_entries` (`id`, `visitor_name`, `mobile`, `vehicle_no`, `flat_id`, `visit_type`, `purpose`, `in_time`, `out_time`) VALUES
-(6, 'Test1', '7897897897', 'CH01CU1235', 5, 'Delivery Boy', '', '2026-02-05 13:19:08', '2026-02-05 15:03:55'),
-(7, 'Test2', '7897897845', 'CH01CU2222', 1, 'Guest', '', '2026-02-09 11:13:40', '2026-02-09 11:19:34'),
-(8, 'Test3', '7897897877', 'CH01CU3333', 1, 'Delivery Boy', '', '2026-02-09 11:20:03', NULL);
+INSERT INTO `visitor_entries` (`id`, `visitor_name`, `mobile`, `vehicle_no`, `photo`, `flat_id`, `visit_type`, `purpose`, `in_time`, `out_time`) VALUES
+(13, 'Admin', '7897897897', 'CH01CU1222', NULL, 9, 'Other', 'Test', '2026-03-06 15:44:23', NULL),
+(14, 'Test1', '7897897888', 'CH01CU3345', NULL, 5, 'Guest', '-', '2026-03-06 15:47:17', '2026-03-06 15:48:17'),
+(15, 'Test', '7894561236', 'CH01CU2288', 'visitor_1772792287_4427.png', 5, 'Guest', '-', '2026-03-06 15:48:07', NULL);
 
 --
 -- Indexes for dumped tables
@@ -826,7 +827,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `visitor_entries`
 --
 ALTER TABLE `visitor_entries`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- Constraints for dumped tables
